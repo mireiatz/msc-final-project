@@ -1,5 +1,3 @@
-CSM500- Project Module
+# CSM500- Project Module
 
-This repository will provide a location to store your project code.
-You should commit your project code regularly (at least weekly) to show
-how your code has evolved over the duration of the project.
+The proposed solution is an Inventory Management (IM) application that leverages Machine Learning (ML) models to provide advanced analytics. For that purpose, it features a comprehensive dashboard with (1) descriptive visualisations of current IM circumstances, (2) predictive demand forecasting, and (3) prescriptive reorder list suggestions. 
