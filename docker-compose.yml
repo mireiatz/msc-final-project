@@ -1,0 +1,54 @@
+version: '3.9'
+
+services:
+  angular:
+    build:
+      context: ./angular
+      dockerfile: Dockerfile
+    container_name: angular
+    ports:
+      - "4200:4200"
+    volumes:
+      - ./angular:/usr/src/app
+    command: npm start
+    depends_on:
+      - laravel
+
+  laravel:
+    container_name: laravel
+    build:
+      context: ./laravel
+      dockerfile: Dockerfile
+    ports:
+      - "8000:80"
+    volumes:
+      - ./laravel:/var/www
+    depends_on:
+      - db
+
+  ml:
+    container_name: ml
+    build:
+      context: ./ml
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5000"
+    volumes:
+      - ./ml:/usr/src/app
+
+  db:
+    container_name: db
+    image: mysql:5.7
+    platform: linux/amd64
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: final-project
+      MYSQL_USER: user
+      MYSQL_PASSWORD: secret
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data:
