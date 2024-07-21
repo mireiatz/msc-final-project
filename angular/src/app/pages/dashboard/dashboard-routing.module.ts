@@ -11,6 +11,14 @@ const routes: Routes = [
     path: 'descriptive-analytics',
     loadChildren: () => import('./descriptive-analytics/descriptive-analytics.module').then(s => s.DescriptiveAnalyticsModule),
   },
+  {
+    path: 'predictive-analytics',
+    loadChildren: () => import('./predictive-analytics/predictive-analytics.module').then(s => s.PredictiveAnalyticsModule),
+  },
+  {
+    path: 'prescriptive-analytics',
+    loadChildren: () => import('./prescriptive-analytics/prescriptive-analytics.module').then(s => s.PrescriptiveAnalyticsModule),
+  },
 ];
 
 @NgModule({
