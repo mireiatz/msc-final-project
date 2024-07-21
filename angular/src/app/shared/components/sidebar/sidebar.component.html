@@ -1,8 +1,11 @@
-<nav>
+<div class="sidenav" [class.collapsed]="isCollapsed">
+  <button class="toggle-btn" (click)="toggleSidebar()">☰</button>
   <ul>
     <li>
-      <span class="icon-dashboard"></span>
       <a routerLink="/dashboard">Dashboard</a>
     </li>
   </ul>
-</nav>
+</div>
+<div class="content">
+  <router-outlet></router-outlet>
+</div>
