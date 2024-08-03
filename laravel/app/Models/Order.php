@@ -20,6 +20,30 @@ class Order extends Model
         'cost',
     ];
 
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::created(function (Order $order) {
+
+            $order->products()->each(function ($product) use ($order) {
+                $quantity = $product->pivot->quantity;
+
+                $order->inventoryTransactions()->create([
+                    'store_id' => $order->store_id,
+                    'product_id' => $product->id,
+                    'quantity' => $quantity,
+                    'stock_balance' => $product->stock_balance + $quantity,
+                ]);
+            });
+        });
+    }
+
+    private function calculateStockBalance(Product $product, int $quantity): int
+    {
+        return $product->stock_balance + $quantity;
+    }
+
     public function store(): BelongsTo
     {
         return $this->belongsTo(Store::class);
@@ -32,9 +56,9 @@ class Order extends Model
 
     public function products()
     {
-        return $this->belongsToMany(Product::class, 'orders_products')
+        return $this->belongsToMany(Product::class, 'order_products')
             ->using(OrderProduct::class)
-            ->as('orders_products')
+            ->as('order_products')
             ->withPivot('quantity', 'unit_cost', 'total_cost')
             ->withTimestamps();
     }

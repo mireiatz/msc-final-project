@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignUuid('provider_id')->constrained('providers');
             $table->date('date');
             $table->integer('cost');
+            $table->string('currency');
             $table->timestamps();
             $table->softDeletes();
         });
