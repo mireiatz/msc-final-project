@@ -1,0 +1,15 @@
+openapi: 3.1.0
+x-stoplight:
+  id: uz2jxosmmw8mw
+info:
+  title: Project Module 2024 Apr Mireia TZ
+  version: '1.0'
+  contact:
+    name: Mireia
+  description: API spec
+servers:
+  - url: 'http://localhost:8000'
+    description: local
+paths: {}
+components:
+  schemas: {}
