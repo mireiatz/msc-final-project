@@ -8,7 +8,7 @@ info:
     name: Mireia
   description: API spec
 servers:
-  - url: 'http://localhost:8000'
+  - url: 'http://localhost:8000/api/v1'
     description: local
 paths:
   /categories:

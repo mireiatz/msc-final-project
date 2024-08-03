@@ -2,10 +2,12 @@ version: '3.9'
 
 services:
   angular:
+    container_name: angular
     build:
       context: ./angular
       dockerfile: Dockerfile
-    container_name: angular
+    networks:
+      - project-network
     ports:
       - "4200:4200"
     volumes:
@@ -19,6 +21,8 @@ services:
     build:
       context: ./laravel
       dockerfile: Dockerfile
+    networks:
+      - project-network
     ports:
       - "8000:80"
     volumes:
@@ -31,6 +35,8 @@ services:
     build:
       context: ./ml
       dockerfile: Dockerfile
+    networks:
+      - project-network
     ports:
       - "5001:5000"
     volumes:
@@ -40,6 +46,8 @@ services:
     container_name: db
     image: mysql:5.7
     platform: linux/amd64
+    networks:
+      - project-network
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: final-project
@@ -52,3 +60,8 @@ services:
 
 volumes:
   db_data:
+
+networks:
+  project-network:
+    external: true
+    name: project-module-2024-apr-mireiatz_default

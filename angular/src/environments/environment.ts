@@ -1,4 +1,4 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://laravel:80/api'
+  apiUrl: 'localhost:8000/api/v1'
 };
