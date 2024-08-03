@@ -1,0 +1,456 @@
+openapi: 3.1.0
+x-stoplight:
+  id: uz2jxosmmw8mw
+info:
+  title: Project Module 2024 Apr Mireia TZ
+  version: '1.0'
+  contact:
+    name: Mireia
+  description: API spec
+servers:
+  - url: 'http://localhost:8000/api/v1'
+    description: local
+paths:
+  /categories:
+    get:
+      summary: getCategories
+      tags: []
+      responses:
+        '200':
+          $ref: '#/components/responses/CategoriesResponse'
+      operationId: getCategories
+      description: ''
+  /inventory-transactions:
+    get:
+      summary: getInventoryTransactions
+      tags: []
+      responses:
+        '200':
+          $ref: '#/components/responses/InventoryTransactionsResponse'
+      operationId: get-inventory-transactions
+  /orders:
+    get:
+      summary: getOrders
+      tags: []
+      responses:
+        '200':
+          $ref: '#/components/responses/OrdersResponse'
+      operationId: get-orders
+  /products:
+    get:
+      summary: getProducts
+      tags: []
+      responses:
+        '200':
+          $ref: '#/components/responses/ProductsResponse'
+      operationId: get-products
+  /providers:
+    get:
+      summary: getProviders
+      tags: []
+      responses:
+        '200':
+          $ref: '#/components/responses/ProvidersResponse'
+      operationId: get-providers
+  /sales:
+    get:
+      summary: getSales
+      tags: []
+      responses:
+        '200':
+          $ref: '#/components/responses/SalesResponse'
+      operationId: get-sales
+  /stores:
+    get:
+      summary: getStores
+      tags: []
+      responses:
+        '200':
+          $ref: '#/components/responses/StoresResponse'
+      operationId: get-stores
+components:
+  schemas:
+    Category:
+      title: Category
+      x-stoplight:
+        id: qhj2dzcqn3d0q
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          x-stoplight:
+            id: d75udpyqtdlwr
+        description:
+          type: string
+          x-stoplight:
+            id: j3ritysfc0vlr
+    InventoryTransaction:
+      title: InventoryTransaction
+      x-stoplight:
+        id: xherxzcwr1j2g
+      type: object
+      properties:
+        id:
+          type: string
+        store_id:
+          type: string
+          x-stoplight:
+            id: 5axiabblwp2dy
+          format: uuid
+        parent_id:
+          type: string
+          x-stoplight:
+            id: l19sqph5twl5r
+          format: uuid
+        parent_type:
+          type: string
+          x-stoplight:
+            id: qbllxce2iey19
+        product_id:
+          type: string
+          x-stoplight:
+            id: ydlrkzyqeqdim
+          format: uuid
+        quantity:
+          type: integer
+          x-stoplight:
+            id: inzzoxkxuv4ly
+        stock_balance:
+          type: integer
+          x-stoplight:
+            id: tuxw2q7u9h0z7
+    Order:
+      title: Order
+      x-stoplight:
+        id: hkulfcra66atc
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        store_id:
+          type: string
+          x-stoplight:
+            id: hbd3qve6012sc
+          format: uuid
+        provider_id:
+          type: string
+          x-stoplight:
+            id: e3zdonuqfazhl
+          format: uuid
+        date:
+          type: string
+          x-stoplight:
+            id: 9tef4iz6254xo
+          format: date-time
+        cost:
+          type: integer
+          x-stoplight:
+            id: am6pc5b20d8hb
+    Product:
+      title: Product
+      x-stoplight:
+        id: xcn85zxonfn92
+      type: object
+      properties:
+        id:
+          type: string
+        category_id:
+          type: string
+          x-stoplight:
+            id: 7u097e4yobwqr
+          format: uuid
+        provider_id:
+          type: string
+          x-stoplight:
+            id: t7tfymnsicx65
+          format: uuid
+        name:
+          type: string
+          x-stoplight:
+            id: vc491liveu9mv
+        description:
+          type: string
+          x-stoplight:
+            id: 73oacbjrr2mpp
+        unit:
+          type: string
+          x-stoplight:
+            id: vco6h78rz5a5p
+        amount_per_unit:
+          type: integer
+          x-stoplight:
+            id: b1co71e415bzj
+        min_stock_level:
+          type: integer
+          x-stoplight:
+            id: yqdm1d1252mtv
+        sale:
+          type: integer
+          x-stoplight:
+            id: 58pns7c6y2mqn
+        cost:
+          type: integer
+          x-stoplight:
+            id: xzrnpjgpdl0kh
+        currency:
+          type: string
+          x-stoplight:
+            id: oqkcxrnquktdl
+    Provider:
+      title: Provider
+      x-stoplight:
+        id: 2ikd05bpg1jno
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          x-stoplight:
+            id: x3pfnagk1cahy
+        description:
+          type: string
+          x-stoplight:
+            id: 4l3mol2fkoren
+        phone:
+          type: string
+          x-stoplight:
+            id: r2dktlr8pp6t9
+        email:
+          type: string
+          x-stoplight:
+            id: ess1dov77ht1c
+        address:
+          type: object
+          x-stoplight:
+            id: bito634v88915
+        lead_days:
+          type: integer
+          x-stoplight:
+            id: un7jlcpw9aqd1
+    Sale:
+      title: Sale
+      x-stoplight:
+        id: 1t5wn9xhvdsiy
+      type: object
+      properties:
+        id:
+          type: string
+        store_id:
+          type: string
+          x-stoplight:
+            id: oiu1pwqncgqu9
+          format: uuid
+        date:
+          type: string
+          x-stoplight:
+            id: ehzsjzi9z8gte
+          format: date-time
+        sale:
+          type: integer
+          x-stoplight:
+            id: dqdfuyktra348
+        cost:
+          type: integer
+          x-stoplight:
+            id: monvlj6lr9g25
+        vat:
+          type: integer
+          x-stoplight:
+            id: 2qewr5f576fhk
+        net_sale:
+          type: integer
+          x-stoplight:
+            id: z2gdh7sb6gt70
+        margin:
+          type: integer
+          x-stoplight:
+            id: 4i2x5yrjwplec
+        currency:
+          type: string
+          x-stoplight:
+            id: 2v9wqjpbuzygi
+    Store:
+      title: Store
+      x-stoplight:
+        id: w1zbddw9ssupq
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          x-stoplight:
+            id: 72p309gryj2n5
+        location:
+          type: string
+          x-stoplight:
+            id: 4ba6o1g62mgov
+  responses:
+    CategoriesResponse:
+      description: Example response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                x-stoplight:
+                  id: 2tgwrqr4yufcb
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+                  x-stoplight:
+                    id: n7ffcabpxlpmf
+              success:
+                type: boolean
+                x-stoplight:
+                  id: zpwmzuhcw1b5u
+              errors:
+                type: object
+                x-stoplight:
+                  id: mbdtpv0j8o8yp
+    InventoryTransactionsResponse:
+      description: Example response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                x-stoplight:
+                  id: tfi2lpglp1ty1
+                items:
+                  $ref: '#/components/schemas/InventoryTransaction'
+                  x-stoplight:
+                    id: ivtg2dgcmj1mc
+              success:
+                type: boolean
+                x-stoplight:
+                  id: 7yzhh25djc1pg
+              errors:
+                type: object
+                x-stoplight:
+                  id: vxr4q9ua1qedg
+    OrdersResponse:
+      description: Example response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                x-stoplight:
+                  id: 5q3uisi1p8aty
+                items:
+                  $ref: '#/components/schemas/Order'
+                  x-stoplight:
+                    id: vy8jy8v8krhu1
+              success:
+                type: boolean
+                x-stoplight:
+                  id: ebf1yu8ynvewc
+              errors:
+                type: object
+                x-stoplight:
+                  id: p7sie6guucmka
+    ProductsResponse:
+      description: Example response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                x-stoplight:
+                  id: l5dv7bfrpxtln
+                items:
+                  $ref: '#/components/schemas/Product'
+                  x-stoplight:
+                    id: 04s4h9hzybz14
+              success:
+                type: boolean
+                x-stoplight:
+                  id: l84qk0qgudj9o
+              errors:
+                type: object
+                x-stoplight:
+                  id: xm0ruprho6im3
+    ProvidersResponse:
+      description: Example response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                x-stoplight:
+                  id: t84r5hu8x73u1
+                items:
+                  $ref: '#/components/schemas/Provider'
+                  x-stoplight:
+                    id: 4nhqpakjfv6z3
+              success:
+                type: boolean
+                x-stoplight:
+                  id: 0k2r7tv66k48n
+              errors:
+                type: object
+                x-stoplight:
+                  id: 9g1wka7euisof
+    SalesResponse:
+      description: Example response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                x-stoplight:
+                  id: a6plhltgjvep6
+                items:
+                  $ref: '#/components/schemas/Sale'
+                  x-stoplight:
+                    id: mw5t6ofgstksv
+              success:
+                type: boolean
+                x-stoplight:
+                  id: 10uwiber03w2x
+              errors:
+                type: object
+                x-stoplight:
+                  id: pb9dtmf8tcfyv
+    StoresResponse:
+      description: Example response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                x-stoplight:
+                  id: oxytph2nob5a5
+                items:
+                  $ref: '#/components/schemas/Store'
+                  x-stoplight:
+                    id: jp784zqkusjud
+              success:
+                type: boolean
+                x-stoplight:
+                  id: bzxmyjtgg218n
+              errors:
+                type: object
+                x-stoplight:
+                  id: xem82ok03vkrq

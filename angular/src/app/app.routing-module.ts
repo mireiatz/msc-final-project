@@ -8,10 +8,6 @@ const routes: Routes = [
     pathMatch: 'full'
   },
   {
-    path: '**',
-    redirectTo: '/dashboard'
-  },
-  {
     path: 'dashboard',
     loadChildren: () => import('./pages/dashboard/dashboard.module').then(d => d.DashboardModule),
   },
