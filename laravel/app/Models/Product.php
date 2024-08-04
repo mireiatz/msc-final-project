@@ -21,6 +21,7 @@ class Product extends Model
         'unit',
         'amount_per_unit',
         'min_stock_level',
+        'max_stock_level',
         'sale',
         'cost',
         'currency',

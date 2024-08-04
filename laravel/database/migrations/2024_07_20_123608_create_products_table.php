@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('unit');
             $table->string('amount_per_unit');
             $table->integer('min_stock_level');
+            $table->integer('max_stock_level');
             $table->integer('sale');
             $table->integer('cost');
             $table->string('currency');

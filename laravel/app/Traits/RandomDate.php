@@ -18,6 +18,6 @@ trait RandomDate
         $randomTimestamp = rand($startDate->timestamp, $endDate->timestamp);
         $randomDate = Carbon::createFromTimestamp($randomTimestamp);
 
-        return $randomDate->format('Y-m-d H:i');
+        return $randomDate->format('Y-m-d H:i:s');
     }
 }

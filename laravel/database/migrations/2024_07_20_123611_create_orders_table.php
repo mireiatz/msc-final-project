@@ -15,7 +15,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->foreignUuid('store_id')->constrained('stores');
             $table->foreignUuid('provider_id')->constrained('providers');
-            $table->date('date');
+            $table->dateTime('date');
             $table->integer('cost');
             $table->string('currency');
             $table->timestamps();
