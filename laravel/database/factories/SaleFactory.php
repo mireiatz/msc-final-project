@@ -5,13 +5,13 @@ namespace Database\Factories;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\Store;
+use App\Traits\RandomDate;
 use App\Traits\RandomModelInstances;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class SaleFactory extends Factory
 {
-    use RandomModelInstances;
+    use RandomModelInstances, RandomDate;
 
     /**
      * Define the model's default state.
@@ -29,7 +29,7 @@ class SaleFactory extends Factory
 
         return [
             'store_id' => $store->id,
-            'date' => Carbon::now()->format('Y-m-d H:i'),
+            'date' => $this->getRandomDate(),
             'sale' => $sale,
             'cost' => $cost,
             'vat' => $vat,

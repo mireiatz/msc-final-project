@@ -6,13 +6,14 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\Provider;
 use App\Models\Store;
+use App\Traits\RandomDate;
 use App\Traits\RandomModelInstances;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class OrderFactory extends Factory
 {
-    use RandomModelInstances;
+    use RandomModelInstances, RandomDate;
 
     /**
      * Define the model's default state.
@@ -27,7 +28,7 @@ class OrderFactory extends Factory
         return [
             'store_id' => $store->id,
             'provider_id' => $provider->id,
-            'date' => Carbon::now()->format('Y-m-d H:i'),
+            'date' => $this->getRandomDate(),
             'cost' => $this->faker->numberBetween(100, 1000),
             'currency' => $this->faker->randomElement(['gbp']),
         ];

@@ -27,7 +27,7 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/InventoryTransactionsResponse'
-      operationId: get-inventory-transactions
+      operationId: getInventoryTransactions
   /orders:
     get:
       summary: getOrders
@@ -35,7 +35,7 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/OrdersResponse'
-      operationId: get-orders
+      operationId: getOrders
   /products:
     get:
       summary: getProducts
@@ -43,7 +43,14 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/ProductsResponse'
-      operationId: get-products
+      operationId: getProducts
+    post:
+      summary: ''
+      operationId: searchCategories
+      responses:
+        '200':
+          description: OK
+      description: ''
   /providers:
     get:
       summary: getProviders
@@ -51,7 +58,7 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/ProvidersResponse'
-      operationId: get-providers
+      operationId: getProviders
   /sales:
     get:
       summary: getSales
@@ -59,7 +66,7 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/SalesResponse'
-      operationId: get-sales
+      operationId: getSales
   /stores:
     get:
       summary: getStores
@@ -67,7 +74,7 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/StoresResponse'
-      operationId: get-stores
+      operationId: getStores
 components:
   schemas:
     Category:
@@ -454,3 +461,14 @@ components:
                 type: object
                 x-stoplight:
                   id: xem82ok03vkrq
+  requestBodies:
+    SearchProductsRequest:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              category_id:
+                type: string
+                x-stoplight:
+                  id: 9u2c0mfww49ij
