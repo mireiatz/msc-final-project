@@ -1,1 +1,210 @@
-/* You can add global styles to this file, and also import other style files */
+// Colours
+$primary-color: #3498db;
+$secondary-color: lighten($primary-color, 20%);
+$accent-color: #e67e22;
+$success-color: #2ecc71;
+$warning-color: #e74c3c;
+$background-color: #f9f9f9;
+$border-color: #e0e0e0;
+$text-color: #333333;
+
+// Typography
+$font-family-primary: 'Arial', sans-serif;
+$font-size-base: 16px;
+$font-size-large: 24px;
+$font-size-medium: 20px;
+$font-size-small: 14px;
+$font-weight-primary: 400;
+$font-weight-bold: 500;
+$font-weight-x-bold: 600;
+
+// Spacing
+$padding-large: 30px;
+$padding-base: 20px;
+$padding-small: 10px;
+$margin-large: 30px;
+$margin-base: 20px;
+$margin-small: 10px;
+
+// Borders
+$border-radius-small: 4px;
+$border-radius-base: 8px;
+$border-radius-large: 12px;
+
+// Utility Classes
+.text-right {
+  text-align: right;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.margin-auto {
+  margin: auto;
+}
+
+.padding-small {
+  padding: $padding-small;
+}
+
+.padding-large {
+  padding: $padding-large;
+}
+
+.margin-small {
+  margin: $margin-small;
+}
+
+.margin-large {
+  margin: $margin-large;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.visible {
+  display: block !important;
+}
+
+.inline-block {
+  display: inline-block;
+}
+
+.float-right {
+  float: right;
+}
+
+.float-left {
+  float: left;
+}
+
+.rounded-sm {
+  border-radius: $border-radius-small;
+}
+
+.rounded-md {
+  border-radius: $border-radius-base;
+}
+
+.rounded-lg {
+  border-radius: $border-radius-large;
+}
+
+.font-weight-primary {
+  font-weight: $font-weight-primary;
+}
+
+.font-weight-bold {
+  font-weight: $font-weight-bold;
+}
+
+.font-weight-x-bold {
+  font-weight: $font-weight-x-bold;
+}
+
+// Main body
+body {
+  font-family: $font-family-primary;
+  font-size: $font-size-base;
+  font-weight: $font-weight-primary;
+  color: $text-color;
+  margin: 0;
+  padding: 0;
+  line-height: 1.5;
+  background-color: $background-color;
+}
+
+// Buttons
+.btn {
+  background-color: $primary-color;
+  color: #ffffff;
+  padding: 10px 20px;
+  border: none;
+  border-radius: $border-radius-small;
+  cursor: pointer;
+  transition: background-color 0.3s;
+
+  &:hover {
+    background-color: $warning-color;
+  }
+}
+
+// Icons
+i {
+
+  &::before {
+    padding: 0 12px 0 0;
+    font-size: 16px;
+  }
+}
+
+// Headings
+h1, h2, h3, h4, h5, h6 {
+  font-weight: bold;
+  margin-top: 0;
+  margin-bottom: $margin-small;
+}
+
+h1 {
+  font-size: $font-size-large;
+}
+
+h2 {
+  font-size: $font-size-medium;
+}
+
+p {
+  margin-bottom: $margin-base;
+  font-size: $font-size-base;
+}
+
+// Card Component
+.card {
+  background-color: #ffffff;
+  border: 1px solid $border-color;
+  border-radius: $border-radius-base;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  padding: $padding-base;
+  margin-bottom: $margin-base;
+
+  &.card-header {
+    border-bottom: 1px solid $border-color;
+    padding-bottom: $padding-small;
+    margin-bottom: $padding-small;
+    font-weight: bold;
+    font-size: $font-size-medium;
+  }
+}
+
+// Table Styles
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: $margin-base;
+
+  th, td {
+    border: 1px solid $border-color;
+    padding: $padding-small;
+    text-align: left;
+    font-size: $font-size-base;
+  }
+
+  th {
+    background-color: $background-color;
+    font-weight: bold;
+  }
+
+  tr:nth-child(even) {
+    background-color: $background-color;
+  }
+
+  tr:hover {
+    background-color: $warning-color;
+  }
+}

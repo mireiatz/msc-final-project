@@ -1,0 +1,16 @@
+@import '../styles.scss';
+
+.container {
+  display: flex;
+  height: 100%;
+}
+
+.sidebar-panel {
+  width: 250px;
+  overflow-y: auto;
+}
+
+.main-panel {
+  padding: $padding-base;
+  overflow-y: auto;
+}
