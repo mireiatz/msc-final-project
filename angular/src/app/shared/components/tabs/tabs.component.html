@@ -1,0 +1,7 @@
+<div class="tabs">
+  <ng-container *ngFor="let tab of tabs">
+    <div class="tab" [ngClass]="{ active: isActive(tab.key) }">
+      <a [routerLink]="[tab.route]" (click)="setActive(tab.key)">{{ tab.label }}</a>
+    </div>
+  </ng-container>
+</div>

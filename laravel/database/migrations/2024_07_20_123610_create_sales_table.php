@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('sales', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('store_id')->constrained('stores');
-            $table->date('date');
+            $table->dateTime('date');
             $table->integer('sale');
             $table->integer('cost');
             $table->integer('vat');

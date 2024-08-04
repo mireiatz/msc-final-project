@@ -27,7 +27,7 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/InventoryTransactionsResponse'
-      operationId: get-inventory-transactions
+      operationId: getInventoryTransactions
   /orders:
     get:
       summary: getOrders
@@ -35,7 +35,7 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/OrdersResponse'
-      operationId: get-orders
+      operationId: getOrders
   /products:
     get:
       summary: getProducts
@@ -43,7 +43,14 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/ProductsResponse'
-      operationId: get-products
+      operationId: getProducts
+    post:
+      summary: ''
+      operationId: searchCategories
+      responses:
+        '200':
+          description: OK
+      description: ''
   /providers:
     get:
       summary: getProviders
@@ -51,7 +58,7 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/ProvidersResponse'
-      operationId: get-providers
+      operationId: getProviders
   /sales:
     get:
       summary: getSales
@@ -59,7 +66,7 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/SalesResponse'
-      operationId: get-sales
+      operationId: getSales
   /stores:
     get:
       summary: getStores
@@ -67,7 +74,17 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/StoresResponse'
-      operationId: get-stores
+      operationId: getStores
+  /analytics/overview:
+    parameters: []
+    post:
+      summary: ''
+      operationId: getOverviewMetrics
+      responses:
+        '200':
+          $ref: '#/components/responses/OverviewMetricsResponse'
+      requestBody:
+        $ref: '#/components/requestBodies/GetOverviewMetricsRequest'
 components:
   schemas:
     Category:
@@ -188,6 +205,10 @@ components:
           type: integer
           x-stoplight:
             id: yqdm1d1252mtv
+        max_stock_level:
+          type: string
+          x-stoplight:
+            id: aqgyetgjup73f
         sale:
           type: integer
           x-stoplight:
@@ -292,6 +313,138 @@ components:
           type: string
           x-stoplight:
             id: 4ba6o1g62mgov
+    OverviewMetrics:
+      title: OverviewMetrics
+      x-stoplight:
+        id: 0wn9kcxb71v38
+      type: object
+      properties:
+        stock:
+          type: object
+          x-stoplight:
+            id: rg05f2q9whb1s
+          required:
+            - products_in_stock_count
+            - products_out_of_stock_count
+            - critically_low_stock_products
+            - excessive_stock_products
+            - inventory_value
+          properties:
+            products_in_stock_count:
+              type: integer
+              x-stoplight:
+                id: rj8gui87mi2mf
+            products_out_of_stock_count:
+              type: integer
+              x-stoplight:
+                id: ctg94ixgf3116
+            critically_low_stock_products:
+              type: array
+              x-stoplight:
+                id: vfj9n4gecuy5m
+              items:
+                x-stoplight:
+                  id: u7jaoogpsj0il
+                type: string
+            excessive_stock_products:
+              type: array
+              x-stoplight:
+                id: 5jmtqimmkjuu9
+              items:
+                x-stoplight:
+                  id: la2nfxnqtcouu
+                type: string
+            inventory_value:
+              type: number
+              x-stoplight:
+                id: 21ioezpboe48k
+        sales:
+          type: object
+          x-stoplight:
+            id: 9znhnemy5ttur
+          required:
+            - number_of_sales
+            - total_items_sold
+            - total_sales_value
+            - highest_sale
+            - lowest_sale
+            - sale_with_most_items
+            - sale_with_least_items
+          properties:
+            number_of_sales:
+              type: integer
+              x-stoplight:
+                id: 486pk1ps60pn0
+            total_items_sold:
+              type: integer
+              x-stoplight:
+                id: zsf9l19jhsbxy
+            total_sales_value:
+              type: number
+              x-stoplight:
+                id: ue6ssf7q98d08
+            highest_sale:
+              type: number
+              x-stoplight:
+                id: 6x9ylbfqlr4gb
+            lowest_sale:
+              type: number
+              x-stoplight:
+                id: p8q3kk8xttg3a
+            sale_with_most_items:
+              type: integer
+              x-stoplight:
+                id: glh4seevm33gh
+            sale_with_least_items:
+              type: integer
+              x-stoplight:
+                id: z2hbeotq49vkb
+        product_performance:
+          type: object
+          x-stoplight:
+            id: fmmgl4oide3h2
+          required:
+            - top_selling_products
+            - least_selling_products
+            - highest_revenue_products
+            - lowest_revenue_products
+          properties:
+            top_selling_products:
+              type: array
+              x-stoplight:
+                id: 4y94ehn7shcip
+              items:
+                x-stoplight:
+                  id: 6rr4atmssnt8k
+                type: string
+            least_selling_products:
+              type: array
+              x-stoplight:
+                id: 4zw07uyan0b00
+              items:
+                x-stoplight:
+                  id: ek8n841y6lbet
+                type: string
+            highest_revenue_products:
+              type: array
+              x-stoplight:
+                id: y90upzs2b018d
+              items:
+                x-stoplight:
+                  id: 6yvp2pppybivv
+                type: string
+            lowest_revenue_products:
+              type: array
+              x-stoplight:
+                id: cjtdgzcpyxlav
+              items:
+                x-stoplight:
+                  id: 5y2a2qrmsjxb5
+                type: string
+      required:
+        - stock
+        - sales
+        - product_performance
   responses:
     CategoriesResponse:
       description: Example response
@@ -454,3 +607,38 @@ components:
                 type: object
                 x-stoplight:
                   id: xem82ok03vkrq
+    OverviewMetricsResponse:
+      description: Example response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/components/schemas/OverviewMetrics'
+                x-stoplight:
+                  id: 2rm6a9mxa269d
+              success:
+                type: boolean
+                x-stoplight:
+                  id: dz986bu60nix9
+              errors:
+                type: object
+                x-stoplight:
+                  id: av5spbhpqn7ba
+            required:
+              - data
+              - success
+  requestBodies:
+    GetOverviewMetricsRequest:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              period:
+                type: string
+                x-stoplight:
+                  id: fmygbj9kc2aiu
+            required:
+              - period

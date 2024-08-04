@@ -22,7 +22,7 @@ class OrderProduct extends Pivot
 
     public function order(): BelongsTo
     {
-        return $this->belongsTo(Sale::class);
+        return $this->belongsTo(Order::class);
     }
 
     public function product(): BelongsTo

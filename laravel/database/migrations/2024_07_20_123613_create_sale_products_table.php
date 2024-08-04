@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('sale_product', function (Blueprint $table) {
+        Schema::create('sale_products', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('sale_id')->constrained('sales');
             $table->foreignUuid('product_id')->constrained('products');
@@ -20,6 +20,7 @@ return new class extends Migration
             $table->integer('total_sale');
             $table->integer('unit_cost');
             $table->integer('total_cost');
+            $table->string('currency');
             $table->timestamps();
             $table->softDeletes();
         });
@@ -30,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('sales_products');
+        Schema::dropIfExists('sale_products');
     }
 };

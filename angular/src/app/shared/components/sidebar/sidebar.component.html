@@ -1,11 +1,30 @@
-<div class="sidenav" [class.collapsed]="isCollapsed">
-  <button class="toggle-btn" (click)="toggleSidebar()">☰</button>
-  <ul>
-    <li>
-      <a routerLink="/dashboard">Dashboard</a>
+<div class="sidebar">
+  <ul class="sidebar-menu">
+    <li class="menu-item">
+      <a routerLink="/dashboard" routerLinkActive="active">
+        <i class="bi bi-graph-up-arrow"></i>
+        <span class="label">Dashboard</span>
+      </a>
+      <ul class="submenu">
+        <li>
+          <a routerLink="/dashboard/descriptive-analytics" routerLinkActive="active">
+            <i class="bi bi-dot"></i>
+            <span class="label">Current Metrics</span>
+          </a>
+        </li>
+        <li>
+          <a routerLink="/dashboard/predictive-analytics" routerLinkActive="active">
+            <i class="bi bi-dot"></i>
+            <span class="label">Demand Forecast</span>
+          </a>
+        </li>
+        <li>
+          <a routerLink="/dashboard/prescriptive-analytics" routerLinkActive="active">
+            <i class="bi bi-dot"></i>
+            <span class="label">Reordering</span>
+          </a>
+        </li>
+      </ul>
     </li>
   </ul>
-</div>
-<div class="content">
-  <router-outlet></router-outlet>
 </div>

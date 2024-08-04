@@ -21,9 +21,14 @@ class Product extends Model
         'unit',
         'amount_per_unit',
         'min_stock_level',
+        'max_stock_level',
         'sale',
         'cost',
         'currency',
+    ];
+
+    protected $appends = [
+        'stock_balance'
     ];
 
     public function category(): BelongsTo
@@ -38,25 +43,30 @@ class Product extends Model
 
     public function sales()
     {
-        return $this->belongsToMany(Sale::class, 'sales_products')
+        return $this->belongsToMany(Sale::class, 'sale_products')
             ->using(SaleProduct::class)
-            ->as('sales_products')
+            ->as('sale_products')
             ->withPivot('quantity', 'unit_sale', 'total_sale', 'unit_cost', 'total_cost')
             ->withTimestamps();
     }
 
     public function orders()
     {
-        return $this->belongsToMany(Order::class, 'orders_products')
+        return $this->belongsToMany(Order::class, 'order_products')
             ->using(OrderProduct::class)
             ->as('order_products')
             ->withPivot('quantity', 'unit_cost', 'total_cost')
-            ->as('orders_products')
+            ->as('order_products')
             ->withTimestamps();
     }
 
     public function inventoryTransactions(): HasMany
     {
         return $this->hasMany(InventoryTransaction::class);
+    }
+
+    public function getStockBalanceAttribute(): int
+    {
+        return $this->inventoryTransactions()->sum('quantity');
     }
 }
