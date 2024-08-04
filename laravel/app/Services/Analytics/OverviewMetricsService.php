@@ -28,10 +28,10 @@ class OverviewMetricsService implements OverviewMetricsInterface
         $inventoryValue = $this->calculateInventoryValue($products);
 
         $salesSummary = $this->summariseSales($startDate);
-        $highestSale = $this->findExtremeSale($startDate, 'highest');
-        $lowestSale = $this->findExtremeSale($startDate, 'lowest');
-        $saleWithMostItems = $this->findExtremeSale($startDate, 'most_items');
-        $saleWithLeastItems = $this->findExtremeSale($startDate, 'least_items');
+        $highestSale = $this->findExtremeSaleAmount($startDate, 'highest');
+        $lowestSale = $this->findExtremeSaleAmount($startDate, 'lowest');
+        $mostItemsSold = $this->findExtremeSaleItems($startDate, 'most_items');
+        $leastItemsSold = $this->findExtremeSaleItems($startDate, 'least_items');
 
         $topSellingProducts = $this->findTopSellers($startDate);
         $leastSellingProducts = $this->findLeastSellers($startDate);
@@ -44,16 +44,16 @@ class OverviewMetricsService implements OverviewMetricsInterface
                 'products_out_of_stock_count' => $productsOutOfStockCount,
                 'critically_low_stock_products' => $criticallyLowStockProducts,
                 'excessive_stock_products' => $excessiveStockProducts,
-                'inventory_value' => $inventoryValue,
+                'inventory_value' => $inventoryValue/100,
             ],
             'sales' => [
                 'number_of_sales' => $salesSummary['number'],
                 'total_items_sold' => $salesSummary['items'],
-                'total_sales_value' => $salesSummary['total'],
-                'highest_sale' => $highestSale,
-                'lowest_sale' => $lowestSale,
-                'sale_with_most_items' => $saleWithMostItems,
-                'sale_with_least_items' => $saleWithLeastItems,
+                'total_sales_value' => $salesSummary['total']/100,
+                'highest_sale' => $highestSale/100,
+                'lowest_sale' => $lowestSale/100,
+                'sale_with_most_items' => $mostItemsSold,
+                'sale_with_least_items' => $leastItemsSold,
             ],
             'product_performance' => [
                 'top_selling_products' => $topSellingProducts,
@@ -115,23 +115,34 @@ class OverviewMetricsService implements OverviewMetricsInterface
         ];
     }
 
-    private function findExtremeSale(string $startDate, string $type): ?Sale
+    private function findExtremeSaleAmount(string $startDate, string $type): ?float
     {
-        $query = Sale::where('sales.created_at', '>=', $startDate);
+        $query = Sale::where('sales.created_at', '>=', $startDate)
+            ->select('sales.sale');
 
-        if (in_array($type, ['most_items', 'least_items'])) {
-            $query->join('sale_products', 'sales.id', '=', 'sale_products.sale_id')
-                ->select('sales.*', DB::raw('SUM(sale_products.quantity) as total_items'))
-                ->groupBy('sales.id');
-        }
+        $result = match ($type) {
+            'highest' => $query->orderBy('sales.sale', 'desc')->first(),
+            'lowest' => $query->orderBy('sales.sale', 'asc')->first(),
+            default => throw new InvalidArgumentException("Invalid type for sale amount: $type"),
+        };
 
-        return match ($type) {
-            'highest' => $query->orderBy('sale', 'desc')->first(),
-            'lowest' => $query->orderBy('sale', 'asc')->first(),
+        return $result ? $result->sale : null;
+    }
+
+    private function findExtremeSaleItems(string $startDate, string $type): ?int
+    {
+        $query = Sale::where('sales.created_at', '>=', $startDate)
+            ->join('sale_products', 'sales.id', '=', 'sale_products.sale_id')
+            ->select(DB::raw('SUM(sale_products.quantity) as total_items'))
+            ->groupBy('sales.id');
+
+        $result = match ($type) {
             'most_items' => $query->orderBy('total_items', 'desc')->first(),
             'least_items' => $query->orderBy('total_items', 'asc')->first(),
-            default => throw new InvalidArgumentException("Invalid type: $type"),
+            default => throw new InvalidArgumentException("Invalid type for sale items: $type"),
         };
+
+        return $result ? $result->total_items : null;
     }
 
     private function findTopSellers(string $startDate): array
@@ -192,6 +203,7 @@ class OverviewMetricsService implements OverviewMetricsInterface
             'day' => Carbon::now()->startOfDay(),
             'week' => Carbon::now()->startOfWeek(),
             'month' => Carbon::now()->startOfMonth(),
+            'year' => Carbon::now()->startOfYear(),
             default => throw new InvalidArgumentException("Invalid period: $period"),
         };
     }

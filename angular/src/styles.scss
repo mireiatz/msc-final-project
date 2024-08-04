@@ -121,19 +121,38 @@ body {
 }
 
 // Buttons
-.btn {
-  background-color: $primary-color;
+.button {
   color: #ffffff;
-  padding: 10px 20px;
+  padding: $padding-small $padding-base;
+  margin: $margin-small;
   border: none;
-  border-radius: $border-radius-small;
+  border-radius: $border-radius-base;
   cursor: pointer;
   transition: background-color 0.3s;
 
-  &:hover {
-    background-color: $warning-color;
+  &-primary {
+    background-color: $primary-color;
+
+    &:hover {
+      background-color: $secondary-color;
+    }
+  }
+
+  &-accented {
+    background-color: $accent-color;
+    color: #ffffff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: $border-radius-base;
+    cursor: pointer;
+    transition: background-color 0.3s;
+
+    &:hover {
+      background-color: $warning-color;
+    }
   }
 }
+
 
 // Icons
 i {
@@ -160,26 +179,13 @@ h2 {
 }
 
 p {
-  margin-bottom: $margin-base;
   font-size: $font-size-base;
 }
 
 // Card Component
 .card {
-  background-color: #ffffff;
-  border: 1px solid $border-color;
-  border-radius: $border-radius-base;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   padding: $padding-base;
-  margin-bottom: $margin-base;
-
-  &.card-header {
-    border-bottom: 1px solid $border-color;
-    padding-bottom: $padding-small;
-    margin-bottom: $padding-small;
-    font-weight: bold;
-    font-size: $font-size-medium;
-  }
+  margin: $margin-base $margin-base 0 0;
 }
 
 // Table Styles

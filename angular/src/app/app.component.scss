@@ -1,8 +1,9 @@
 @import '../styles.scss';
 
-.container {
+.full-panel {
   display: flex;
   height: 100%;
+  width: 100%;
 }
 
 .sidebar-panel {
@@ -11,6 +12,8 @@
 }
 
 .main-panel {
+  width: 100%;
   padding: $padding-base;
+  margin-left: 50px;
   overflow-y: auto;
 }

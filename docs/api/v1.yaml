@@ -331,23 +331,31 @@ components:
             - inventory_value
           properties:
             products_in_stock_count:
-              type: string
+              type: integer
               x-stoplight:
                 id: rj8gui87mi2mf
             products_out_of_stock_count:
-              type: string
+              type: integer
               x-stoplight:
                 id: ctg94ixgf3116
             critically_low_stock_products:
-              type: string
+              type: array
               x-stoplight:
                 id: vfj9n4gecuy5m
+              items:
+                x-stoplight:
+                  id: u7jaoogpsj0il
+                type: string
             excessive_stock_products:
-              type: string
+              type: array
               x-stoplight:
                 id: 5jmtqimmkjuu9
+              items:
+                x-stoplight:
+                  id: la2nfxnqtcouu
+                type: string
             inventory_value:
-              type: string
+              type: number
               x-stoplight:
                 id: 21ioezpboe48k
         sales:
@@ -364,31 +372,31 @@ components:
             - sale_with_least_items
           properties:
             number_of_sales:
-              type: string
+              type: integer
               x-stoplight:
                 id: 486pk1ps60pn0
             total_items_sold:
-              type: string
+              type: integer
               x-stoplight:
                 id: zsf9l19jhsbxy
             total_sales_value:
-              type: string
+              type: number
               x-stoplight:
                 id: ue6ssf7q98d08
             highest_sale:
-              type: string
+              type: number
               x-stoplight:
                 id: 6x9ylbfqlr4gb
             lowest_sale:
-              type: string
+              type: number
               x-stoplight:
                 id: p8q3kk8xttg3a
             sale_with_most_items:
-              type: string
+              type: integer
               x-stoplight:
                 id: glh4seevm33gh
             sale_with_least_items:
-              type: string
+              type: integer
               x-stoplight:
                 id: z2hbeotq49vkb
         product_performance:
@@ -402,21 +410,37 @@ components:
             - lowest_revenue_products
           properties:
             top_selling_products:
-              type: string
+              type: array
               x-stoplight:
                 id: 4y94ehn7shcip
+              items:
+                x-stoplight:
+                  id: 6rr4atmssnt8k
+                type: string
             least_selling_products:
-              type: string
+              type: array
               x-stoplight:
                 id: 4zw07uyan0b00
+              items:
+                x-stoplight:
+                  id: ek8n841y6lbet
+                type: string
             highest_revenue_products:
-              type: string
+              type: array
               x-stoplight:
                 id: y90upzs2b018d
+              items:
+                x-stoplight:
+                  id: 6yvp2pppybivv
+                type: string
             lowest_revenue_products:
-              type: string
+              type: array
               x-stoplight:
                 id: cjtdgzcpyxlav
+              items:
+                x-stoplight:
+                  id: 5y2a2qrmsjxb5
+                type: string
       required:
         - stock
         - sales
@@ -602,6 +626,9 @@ components:
                 type: object
                 x-stoplight:
                   id: av5spbhpqn7ba
+            required:
+              - data
+              - success
   requestBodies:
     GetOverviewMetricsRequest:
       content:

@@ -1,0 +1,42 @@
+@import '../../../../../styles.scss';
+
+.col {
+  padding-left: 0!important;
+  padding-right: 0!important;
+}
+
+.card {
+  min-height: 116px;
+  max-height: 250px;
+  overflow: scroll;
+
+  &-title {
+    margin-bottom: 0;
+  }
+
+  &-body {
+    padding: 0;
+  }
+
+  p {
+    margin: 0;
+    text-align: center;
+  }
+}
+
+h1 {
+  text-align: center;
+  margin: 0;
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: $margin-small;
+}
+
+.section-header {
+  background-color: $accent-color;
+  color: white;
+  margin-top: $margin-base;
+  padding: $padding-small;
+}

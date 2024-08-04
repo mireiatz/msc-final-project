@@ -29,6 +29,7 @@ class ProductFactory extends Factory
             'unit' => $this->faker->randomElement(['pack', 'litre', 'box']),
             'amount_per_unit' => $this->faker->numberBetween(1, 20),
             'min_stock_level' => $this->faker->numberBetween(1, 100),
+            'max_stock_level' => $this->faker->numberBetween(100, 1000),
             'sale' => $this->faker->numberBetween(10000, 100000),
             'cost' => $this->faker->numberBetween(100, 10000),
             'currency' => $this->faker->randomElement(['gbp']),
