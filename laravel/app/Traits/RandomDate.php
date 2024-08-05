@@ -13,8 +13,8 @@ trait RandomDate
      */
     protected function getRandomDate(): string
     {
-        $startDate = Carbon::create(2020);
-        $endDate = Carbon::create(2024, 12, 31, 23, 59, 59);
+        $startDate = Carbon::create(2024);
+        $endDate = Carbon::now();
         $randomTimestamp = rand($startDate->timestamp, $endDate->timestamp);
         $randomDate = Carbon::createFromTimestamp($randomTimestamp);
 

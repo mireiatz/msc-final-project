@@ -37,6 +37,10 @@ class Order extends Model
                 ]);
             });
         });
+
+        static::deleting(function ($order) {
+            $order->inventoryTransactions()->delete();
+        });
     }
 
     private function calculateStockBalance(Product $product, int $quantity): int

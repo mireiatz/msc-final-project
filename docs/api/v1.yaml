@@ -399,7 +399,7 @@ components:
               type: integer
               x-stoplight:
                 id: z2hbeotq49vkb
-        product_performance:
+        products:
           type: object
           x-stoplight:
             id: fmmgl4oide3h2
@@ -444,7 +444,7 @@ components:
       required:
         - stock
         - sales
-        - product_performance
+        - products
   responses:
     CategoriesResponse:
       description: Example response

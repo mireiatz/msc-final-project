@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('store_id')->constrained('stores');
-            $table->foreignUuid('provider_id')->constrained('providers');
-            $table->dateTime('date');
+            $table->foreignUuid('store_id')->index()->constrained('stores');
+            $table->foreignUuid('provider_id')->index()->constrained('providers');
+            $table->dateTime('date')->index();
             $table->integer('cost');
             $table->string('currency');
             $table->timestamps();

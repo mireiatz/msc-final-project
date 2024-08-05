@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::create('inventory_transactions', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('store_id')->constrained('stores');
+            $table->foreignUuid('store_id')->index()->constrained('stores');
             $table->uuidMorphs('parent');
-            $table->foreignUuid('product_id')->constrained('products');
-            $table->integer('quantity');
+            $table->foreignUuid('product_id')->index()->constrained('products');
+            $table->integer('quantity')->index();
             $table->integer('stock_balance');
             $table->timestamps();
             $table->softDeletes();

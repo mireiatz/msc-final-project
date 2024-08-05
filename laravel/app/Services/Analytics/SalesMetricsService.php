@@ -1,0 +1,93 @@
+<?php
+namespace App\Services\Analytics;
+
+use App\Models\Sale;
+use Carbon\Carbon;
+use InvalidArgumentException;
+
+class SalesMetricsService implements SalesMetricsInterface
+{
+    /**
+     * Get sales analytics for the specified period.
+     *
+     * @param string $period
+     * @return array
+     */
+    public function getMetrics(string $period): array
+    {
+        $startDate = $this->determineStartDate($period);
+
+        $sales = Sale::where('sales.date', '>=', $startDate)->with('products')->get();
+
+        $numberOfSales = $this->calculateNumberOfSales($sales);
+        $totalItemsSold = $this->calculateTotalItemsSold($sales);
+        $totalSalesValue = $this->calculateTotalSalesValue($sales);
+        $highestSale = $this->findHighestSale($sales);
+        $lowestSale = $this->findLowestSale($sales);
+        $mostItemsSold = $this->findSaleWithMostItems($sales);
+        $leastItemsSold = $this->findSaleWithLeastItems($sales);
+
+        return [
+            'number_of_sales' => $numberOfSales,
+            'total_items_sold' => $totalItemsSold,
+            'total_sales_value' => $totalSalesValue,
+            'highest_sale' => $highestSale / 100,
+            'lowest_sale' => $lowestSale / 100,
+            'sale_with_most_items' => $mostItemsSold,
+            'sale_with_least_items' => $leastItemsSold,
+        ];
+    }
+
+
+    private function calculateNumberOfSales($sales): int
+    {
+        return $sales->count() ?? 0;
+    }
+
+    private function calculateTotalItemsSold($sales): int
+    {
+        return $sales->sum(function ($sale) {
+            return $sale->products()->count();
+        }) ?? 0;
+    }
+
+    private function calculateTotalSalesValue($sales): int
+    {
+        return $sales->sum('sale') ?? 0;
+    }
+
+    private function findHighestSale($sales): int
+    {
+        return $sales->max('sale') ?? 0;
+    }
+
+    private function findLowestSale($sales): int
+    {
+        return $sales->min('sale') ?? 0;
+    }
+
+    private function findSaleWithMostItems($sales): int
+    {
+        return $sales->map(function ($sale) {
+            return $sale->products()->count();
+        })->max() ?? 0;
+    }
+
+    private function findSaleWithLeastItems($sales): int
+    {
+        return $sales->map(function ($sale) {
+            return $sale->products()->count();
+        })->min() ?? 0;
+    }
+
+    private function determineStartDate(string $period): Carbon
+    {
+        return match ($period) {
+            'day' => Carbon::now()->startOfDay(),
+            'week' => Carbon::now()->startOfWeek(),
+            'month' => Carbon::now()->startOfMonth(),
+            'year' => Carbon::now()->startOfYear(),
+            default => throw new InvalidArgumentException("Invalid period: $period"),
+        };
+    }
+}

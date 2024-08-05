@@ -21,20 +21,15 @@ class SaleFactory extends Factory
     public function definition(): array
     {
         $store =  $this->getRandomModelInstance(Store::class);
-        $sale = $this->faker->numberBetween(10000, 100000);
-        $cost = $this->faker->numberBetween(100, 10000);
-        $vat = (int) round($sale * 0.2);
-        $net =  $sale + $vat;
-        $margin = $sale - $cost;
 
         return [
             'store_id' => $store->id,
             'date' => $this->getRandomDate(),
-            'sale' => $sale,
-            'cost' => $cost,
-            'vat' => $vat,
-            'net_sale' => $net,
-            'margin' => $margin,
+            'sale' => 0,
+            'cost' => 0,
+            'vat' => 0,
+            'net_sale' => 0,
+            'margin' => 0,
             'currency' => $this->faker->randomElement(['gbp']),
         ];
     }
@@ -44,12 +39,14 @@ class SaleFactory extends Factory
         return $this->afterCreating(function (Sale $sale) {
             $amount = $this->faker->numberBetween(1, 5);
             $products = $this->getRandomModelInstances(Product::class, $amount);
+            $total_sale = 0;
+            $total_cost = 0;
 
-            foreach ($products as $product) {
+            $products->each(function ($product) use ($sale, &$total_sale, &$total_cost) {
                 $quantity = $this->faker->numberBetween(1, 10);
                 $unitSale = $this->faker->numberBetween(100, 500);
                 $totalSale = $quantity * $unitSale;
-                $unitCost = $this->faker->numberBetween(50, 250);
+                $unitCost = $this->faker->numberBetween(50, $unitSale);
                 $totalCost = $quantity * $unitCost;
 
                 $sale->products()->attach($product->id, [
@@ -67,7 +64,21 @@ class SaleFactory extends Factory
                     'quantity' => -1 * $quantity,
                     'stock_balance' => $product->stock_balance + $quantity,
                 ]);
-            }
+
+                $total_sale += $totalSale;
+                $total_cost += $totalCost;
+            });
+
+            $vat = (int) round($total_sale * 0.2);
+            $net =  $total_sale + $vat;
+            $sale->update([
+                'sale' => $total_sale,
+                'cost' => $total_cost,
+                'vat' => $vat,
+                'net_sale' => $net,
+                'margin' => $total_sale - $total_cost,
+            ]);
+            $sale->save();
         });
     }
 }
