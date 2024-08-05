@@ -13,11 +13,11 @@ class SalesMetricsService implements SalesMetricsInterface
      * @param string $period
      * @return array
      */
-    public function getMetrics(string $period): array
+    public function getOverviewMetrics(string $startDate, string $endDate): array
     {
-        $startDate = $this->determineStartDate($period);
-
-        $sales = Sale::where('sales.date', '>=', $startDate)->with('products')->get();
+        $sales = Sale::whereBetween('sales.date', [$startDate, $endDate])
+            ->with('products')
+            ->get();
 
         $numberOfSales = $this->calculateNumberOfSales($sales);
         $totalItemsSold = $this->calculateTotalItemsSold($sales);
@@ -37,7 +37,6 @@ class SalesMetricsService implements SalesMetricsInterface
             'sale_with_least_items' => $leastItemsSold,
         ];
     }
-
 
     private function calculateNumberOfSales($sales): int
     {
@@ -80,14 +79,8 @@ class SalesMetricsService implements SalesMetricsInterface
         })->min() ?? 0;
     }
 
-    private function determineStartDate(string $period): Carbon
+    public function getDetailedMetrics(string $startDate, string $endDate): array
     {
-        return match ($period) {
-            'day' => Carbon::now()->startOfDay(),
-            'week' => Carbon::now()->startOfWeek(),
-            'month' => Carbon::now()->startOfMonth(),
-            'year' => Carbon::now()->startOfYear(),
-            default => throw new InvalidArgumentException("Invalid period: $period"),
-        };
+        return [];
     }
 }

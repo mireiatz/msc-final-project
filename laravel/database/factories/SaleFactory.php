@@ -61,6 +61,7 @@ class SaleFactory extends Factory
                 $sale->inventoryTransactions()->create([
                     'store_id' => $sale->store_id,
                     'product_id' => $product->id,
+                    'date' => $sale->date,
                     'quantity' => -1 * $quantity,
                     'stock_balance' => $product->stock_balance + $quantity,
                 ]);

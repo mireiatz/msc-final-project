@@ -12,14 +12,13 @@ class ProductsMetricsService implements ProductsMetricsInterface
     /**
      * Get product analytics for the specified period.
      *
-     * @param string $period
+     * @param string $startDate
+     * @param $endDate
      * @return array
      */
-    public function getMetrics(string $period): array
+    public function getOverviewMetrics(string $startDate, $endDate): array
     {
-        $startDate = $this->determineStartDate($period);
-
-        $products = $this->getProductSalesData($startDate);
+        $products = $this->getProductSalesData($startDate, $endDate);
 
         $topSellers = $this->calculateTopSellingProducts($products);
         $leastSellers = $this->calculateLeastSellingProducts($products);
@@ -34,10 +33,10 @@ class ProductsMetricsService implements ProductsMetricsInterface
         ];
     }
 
-    private function getProductSalesData(string $startDate): Collection
+    private function getProductSalesData(string $startDate, string $endDate): Collection
     {
-        return Product::with(['sales' => function ($query) use ($startDate) {
-            $query->where('sales.date', '>=', $startDate);
+        return Product::with(['sales' => function ($query) use ($startDate, $endDate) {
+            $query->whereBetween('sales.date', [$startDate, $endDate]);
         }])->get();
     }
 
@@ -81,14 +80,49 @@ class ProductsMetricsService implements ProductsMetricsInterface
         })->sortBy('revenue')->take(5)->pluck('name')->toArray();
     }
 
-    private function determineStartDate(string $period): Carbon
+    public function getDetailedMetrics(string $startDate, string $endDate): array
     {
-        return match ($period) {
-            'day' => Carbon::now()->startOfDay(),
-            'week' => Carbon::now()->startOfWeek(),
-            'month' => Carbon::now()->startOfMonth(),
-            'year' => Carbon::now()->startOfYear(),
-            default => throw new InvalidArgumentException("Invalid period: $period"),
-        };
+        $products = $this->getProducts($startDate, $endDate);
+        return $this->calculateDetailedMetrics($products, $startDate, $endDate);
+    }
+
+    private function getProducts(string $startDate, string $endDate): Collection
+    {
+        return Product::with([
+            'sales' => function ($query) use ($startDate, $endDate) {
+                $query->whereBetween('sales.date', [$startDate, $endDate]);
+            }
+        ])->orderByDesc('category_id')->get();
+    }
+
+    private function calculateDetailedMetrics(Collection $products, string $startDate, string $endDate): array
+    {
+        return $products->map(function ($product) use ($startDate, $endDate) {
+            $totalQuantitySold = $product->sales->sum('pivot.quantity');
+            $totalSalesRevenue = $product->sales->sum('pivot.total_sale');
+
+            $initialStock = $this->getStockBalanceAt($product, $startDate);
+            $finalStock = $this->getStockBalanceAt($product, $endDate);
+
+            return [
+                'id' => $product->id,
+                'name' => $product->name,
+                'category' => $product->category->name,
+                'provider' => $product->provider->name,
+                'sale' => $product->sale / 100,
+                'total_quantity_sold' => $totalQuantitySold,
+                'total_sales_revenue' => $totalSalesRevenue / 100,
+                'initial_stock_balance' => $initialStock,
+                'final_stock_balance' => $finalStock,
+            ];
+        })->toArray();
+    }
+
+    private function getStockBalanceAt(Product $product, string $date): int
+    {
+        return $product->inventoryTransactions()
+            ->where('date', '<=', $date)
+            ->orderByDesc('date')
+            ->value('stock_balance') ?? 0;
     }
 }

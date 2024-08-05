@@ -56,6 +56,7 @@ class OrderFactory extends Factory
                 $order->inventoryTransactions()->create([
                     'store_id' => $order->store_id,
                     'product_id' => $product->id,
+                    'date' => $order->date,
                     'quantity' => $quantity,
                     'stock_balance' => $product->stock_balance + $quantity,
                 ]);

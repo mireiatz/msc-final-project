@@ -85,6 +85,33 @@ paths:
           $ref: '#/components/responses/OverviewMetricsResponse'
       requestBody:
         $ref: '#/components/requestBodies/GetOverviewMetricsRequest'
+  /analytics/stock:
+    get:
+      summary: ''
+      operationId: getStockMetrics
+      responses:
+        '200':
+          $ref: '#/components/responses/StockMetricsResponse'
+  /analytics/sales:
+    post:
+      summary: getSalesMetrics
+      tags: []
+      responses:
+        '200':
+          $ref: '#/components/responses/StockMetricsResponse'
+      operationId: getSalesMetrics
+      requestBody:
+        $ref: '#/components/requestBodies/GetSalesMetricsRequest'
+  /analytics/products:
+    post:
+      summary: getProductsMetrics
+      tags: []
+      responses:
+        '200':
+          $ref: '#/components/responses/ProductsMetricsResponse'
+      operationId: getProductsMetrics
+      requestBody:
+        $ref: '#/components/requestBodies/GetProductsMetricsRequest'
 components:
   schemas:
     Category:
@@ -400,51 +427,125 @@ components:
               x-stoplight:
                 id: z2hbeotq49vkb
         products:
-          type: object
+          $ref: '#/components/schemas/ProductsOverviewMetrics'
           x-stoplight:
             id: fmmgl4oide3h2
-          required:
-            - top_selling_products
-            - least_selling_products
-            - highest_revenue_products
-            - lowest_revenue_products
-          properties:
-            top_selling_products:
-              type: array
-              x-stoplight:
-                id: 4y94ehn7shcip
-              items:
-                x-stoplight:
-                  id: 6rr4atmssnt8k
-                type: string
-            least_selling_products:
-              type: array
-              x-stoplight:
-                id: 4zw07uyan0b00
-              items:
-                x-stoplight:
-                  id: ek8n841y6lbet
-                type: string
-            highest_revenue_products:
-              type: array
-              x-stoplight:
-                id: y90upzs2b018d
-              items:
-                x-stoplight:
-                  id: 6yvp2pppybivv
-                type: string
-            lowest_revenue_products:
-              type: array
-              x-stoplight:
-                id: cjtdgzcpyxlav
-              items:
-                x-stoplight:
-                  id: 5y2a2qrmsjxb5
-                type: string
       required:
         - stock
         - sales
         - products
+    StockMetrics:
+      title: StockMetrics
+      x-stoplight:
+        id: 05cuwnx12h8kv
+      type: object
+    SalesMetrics:
+      title: SalesMetrics
+      x-stoplight:
+        id: dgbbi7wia7l0q
+      type: object
+      properties:
+        id:
+          type: string
+    ProductDetailedMetrics:
+      title: ProductsMetrics
+      x-stoplight:
+        id: pymopynkum60x
+      type: object
+      properties:
+        id:
+          x-stoplight:
+            id: zbw2j0kzdgy0c
+          type: string
+          format: uuid
+        name:
+          type: string
+          x-stoplight:
+            id: w6gwzg7vxnfwc
+        category:
+          type: string
+          x-stoplight:
+            id: pozmgc09kwj7u
+        provider:
+          type: string
+          x-stoplight:
+            id: 416wt7ls9zusj
+        sale:
+          type: string
+          x-stoplight:
+            id: ipv8118d7rgl8
+        total_quantity_sold:
+          type: integer
+          x-stoplight:
+            id: fpjz6e4wc9vbm
+        total_sales_revenue:
+          type: number
+          x-stoplight:
+            id: j8xkymn1p2gnu
+        initial_stock_balance:
+          type: integer
+          x-stoplight:
+            id: 7ell2v9x265jk
+        final_stock_balance:
+          type: integer
+          x-stoplight:
+            id: 7ed7l55gc3deu
+    ProductsOverviewMetrics:
+      title: ProductsOverviewMetrics
+      x-stoplight:
+        id: uwkdh4s54gx3f
+      type: object
+      properties:
+        top_selling_products:
+          type: array
+          x-stoplight:
+            id: bbi268vdf0drk
+          items:
+            x-stoplight:
+              id: qh4nvginz887b
+            type: string
+        least_selling_products:
+          type: array
+          x-stoplight:
+            id: 0afpen1jckfgn
+          items:
+            x-stoplight:
+              id: 4m9m5fylj9514
+            type: string
+        highest_revenue_products:
+          type: array
+          x-stoplight:
+            id: hskuo508o3fjf
+          items:
+            x-stoplight:
+              id: 1b4tegtavbr3u
+            type: string
+        lowest_revenue_products:
+          type: array
+          x-stoplight:
+            id: yp1azl9v1pcjn
+          items:
+            x-stoplight:
+              id: whw8reyuqybeu
+            type: string
+    ProductsMetrics:
+      type: object
+      properties:
+        overview_metrics:
+          $ref: '#/components/schemas/ProductsOverviewMetrics'
+          x-stoplight:
+            id: a9ptbvnw09rd0
+        detailed_metrics:
+          type: array
+          x-stoplight:
+            id: ljbcu61m4z5g0
+          items:
+            $ref: '#/components/schemas/ProductDetailedMetrics'
+            x-stoplight:
+              id: ri7bjrpfr15tv
+      required:
+        - overview_metrics
+        - detailed_metrics
   responses:
     CategoriesResponse:
       description: Example response
@@ -629,8 +730,86 @@ components:
             required:
               - data
               - success
+    StockMetricsResponse:
+      description: Example response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/components/schemas/StockMetrics'
+                x-stoplight:
+                  id: tvm67rarohx1a
+              success:
+                type: boolean
+                x-stoplight:
+                  id: 3s93uu3ql7yed
+              errors:
+                type: object
+                x-stoplight:
+                  id: frkbjsxw5lax8
+    SalesMetricsResponse:
+      description: Example response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/components/schemas/SalesMetrics'
+                x-stoplight:
+                  id: umkogo2w3iswv
+              success:
+                type: boolean
+                x-stoplight:
+                  id: w8l21vudeptt6
+              errors:
+                type: object
+                x-stoplight:
+                  id: r2bbp69dzk0rz
+    ProductsMetricsResponse:
+      description: Example response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/components/schemas/ProductsMetrics'
+                x-stoplight:
+                  id: em4z9u893tysb
+              success:
+                type: boolean
+                x-stoplight:
+                  id: rtf7zebpvgkds
+              errors:
+                type: object
+                x-stoplight:
+                  id: nmfykluoninfj
+            required:
+              - data
+              - success
   requestBodies:
     GetOverviewMetricsRequest:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              start_date:
+                type: string
+                x-stoplight:
+                  id: fmygbj9kc2aiu
+                format: date-time
+              end_date:
+                type: string
+                x-stoplight:
+                  id: 0hi65br3zbort
+                format: date-time
+            required:
+              - start_date
+    GetSalesMetricsRequest:
       content:
         application/json:
           schema:
@@ -639,6 +818,25 @@ components:
               period:
                 type: string
                 x-stoplight:
-                  id: fmygbj9kc2aiu
+                  id: n7j806vhw0qdz
             required:
               - period
+    GetProductsMetricsRequest:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              start_date:
+                type: string
+                x-stoplight:
+                  id: 4tyjwixj0dwwt
+                format: date
+              end_date:
+                type: string
+                x-stoplight:
+                  id: eu1gwg9i3590c
+                format: date
+            required:
+              - start_date
+              - end_date

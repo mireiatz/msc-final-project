@@ -11,7 +11,7 @@ class StockMetricsService implements StockMetricsInterface
      *
      * @return array
      */
-    public function getMetrics(): array
+    public function getOverviewMetrics(): array
     {
         $products = Product::all();
         $productsInStockCount = $this->calculateProductsInStockCount($products);
@@ -65,5 +65,10 @@ class StockMetricsService implements StockMetricsInterface
 
             return $carry + $productValue;
         }, 0.0);
+    }
+
+    public function getDetailedMetrics(): array
+    {
+        return [];
     }
 }

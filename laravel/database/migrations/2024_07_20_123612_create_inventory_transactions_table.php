@@ -16,8 +16,9 @@ return new class extends Migration
             $table->foreignUuid('store_id')->index()->constrained('stores');
             $table->uuidMorphs('parent');
             $table->foreignUuid('product_id')->index()->constrained('products');
+            $table->dateTime('date')->index();
             $table->integer('quantity')->index();
-            $table->integer('stock_balance');
+            $table->integer('stock_balance')->index();
             $table->timestamps();
             $table->softDeletes();
         });
