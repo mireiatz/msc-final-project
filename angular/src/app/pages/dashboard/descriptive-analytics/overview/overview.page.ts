@@ -13,25 +13,27 @@ import { OverviewMetrics } from "../../../../shared/services/api/models/overview
 export class OverviewPage {
 
   public metrics: OverviewMetrics | undefined = undefined;
-  public period: string = 'day';
+  public startDate: string = '';
+  public endDate: string = '';
   public errors: string[] = [];
 
   constructor(
     protected apiService: ApiService
   ) {
-    this.getOverviewMetrics();
   }
 
   public getOverviewMetrics() {
     this.apiService.getOverviewMetrics({
       body: {
-        period: this.period,
+        start_date: this.startDate,
+        end_date: this.endDate,
       }
     }).pipe(
       take(1)
     ).subscribe({
         next: response => {
           this.metrics = response.data;
+          console.log(this.metrics)
         },
         error: (error: HttpErrorResponse) => {
           for (let errorList in error.error.errors) {
@@ -42,8 +44,9 @@ export class OverviewPage {
     );
   }
 
-  public setPeriod(period: string){
-    this.period = period;
+  public setDatesSelected(event: any) {
+    this.startDate = event.startDate;
+    this.endDate = event.endDate;
     this.getOverviewMetrics();
   }
 }

@@ -98,7 +98,7 @@ paths:
       tags: []
       responses:
         '200':
-          $ref: '#/components/responses/StockMetricsResponse'
+          $ref: '#/components/responses/SalesMetricsResponse'
       operationId: getSalesMetrics
       requestBody:
         $ref: '#/components/requestBodies/GetSalesMetricsRequest'
@@ -490,6 +490,16 @@ components:
           type: integer
           x-stoplight:
             id: 7ed7l55gc3deu
+      required:
+        - id
+        - name
+        - category
+        - provider
+        - sale
+        - total_quantity_sold
+        - total_sales_revenue
+        - initial_stock_balance
+        - final_stock_balance
     ProductsOverviewMetrics:
       title: ProductsOverviewMetrics
       x-stoplight:
@@ -528,6 +538,11 @@ components:
             x-stoplight:
               id: whw8reyuqybeu
             type: string
+      required:
+        - top_selling_products
+        - least_selling_products
+        - highest_revenue_products
+        - lowest_revenue_products
     ProductsMetrics:
       type: object
       properties:
@@ -831,12 +846,12 @@ components:
                 type: string
                 x-stoplight:
                   id: 4tyjwixj0dwwt
-                format: date
+                format: date-time
               end_date:
                 type: string
                 x-stoplight:
                   id: eu1gwg9i3590c
-                format: date
+                format: date-time
             required:
               - start_date
               - end_date

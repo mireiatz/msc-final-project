@@ -1,3 +1,5 @@
-<div>
-  Product Performance
-</div>
+<app-date-range-picker
+  (datesSelected)="setDatesSelected($event)"
+></app-date-range-picker>
+
+<app-table [columns]="columns" [data]="detailedMetrics"></app-table>

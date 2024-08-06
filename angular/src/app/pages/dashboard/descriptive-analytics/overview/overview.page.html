@@ -1,8 +1,7 @@
+  <app-date-range-picker
+    (datesSelected)="setDatesSelected($event)"
+  ></app-date-range-picker>
 <div *ngIf="metrics" class="container mt-12">
-  <button class="button-primary" (click)="setPeriod('day')">Day</button>
-  <button class="button-primary" (click)="setPeriod('week')">Week</button>
-  <button class="button-primary" (click)="setPeriod('month')">Month</button>
-  <button class="button-primary" (click)="setPeriod('month')">Year</button>
 
   <!-- Stock Information Cards -->
   <div class="section-header">
@@ -57,7 +56,7 @@
           <div class="row">
             <div class="col-md-6">
               <h2>Critically Low</h2>
-              <ul>
+              <ul *ngIf="metrics.stock.critically_low_stock_products.length; else noItems">
                 <li *ngFor="let product of metrics.stock.critically_low_stock_products">{{ product }}</li>
               </ul>
             </div>
@@ -65,7 +64,7 @@
               <h2>
                 <strong>Excessive</strong>
               </h2>
-              <ul>
+              <ul *ngIf="metrics.stock.excessive_stock_products.length; else noItems">
                 <li *ngFor="let product of metrics.stock.excessive_stock_products">{{ product }}</li>
               </ul>
             </div>
@@ -154,14 +153,14 @@
           <div class="row">
             <div class="col-md-6">
               <h2>Top Selling</h2>
-              <ul>
-                <li *ngFor="let product of metrics.product_performance.top_selling_products">{{ product }}</li>
+              <ul *ngIf="metrics.products.top_selling_products.length; else noItems">
+                <li *ngFor="let product of metrics.products.top_selling_products">{{ product }}</li>
               </ul>
             </div>
             <div class="col-md-6">
               <h2>Highest Revenue</h2>
-              <ul>
-                <li *ngFor="let product of metrics.product_performance.highest_revenue_products">{{ product }}</li>
+              <ul *ngIf="metrics.products.highest_revenue_products.length; else noItems">
+                <li *ngFor="let product of metrics.products.highest_revenue_products">{{ product }}</li>
               </ul>
             </div>
           </div>
@@ -177,15 +176,15 @@
           <div class="row">
             <div class="col-md-6">
               <h2>Least Selling</h2>
-              <ul>
-                <li *ngFor="let product of metrics.product_performance.least_selling_products">{{ product }}</li>
+              <ul *ngIf="metrics.products.least_selling_products.length; else noItems">
+                <li *ngFor="let product of metrics.products.least_selling_products">{{ product }}</li>
               </ul>
             </div>
             <div class="col-md-6">
               <div>
                 <h2>Lowest Revenue</h2>
-                <ul>
-                  <li *ngFor="let product of metrics.product_performance.lowest_revenue_products">{{ product }}</li>
+                <ul *ngIf="metrics.products.lowest_revenue_products.length; else noItems">
+                  <li *ngFor="let product of metrics.products.lowest_revenue_products">{{ product }}</li>
                 </ul>
               </div>
             </div>
@@ -195,3 +194,7 @@
     </div>
   </div>
 </div>
+
+<ng-template #noItems>
+  <p>-</p>
+</ng-template>

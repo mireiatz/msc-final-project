@@ -15,8 +15,7 @@ $font-size-large: 24px;
 $font-size-medium: 20px;
 $font-size-small: 14px;
 $font-weight-primary: 400;
-$font-weight-bold: 500;
-$font-weight-x-bold: 600;
+$font-weight-bold: 600;
 
 // Spacing
 $padding-large: 30px;
@@ -104,10 +103,6 @@ $border-radius-large: 12px;
   font-weight: $font-weight-bold;
 }
 
-.font-weight-x-bold {
-  font-weight: $font-weight-x-bold;
-}
-
 // Main body
 body {
   font-family: $font-family-primary;
@@ -121,12 +116,14 @@ body {
 }
 
 // Buttons
-.button {
+.btn {
   color: #ffffff;
+  font-weight: $font-weight-bold;
   padding: $padding-small $padding-base;
   margin: $margin-small;
-  border: none;
   border-radius: $border-radius-base;
+  border: 1px solid $border-color;
+  height: fit-content;
   cursor: pointer;
   transition: background-color 0.3s;
 
@@ -212,5 +209,16 @@ table {
 
   tr:hover {
     background-color: $warning-color;
+  }
+}
+
+// Forms
+.form-group {
+  margin-right: 8px;
+
+  label {
+    font-size: $font-size-small;
+    font-weight: $font-weight-bold;
+    margin: 0;
   }
 }
