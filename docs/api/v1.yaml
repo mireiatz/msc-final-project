@@ -112,6 +112,11 @@ paths:
       operationId: getProductsMetrics
       requestBody:
         $ref: '#/components/requestBodies/GetProductsMetricsRequest'
+      parameters:
+        - schema:
+            type: integer
+          in: query
+          name: page
 components:
   schemas:
     Category:
@@ -543,24 +548,38 @@ components:
         - least_selling_products
         - highest_revenue_products
         - lowest_revenue_products
-    ProductsMetrics:
+    Pagination:
+      title: Pagination
+      x-stoplight:
+        id: ptpswjycv2g5j
       type: object
       properties:
-        overview_metrics:
-          $ref: '#/components/schemas/ProductsOverviewMetrics'
+        count:
+          type: integer
           x-stoplight:
-            id: a9ptbvnw09rd0
-        detailed_metrics:
-          type: array
+            id: 32dgcmxmw1lc0
+        total_items:
+          type: integer
           x-stoplight:
-            id: ljbcu61m4z5g0
-          items:
-            $ref: '#/components/schemas/ProductDetailedMetrics'
-            x-stoplight:
-              id: ri7bjrpfr15tv
+            id: i0jlgyr1sm63a
+        items_per_page:
+          type: integer
+          x-stoplight:
+            id: 9b7221kd3nyh2
+        current_page:
+          type: integer
+          x-stoplight:
+            id: fkstly3yhxjn7
+        total_pages:
+          type: integer
+          x-stoplight:
+            id: o3il1hcx0ev0i
       required:
-        - overview_metrics
-        - detailed_metrics
+        - count
+        - total_items
+        - items_per_page
+        - current_page
+        - total_pages
   responses:
     CategoriesResponse:
       description: Example response
@@ -791,9 +810,25 @@ components:
             type: object
             properties:
               data:
-                $ref: '#/components/schemas/ProductsMetrics'
                 x-stoplight:
                   id: em4z9u893tysb
+                required:
+                  - metrics
+                  - pagination
+                type: object
+                properties:
+                  metrics:
+                    x-stoplight:
+                      id: g49ozsdj40jzx
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProductDetailedMetrics'
+                      x-stoplight:
+                        id: iqhdxfo24ryri
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+                    x-stoplight:
+                      id: cml65un7uokas
               success:
                 type: boolean
                 x-stoplight:

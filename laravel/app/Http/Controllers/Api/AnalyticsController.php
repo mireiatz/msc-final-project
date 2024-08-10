@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\PaginationHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Analytics\GetOverviewMetricsRequest;
 use App\Http\Requests\Api\Analytics\GetProductsMetricsRequest;
@@ -82,13 +83,20 @@ class AnalyticsController extends Controller
     {
         $data = $request->validated();
 
-        $overviewMetrics = $this->productsMetricsInterface->getOverviewMetrics($data['start_date'], $data['end_date']);
-        $detailedMetrics = $this->productsMetricsInterface->getDetailedMetrics($data['start_date'], $data['end_date']);
+        $metrics = $this->productsMetricsInterface->getDetailedMetrics($data['start_date'], $data['end_date']);
+
+        $paginatedMetrics = PaginationHelper::paginate($metrics);
 
         return response()->json([
             'data' => [
-                'overview_metrics' => $overviewMetrics,
-                'detailed_metrics' => $detailedMetrics,
+                'metrics' => $paginatedMetrics->items(),
+                'pagination' => [
+                    'count' => $paginatedMetrics->count(),
+                    'total_items' => $paginatedMetrics->total(),
+                    'items_per_page' => $paginatedMetrics->perPage(),
+                    'current_page' => $paginatedMetrics->currentPage(),
+                    'total_pages' => $paginatedMetrics->lastPage(),
+                ],
             ],
             'success' => true,
         ]);

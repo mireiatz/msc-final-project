@@ -98,8 +98,8 @@ class ProductsMetricsService implements ProductsMetricsInterface
     private function calculateDetailedMetrics(Collection $products, string $startDate, string $endDate): array
     {
         return $products->map(function ($product) use ($startDate, $endDate) {
-            $totalQuantitySold = $product->sales->sum('pivot.quantity');
-            $totalSalesRevenue = $product->sales->sum('pivot.total_sale');
+            $totalQuantitySold = $product->sales()->sum('quantity');
+            $totalSalesRevenue = $product->sales()->sum('total_sale');
 
             $initialStock = $this->getStockBalanceAt($product, $startDate);
             $finalStock = $this->getStockBalanceAt($product, $endDate);
