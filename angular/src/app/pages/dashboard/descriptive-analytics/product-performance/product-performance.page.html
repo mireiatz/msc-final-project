@@ -2,4 +2,20 @@
   (datesSelected)="setDatesSelected($event)"
 ></app-date-range-picker>
 
-<app-table [columns]="columns" [data]="detailedMetrics"></app-table>
+<div *ngIf="metrics || isLoading">
+  <div class="data-display">
+    <app-loader
+      [isLoading]="isLoading"
+    ></app-loader>
+
+    <app-table
+      [columns]="columns"
+      [data]="metrics"
+    ></app-table>
+  </div>
+
+  <app-pagination-footer
+    [pagination]="pagination"
+    (pageChange)="onPageChange($event)">
+  </app-pagination-footer>
+</div>

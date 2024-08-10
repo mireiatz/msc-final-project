@@ -10,6 +10,4 @@ export class TableComponent {
   @Input() columns: Array<{ header: string; field: string }> = [{ header: '', field: '' }];
   @Input() data: any[] | undefined = [];
 
-  constructor() {}
-
 }
