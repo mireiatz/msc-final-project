@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Helpers\PaginationHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Analytics\GetOverviewMetricsRequest;
 use App\Http\Requests\Api\Analytics\GetProductsMetricsRequest;
@@ -12,7 +11,7 @@ use App\Services\Analytics\ProductsMetricsInterface;
 use App\Services\Analytics\SalesMetricsInterface;
 use App\Services\Analytics\StockMetricsInterface;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
+use App\Http\Responses\JsonResponse as Json;
 
 class AnalyticsController extends Controller
 {
@@ -67,10 +66,7 @@ class AnalyticsController extends Controller
         $data = $request->validated();
         $metrics = $this->salesMetricsInterface->getDetailedMetrics($data['start_date'], $data['end_date']);
 
-        return response()->json([
-            'data' => $metrics,
-            'success' => true,
-        ]);
+        return Json::success($metrics);
     }
 
     /**
@@ -85,20 +81,6 @@ class AnalyticsController extends Controller
 
         $metrics = $this->productsMetricsInterface->getDetailedMetrics($data['start_date'], $data['end_date']);
 
-        $paginatedMetrics = PaginationHelper::paginate($metrics);
-
-        return response()->json([
-            'data' => [
-                'metrics' => $paginatedMetrics->items(),
-                'pagination' => [
-                    'count' => $paginatedMetrics->count(),
-                    'total_items' => $paginatedMetrics->total(),
-                    'items_per_page' => $paginatedMetrics->perPage(),
-                    'current_page' => $paginatedMetrics->currentPage(),
-                    'total_pages' => $paginatedMetrics->lastPage(),
-                ],
-            ],
-            'success' => true,
-        ]);
+        return Json::paginate($metrics);
     }
 }
