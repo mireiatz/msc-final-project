@@ -1,72 +1,82 @@
-<app-date-range-picker
-  (datesSelected)="setDatesSelected($event)"
-></app-date-range-picker>
+<div class="main-page">
+  <app-date-range-picker
+    (datesSelected)="setDatesSelected($event)"
+  ></app-date-range-picker>
 
-<h2>Total Sales</h2>
-<ngx-charts-line-chart
-  [view]="[1000, 400]"
-  [results]="salesData"
-  [xAxis]="true"
-  [yAxis]="true"
-  [legend]="true"
-  [showXAxisLabel]="true"
-  [showYAxisLabel]="true"
-  [xAxisLabel]="'Date'"
-  [yAxisLabel]="'Sales'"
-  [autoScale]="true"
->
-</ngx-charts-line-chart>
+  <div *ngIf="salesData && productQuantityData && productRevenueData && categoryQuantityData && categoryRevenueData || isLoading" class="data-display">
+    <app-loader
+      [isLoading]="isLoading"
+    ></app-loader>
 
-<h2>Sales Per Product</h2>
-<ngx-charts-line-chart
-  [view]="[1000, 400]"
-  [results]="productQuantityData"
-  [xAxis]="true"
-  [yAxis]="true"
-  [legend]="true"
-  [showXAxisLabel]="true"
-  [showYAxisLabel]="true"
-  [xAxisLabel]="'Date'"
-  [yAxisLabel]="'Quantity'"
-  [autoScale]="true">
-</ngx-charts-line-chart>
+    <h2>Total Sales</h2>
+    <ngx-charts-line-chart
+      [view]="[1000, 400]"
+      [results]="salesData"
+      [xAxis]="true"
+      [yAxis]="true"
+      [legend]="true"
+      [showXAxisLabel]="true"
+      [showYAxisLabel]="true"
+      [xAxisLabel]="'Date'"
+      [yAxisLabel]="'Sales'"
+      [autoScale]="true"
+    >
+    </ngx-charts-line-chart>
 
-<ngx-charts-line-chart
-  [view]="[1000, 400]"
-  [results]="productRevenueData"
-  [xAxis]="true"
-  [yAxis]="true"
-  [legend]="true"
-  [showXAxisLabel]="true"
-  [showYAxisLabel]="true"
-  [xAxisLabel]="'Date'"
-  [yAxisLabel]="'Revenue'"
-  [autoScale]="true">
-</ngx-charts-line-chart>
+    <h2>Sales Per Product</h2>
+    <ngx-charts-line-chart
+      [view]="[1000, 400]"
+      [results]="productQuantityData"
+      [xAxis]="true"
+      [yAxis]="true"
+      [legend]="true"
+      [showXAxisLabel]="true"
+      [showYAxisLabel]="true"
+      [xAxisLabel]="'Date'"
+      [yAxisLabel]="'Quantity'"
+      [autoScale]="true"
+    >
+    </ngx-charts-line-chart>
+    <ngx-charts-line-chart
+      [view]="[1000, 400]"
+      [results]="productRevenueData"
+      [xAxis]="true"
+      [yAxis]="true"
+      [legend]="true"
+      [showXAxisLabel]="true"
+      [showYAxisLabel]="true"
+      [xAxisLabel]="'Date'"
+      [yAxisLabel]="'Revenue'"
+      [autoScale]="true"
+    >
+    </ngx-charts-line-chart>
 
-<h2>Sales Per Category</h2>
-<ngx-charts-line-chart
-  [view]="[1000, 400]"
-  [results]="categoryQuantityData"
-  [xAxis]="true"
-  [yAxis]="true"
-  [legend]="true"
-  [showXAxisLabel]="true"
-  [showYAxisLabel]="true"
-  [xAxisLabel]="'Date'"
-  [yAxisLabel]="'Quantity'"
-  [autoScale]="true">
-</ngx-charts-line-chart>
-
-<ngx-charts-line-chart
-  [view]="[1000, 400]"
-  [results]="categoryRevenueData"
-  [xAxis]="true"
-  [yAxis]="true"
-  [legend]="true"
-  [showXAxisLabel]="true"
-  [showYAxisLabel]="true"
-  [xAxisLabel]="'Date'"
-  [yAxisLabel]="'Revenue'"
-  [autoScale]="true">
-</ngx-charts-line-chart>
+    <h2>Sales Per Category</h2>
+    <ngx-charts-line-chart
+      [view]="[1000, 400]"
+      [results]="categoryQuantityData"
+      [xAxis]="true"
+      [yAxis]="true"
+      [legend]="true"
+      [showXAxisLabel]="true"
+      [showYAxisLabel]="true"
+      [xAxisLabel]="'Date'"
+      [yAxisLabel]="'Quantity'"
+      [autoScale]="true"
+    >
+    </ngx-charts-line-chart>
+    <ngx-charts-line-chart
+      [view]="[1000, 400]"
+      [results]="categoryRevenueData"
+      [xAxis]="true"
+      [yAxis]="true"
+      [legend]="true"
+      [showXAxisLabel]="true"
+      [showYAxisLabel]="true"
+      [xAxisLabel]="'Date'"
+      [yAxisLabel]="'Revenue'"
+      [autoScale]="true"
+    >
+    </ngx-charts-line-chart>
+  </div>
+</div>

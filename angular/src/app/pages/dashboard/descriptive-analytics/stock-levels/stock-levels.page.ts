@@ -1,5 +1,5 @@
-import { Component } from "@angular/core";
-import { take } from "rxjs";
+import { Component, OnDestroy } from "@angular/core";
+import { finalize, Subject, take } from "rxjs";
 import { HttpErrorResponse } from "@angular/common/http";
 import { ApiService } from "../../../../shared/services/api/services/api.service";
 import { Color, ScaleType } from "@swimlane/ngx-charts";
@@ -13,8 +13,10 @@ type ProductStatus = 'understocked' | 'overstocked' | 'within_range';
   styleUrls: ['./stock-levels.page.scss'],
 })
 
-export class StockLevelsPage {
+export class StockLevelsPage implements OnDestroy {
 
+  public onDestroy: Subject<void> = new Subject();
+  public isLoading: boolean = true;
   public metrics: StockDetailedMetrics[] | undefined = undefined;
   public errors: string[] = [];
   public stockData: Array<{
@@ -33,13 +35,17 @@ export class StockLevelsPage {
     this.getStockMetrics();
   }
 
+  public ngOnDestroy(): void {
+    this.onDestroy.next();
+  }
+
   public getStockMetrics() {
     this.apiService.getStockMetrics().pipe(
-      take(1)
+      take(1),
+      finalize(() => this.isLoading = false),
     ).subscribe({
         next: response => {
           this.metrics = response.data;
-          console.log(this.metrics)
           this.mapStockData();
         },
         error: (error: HttpErrorResponse) => {

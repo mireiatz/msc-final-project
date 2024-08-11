@@ -1,5 +1,5 @@
-import { Component } from "@angular/core";
-import { take } from "rxjs";
+import { Component, OnDestroy } from "@angular/core";
+import { finalize, Subject, take } from "rxjs";
 import { HttpErrorResponse } from "@angular/common/http";
 import { ApiService } from "../../../../shared/services/api/services/api.service";
 
@@ -9,8 +9,10 @@ import { ApiService } from "../../../../shared/services/api/services/api.service
 	styleUrls: ['./sales.page.scss'],
 })
 
-export class SalesPage {
+export class SalesPage implements OnDestroy {
 
+  public onDestroy: Subject<void> = new Subject();
+  public isLoading: boolean = true;
   public errors: string[] = [];
   public startDate: string = '';
   public endDate: string = '';
@@ -21,17 +23,24 @@ export class SalesPage {
   public categoryRevenueData: any[] = []
 
   constructor(
-    protected apiService: ApiService
+    protected apiService: ApiService,
   ) {}
 
+  public ngOnDestroy(): void {
+    this.onDestroy.next();
+  }
+
   public getSalesMetrics() {
+    this.isLoading = true;
+
     this.apiService.getSalesMetrics({
       body: {
         start_date: this.startDate,
         end_date: this.endDate,
       }
     }).pipe(
-      take(1)
+      take(1),
+      finalize(() => this.isLoading = false),
     ).subscribe({
         next: response => {
           if(!response.data) return;

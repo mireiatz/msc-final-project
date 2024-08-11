@@ -104,6 +104,14 @@ $border-radius-large: 12px;
 }
 
 // Main body
+:host {
+  width: 100%;
+}
+
+.main-page {
+  margin: 30px;
+}
+
 body {
   font-family: $font-family-primary;
   font-size: $font-size-base;
@@ -226,4 +234,7 @@ table {
 // Loading
 .data-display {
   position: relative;
+  min-height: 200px;
+  max-height: 100vh;
 }
+

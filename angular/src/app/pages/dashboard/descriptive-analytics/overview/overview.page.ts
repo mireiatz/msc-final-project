@@ -1,6 +1,6 @@
-import { Component } from "@angular/core";
+import { Component, OnDestroy } from "@angular/core";
 import { ApiService } from "../../../../shared/services/api/services/api.service";
-import { take } from "rxjs";
+import { finalize, Subject, take } from "rxjs";
 import { HttpErrorResponse } from "@angular/common/http";
 import { OverviewMetrics } from "../../../../shared/services/api/models/overview-metrics";
 
@@ -10,16 +10,21 @@ import { OverviewMetrics } from "../../../../shared/services/api/models/overview
 	styleUrls: ['./overview.page.scss'],
 })
 
-export class OverviewPage {
+export class OverviewPage implements OnDestroy {
 
+  public onDestroy: Subject<void> = new Subject();
+  public isLoading: boolean = true;
+  public errors: string[] = [];
   public metrics: OverviewMetrics | undefined = undefined;
   public startDate: string = '';
   public endDate: string = '';
-  public errors: string[] = [];
 
   constructor(
     protected apiService: ApiService
-  ) {
+  ) {}
+
+  public ngOnDestroy(): void {
+    this.onDestroy.next();
   }
 
   public getOverviewMetrics() {
@@ -29,11 +34,11 @@ export class OverviewPage {
         end_date: this.endDate,
       }
     }).pipe(
-      take(1)
+      take(1),
+      finalize(() => this.isLoading = false),
     ).subscribe({
         next: response => {
           this.metrics = response.data;
-          console.log(this.metrics)
         },
         error: (error: HttpErrorResponse) => {
           for (let errorList in error.error.errors) {

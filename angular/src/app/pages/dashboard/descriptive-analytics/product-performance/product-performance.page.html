@@ -1,8 +1,8 @@
+<div *ngIf="metrics || isLoading" class="main-page">
 <app-date-range-picker
   (datesSelected)="setDatesSelected($event)"
 ></app-date-range-picker>
 
-<div *ngIf="metrics || isLoading">
   <div class="data-display">
     <app-loader
       [isLoading]="isLoading"

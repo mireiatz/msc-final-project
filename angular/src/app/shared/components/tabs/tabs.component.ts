@@ -13,10 +13,10 @@ interface Tab {
 })
 export class TabsComponent implements OnInit {
   @Input() tabs: Tab[] = [];
-  public activeTab: string = '';
+  @Input() activeTab: string = '';
 
   public ngOnInit() {
-    if (this.tabs.length > 0) {
+    if (!this.activeTab) {
       this.activeTab = this.tabs[0].key;
     }
   }
