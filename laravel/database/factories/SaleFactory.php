@@ -43,7 +43,7 @@ class SaleFactory extends Factory
             $total_cost = 0;
 
             $products->each(function ($product) use ($sale, &$total_sale, &$total_cost) {
-                $quantity = $this->faker->numberBetween(1, 10);
+                $quantity = $this->faker->numberBetween(1, $product->stock_balance);
                 $unitSale = $this->faker->numberBetween(100, 500);
                 $totalSale = $quantity * $unitSale;
                 $unitCost = $this->faker->numberBetween(50, $unitSale);

@@ -49,10 +49,7 @@ class AnalyticsController extends Controller
     {
         $metrics = $this->stockMetricsInterface->getDetailedMetrics();
 
-        return response()->json([
-            'data' => $metrics,
-            'success' => true,
-        ]);
+        return Json::success($metrics);
     }
 
     /**
