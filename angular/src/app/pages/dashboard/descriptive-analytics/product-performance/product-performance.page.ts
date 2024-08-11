@@ -61,7 +61,7 @@ export class ProductPerformancePage implements OnDestroy {
       finalize(() => this.isLoading = false),
     ).subscribe({
         next: response => {
-          this.metrics = response.data.metrics;
+          this.metrics = response.data.items;
           this.pagination = response.data.pagination;
         },
         error: (error: HttpErrorResponse) => {

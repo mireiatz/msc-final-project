@@ -7,6 +7,8 @@ import { RouterModule } from "@angular/router";
 import { provideHttpClient } from "@angular/common/http";
 import { ApiService } from "./shared/services/api/services";
 import { ApiConfiguration } from "./shared/services/api/api-configuration";
+import { CommonModule } from "@angular/common";
+import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 
 @NgModule({
   declarations: [
@@ -15,7 +17,9 @@ import { ApiConfiguration } from "./shared/services/api/api-configuration";
   imports: [
     AppRoutingModule,
     BrowserModule,
+    BrowserAnimationsModule,
     SharedModule,
+    CommonModule,
     RouterModule,
   ],
   providers: [

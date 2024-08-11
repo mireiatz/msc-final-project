@@ -66,8 +66,10 @@ export class DateRangePickerComponent implements OnInit {
   }
 
   public selectDates() {
-      const formattedStartDate = format(startOfDay(this.startDate), 'yyyy-MM-dd HH:mm:ss');
-      const formattedEndDate = format(this.endDate, 'yyyy-MM-dd HH:mm:ss');
-      this.datesSelected.emit({ startDate: formattedStartDate, endDate: formattedEndDate });
+    this.startDate = this.calendarStartDate;
+    this.endDate = this.calendarEndDate;
+    const formattedStartDate = format(startOfDay(this.startDate), 'yyyy-MM-dd HH:mm:ss');
+    const formattedEndDate = format(this.endDate, 'yyyy-MM-dd HH:mm:ss');
+    this.datesSelected.emit({ startDate: formattedStartDate, endDate: formattedEndDate });
   }
 }
