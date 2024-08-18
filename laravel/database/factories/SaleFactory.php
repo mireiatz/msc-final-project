@@ -7,7 +7,10 @@ use App\Models\Sale;
 use App\Models\Store;
 use App\Traits\RandomDate;
 use App\Traits\RandomModelInstances;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 class SaleFactory extends Factory
 {
@@ -20,7 +23,7 @@ class SaleFactory extends Factory
      */
     public function definition(): array
     {
-        $store =  $this->getRandomModelInstance(Store::class);
+        $store = $this->getRandomModelInstance(Store::class);
 
         return [
             'store_id' => $store->id,
@@ -41,12 +44,16 @@ class SaleFactory extends Factory
             $products = $this->getRandomModelInstances(Product::class, $amount);
             $total_sale = 0;
             $total_cost = 0;
+            $productsAttached = false;
 
             $products->each(function ($product) use ($sale, &$total_sale, &$total_cost) {
                 $quantity = $this->faker->numberBetween(1, $product->stock_balance);
-                $unitSale = $this->faker->numberBetween(100, 500);
+                if ($product->stock_balance <= $quantity) {
+                    return;
+                }
+                $unitSale = $product->sale;
                 $totalSale = $quantity * $unitSale;
-                $unitCost = $this->faker->numberBetween(50, $unitSale);
+                $unitCost = $product->cost;
                 $totalCost = $quantity * $unitCost;
 
                 $sale->products()->attach($product->id, [
@@ -63,23 +70,27 @@ class SaleFactory extends Factory
                     'product_id' => $product->id,
                     'date' => $sale->date,
                     'quantity' => -1 * $quantity,
-                    'stock_balance' => $product->stock_balance + $quantity,
+                    'stock_balance' => $product->stock_balance - $quantity,
                 ]);
 
                 $total_sale += $totalSale;
                 $total_cost += $totalCost;
+                $productsAttached = true;
             });
 
-            $vat = (int) round($total_sale * 0.2);
-            $net =  $total_sale + $vat;
-            $sale->update([
-                'sale' => $total_sale,
-                'cost' => $total_cost,
-                'vat' => $vat,
-                'net_sale' => $net,
-                'margin' => $total_sale - $total_cost,
-            ]);
-            $sale->save();
+            if ($productsAttached) {
+                $vat = (int) round($total_sale * 0.2);
+                $net = $total_sale + $vat;
+                $sale->update([
+                    'sale' => $total_sale,
+                    'cost' => $total_cost,
+                    'vat' => $vat,
+                    'net_sale' => $net,
+                    'margin' => $total_sale - $total_cost,
+                ]);
+            } else {
+                $sale->forceDelete();
+            }
         });
     }
 }

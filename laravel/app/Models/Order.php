@@ -18,6 +18,7 @@ class Order extends Model
         'provider_id',
         'date',
         'cost',
+        'currency',
     ];
 
     protected static function boot(): void

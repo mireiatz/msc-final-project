@@ -23,8 +23,7 @@ class ProductFactory extends Factory
         $category =  $this->getRandomModelInstance(Category::class);
 
         $productName = $this->faker->unique()->word();
-        while (Product::where('category_id', $category->id)
-            ->where('name', $productName)
+        while (Product::where('name', $productName)
             ->exists()) {
             $productName = $this->faker->unique()->word();
         }
@@ -37,7 +36,7 @@ class ProductFactory extends Factory
             'unit' => $this->faker->randomElement(['pack', 'litre', 'box']),
             'amount_per_unit' => $this->faker->numberBetween(1, 20),
             'min_stock_level' => $this->faker->numberBetween(1, 100),
-            'max_stock_level' => $this->faker->numberBetween(100, 1000),
+            'max_stock_level' => $this->faker->numberBetween(100, 200),
             'sale' => $this->faker->numberBetween(10000, 100000),
             'cost' => $this->faker->numberBetween(100, 10000),
             'currency' => $this->faker->randomElement(['gbp']),
