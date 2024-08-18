@@ -19,7 +19,6 @@
   }
 
   p {
-    margin: 0;
     text-align: center;
   }
 }
@@ -35,6 +34,7 @@ h2 {
 }
 
 .section-header {
+  width: 100%;
   background-color: $accent-color;
   color: white;
   margin-top: $margin-base;

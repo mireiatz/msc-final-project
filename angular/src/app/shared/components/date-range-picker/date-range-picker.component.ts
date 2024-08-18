@@ -20,7 +20,7 @@ export class DateRangePickerComponent implements OnInit {
   public calendarEndDate: string = '';
   public startDate: string = '';
   public endDate: string = '';
-  public period: string = 'week';
+  public period: string = 'month';
 
   ngOnInit(): void {
     this.setPeriod(this.period);

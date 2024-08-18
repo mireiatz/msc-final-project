@@ -18,9 +18,12 @@ export class OverviewPage implements OnDestroy {
   public metrics: OverviewMetrics | undefined = undefined;
   public startDate: string = '';
   public endDate: string = '';
+  public stockChartData: Array<{ name: string; value: number; }> = [];
+  public salesRevenueChartData: Array<{ name: string; value: number; }> = [];
+  public salesItemsChartData: Array<{ name: string; value: number; }> = [];
 
   constructor(
-    protected apiService: ApiService
+    protected apiService: ApiService,
   ) {}
 
   public ngOnDestroy(): void {
@@ -39,6 +42,8 @@ export class OverviewPage implements OnDestroy {
     ).subscribe({
         next: response => {
           this.metrics = response.data;
+          this.prepareStockChartData();
+          this.prepareSalesChartData();
         },
         error: (error: HttpErrorResponse) => {
           for (let errorList in error.error.errors) {
@@ -53,5 +58,49 @@ export class OverviewPage implements OnDestroy {
     this.startDate = event.startDate;
     this.endDate = event.endDate;
     this.getOverviewMetrics();
+  }
+
+  public prepareStockChartData() {
+    if(!this.metrics) return;
+
+    const inStockPercentage = (this.metrics.stock.products_in_stock_count / this.metrics.stock.product_count) * 100;
+    const outOfStockPercentage = (this.metrics.stock.products_out_of_stock_count / this.metrics.stock.product_count) * 100;
+
+    this.stockChartData = [
+      {
+        "name": "In Stock",
+        "value": inStockPercentage,
+      },
+      {
+        "name": "Out Of Stock",
+        "value": outOfStockPercentage,
+      },
+    ];
+  }
+
+  public prepareSalesChartData() {
+    if(!this.metrics) return;
+
+    this.salesRevenueChartData = [
+      {
+        "name": "Highest",
+        "value": Number(this.metrics.sales.highest_sale.toFixed(2)),
+      },
+      {
+        "name": "Lowest",
+        "value": Number(this.metrics.sales.lowest_sale.toFixed(2)),
+      },
+    ];
+
+    this.salesItemsChartData = [
+      {
+        "name": "Most",
+        "value": this.metrics.sales.max_items_sold_in_sale,
+      },
+      {
+        "name": "Least",
+        "value": this.metrics.sales.min_items_sold_in_sale,
+      },
+    ];
   }
 }
