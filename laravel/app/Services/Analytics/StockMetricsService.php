@@ -14,57 +14,75 @@ class StockMetricsService implements StockMetricsInterface
     public function getOverviewMetrics(): array
     {
         $products = Product::all();
-        $productsInStockCount = $this->calculateProductsInStockCount($products);
-        $productsOutOfStockCount = $this->calculateProductsOutOfStockCount($products);
-        $criticallyLowStockProducts = $this->findCriticallyLowStockProducts($products);
-        $excessiveStockProducts = $this->findExcessiveStockProducts($products);
+
+        $productsInStockCount = $this->countProductsInStock($products);
+        $productsOutOfStockCount = $this->countProductsOutOfStock($products);
+        $lowStockProducts = $this->getLowStockProducts($products);
+        $excessiveStockProducts = $this->getExcessiveStockProducts($products);
         $inventoryValue = $this->calculateInventoryValue($products);
+        $totalItemsInStock = $this->calculateTotalItemsInStock($products);
+        $productCount = $products->count();
 
         return [
+            'inventory_value' => $inventoryValue,
+            'total_items_in_stock' => $totalItemsInStock,
             'products_in_stock_count' => $productsInStockCount,
             'products_out_of_stock_count' => $productsOutOfStockCount,
-            'critically_low_stock_products' => $criticallyLowStockProducts,
+            'low_stock_products' => $lowStockProducts,
             'excessive_stock_products' => $excessiveStockProducts,
-            'inventory_value' => $inventoryValue / 100,
+            'product_count' => $productCount,
         ];
     }
 
-    private function calculateProductsInStockCount($products): int
+    public function calculateInventoryValue($products): int
+    {
+        return $products->reduce(function ($carry, $product) {
+            $productValue = $product->stock_balance * $product->cost;
+            return $carry + $productValue;
+        }, 0) / 100;
+    }
+
+    public function calculateTotalItemsInStock($products): int
+    {
+        return $products->sum('stock_balance');
+    }
+
+    public function countProductsInStock($products): int
     {
         return $products->filter(function ($product) {
             return $product->stock_balance > 0;
         })->count();
     }
 
-    private function calculateProductsOutOfStockCount($products): int
+    public function countProductsOutOfStock($products): int
     {
         return $products->filter(function ($product) {
             return $product->stock_balance <= 0;
         })->count();
     }
 
-    private function findCriticallyLowStockProducts($products): array
+    public function getLowStockProducts($products): array
     {
         return $products->filter(function ($product) {
             return $product->stock_balance < $product->min_stock_level;
-        })->pluck('name')->toArray();
+        })->values()->mapWithKeys(function ($product, $index) {
+            return [$index => [
+                'id' => $product->id,
+                'name' => $product->name,
+            ]];
+        })->toArray();
     }
 
-    private function findExcessiveStockProducts($products): array
+    public function getExcessiveStockProducts($products): array
     {
         return $products->filter(function ($product) {
             return $product->stock_balance > $product->max_stock_level;
-        })->pluck('name')->toArray();
-    }
-
-    private function calculateInventoryValue($products): int
-    {
-        return $products->reduce(function ($carry, $product) {
-            $stockBalance = $product->inventoryTransactions()->sum('quantity');
-            $productValue = $stockBalance * $product->cost;
-
-            return $carry + $productValue;
-        }, 0.0);
+        })->values()->mapWithKeys(function ($product, $index) {
+            return [$index => [
+                'id' => $product->id,
+                'name' => $product->name,
+            ]];
+        })->toArray();
     }
 
     public function getDetailedMetrics(): array
@@ -83,7 +101,7 @@ class StockMetricsService implements StockMetricsInterface
                         'name' => $categoryName,
                     ],
                     'products' => $products->map(function ($product) {
-                        $stock_balance = $product->inventoryTransactions()->sum('quantity');
+                        $stock_balance = $product->stock_balance;
 
                         return [
                             'id' => $product->id,
@@ -99,7 +117,7 @@ class StockMetricsService implements StockMetricsInterface
             })->values()->toArray();
     }
 
-    private function getStockStatus($balance, $min, $max): string
+    public function getStockStatus($balance, $min, $max): string
     {
         if ($balance < $min) {
             return 'understocked';

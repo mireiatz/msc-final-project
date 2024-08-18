@@ -1,0 +1,240 @@
+<?php
+
+namespace Tests\Unit\Services\Analytics;
+
+use App\Models\Product;
+use App\Services\Analytics\StockMetricsService;
+use App\Traits\OrderCreation;
+use App\Traits\SaleCreation;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Tests\TestCase;
+
+class StockMetricsServiceTest extends TestCase
+{
+    use DatabaseTransactions, SaleCreation, OrderCreation;
+
+    private StockMetricsService $service;
+    private Product $product1;
+    private Product $product2;
+    private string $startDate;
+    private string $endDate;
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->service = new StockMetricsService();
+
+        $this->product1 = Product::factory()->create([
+            'cost' => 1000,
+            'min_stock_level' => 5,
+            'max_stock_level' => 15,
+        ]);
+        $this->product2 = Product::factory()->create([
+            'cost' => 5000,
+            'min_stock_level' => 1,
+            'max_stock_level' => 10,
+        ]);
+
+        $this->startDate = now()->subDays(10)->toDateString();
+        $this->endDate = now()->toDateString();
+    }
+
+    public function testCalculateInventoryValue(): void
+    {
+        $products = collect([$this->product1, $this->product2]);
+
+        $inventoryValue = $this->service->calculateInventoryValue($products);
+        $this->assertEquals(0, $inventoryValue);
+
+        $this->createOrder($products, [1, 1], $this->startDate, $this->endDate);
+        $inventoryValue = $this->service->calculateInventoryValue($products);
+        $this->assertEquals(60.00, $inventoryValue);
+
+        $this->createOrder($products, [2, 10], $this->startDate, $this->endDate);
+        $inventoryValue = $this->service->calculateInventoryValue($products);
+        $this->assertEquals(580.00, $inventoryValue);
+
+        $this->createSale($products, [1, 1], $this->startDate, $this->endDate);
+        $inventoryValue = $this->service->calculateInventoryValue($products);
+        $this->assertEquals(520.00, $inventoryValue);
+
+        $this->createSale($products, [2, 10], $this->startDate, $this->endDate);
+        $inventoryValue = $this->service->calculateInventoryValue($products);
+        $this->assertEquals(0, $inventoryValue);
+
+        $this->createOrder(collect([$this->product1]), [10], $this->startDate, $this->endDate);
+        $inventoryValue = $this->service->calculateInventoryValue($products);
+        $this->assertEquals(100.00, $inventoryValue);
+
+        $this->createSale(collect([$this->product1]), [5], $this->startDate, $this->endDate);
+        $inventoryValue = $this->service->calculateInventoryValue($products);
+        $this->assertEquals(50.00, $inventoryValue);
+
+        $this->createOrder(collect([$this->product2]), [10], $this->startDate, $this->endDate);
+        $inventoryValue = $this->service->calculateInventoryValue($products);
+        $this->assertEquals(550.00, $inventoryValue);
+
+        $this->createSale(collect([$this->product2]), [5], $this->startDate, $this->endDate);
+        $inventoryValue = $this->service->calculateInventoryValue($products);
+        $this->assertEquals(300.00, $inventoryValue);
+    }
+
+    public function testCalculateTotalItemsInStock(): void
+    {
+        $products = collect([$this->product1, $this->product2]);
+
+        $totalItems = $this->service->calculateTotalItemsInStock($products);
+        $this->assertEquals(0, $totalItems);
+
+        $this->createOrder($products, [5, 10], $this->startDate, $this->endDate);
+        $totalItems = $this->service->calculateTotalItemsInStock($products);
+        $this->assertEquals(15, $totalItems);
+
+        $this->createSale($products, [2, 3], $this->startDate, $this->endDate);
+        $totalItems = $this->service->calculateTotalItemsInStock($products);
+        $this->assertEquals(10, $totalItems);
+
+        $this->createSale($products, [3, 7], $this->startDate, $this->endDate);
+        $totalItems = $this->service->calculateTotalItemsInStock($products);
+        $this->assertEquals(0, $totalItems);
+
+        $this->createOrder(collect([$this->product1]), [100], $this->startDate, $this->endDate);
+        $totalItems = $this->service->calculateTotalItemsInStock($products);
+        $this->assertEquals(100, $totalItems);
+
+        $this->createOrder(collect([$this->product2]), [10], $this->startDate, $this->endDate);
+        $totalItems = $this->service->calculateTotalItemsInStock($products);
+        $this->assertEquals(110, $totalItems);
+
+        $this->createSale($products, [50, 10], $this->startDate, $this->endDate);
+        $totalItems = $this->service->calculateTotalItemsInStock($products);
+        $this->assertEquals(50, $totalItems);
+    }
+
+    public function testCountProductsInStock(): void
+    {
+        $products = collect([$this->product1, $this->product2]);
+
+        $productsInStockCount = $this->service->countProductsInStock($products);
+        $this->assertEquals(0, $productsInStockCount);
+
+        $this->createOrder($products, [10, 10], $this->startDate, $this->endDate);
+        $productsInStockCount = $this->service->countProductsInStock($products);
+        $this->assertEquals(2, $productsInStockCount);
+
+        $this->createSale($products, [1, 1], $this->startDate, $this->endDate);
+        $productsInStockCount = $this->service->countProductsInStock($products);
+        $this->assertEquals(2, $productsInStockCount);
+
+        $this->createSale($products, [1, 1], $this->startDate, $this->endDate);
+        $productsInStockCount = $this->service->countProductsInStock($products);
+        $this->assertEquals(2, $productsInStockCount);
+
+        $this->createSale($products, [8, 1], $this->startDate, $this->endDate);
+        $productsInStockCount = $this->service->countProductsInStock($products);
+        $this->assertEquals(1, $productsInStockCount);
+
+        $this->createSale(collect([$this->product2]), [7], $this->startDate, $this->endDate);
+        $productsInStockCount = $this->service->countProductsInStock($products);
+        $this->assertEquals(0, $productsInStockCount);
+    }
+
+    public function testCountProductsOutOfStock(): void
+    {
+        $products = collect([$this->product1, $this->product2]);
+
+        $productsOutOfStockCount = $this->service->countProductsOutOfStock($products);
+        $this->assertEquals(2, $productsOutOfStockCount);
+
+        $this->createOrder(collect([$this->product1]), [10], $this->startDate, $this->endDate);
+        $productsOutOfStockCount = $this->service->countProductsOutOfStock($products);
+        $this->assertEquals(1, $productsOutOfStockCount);
+
+        $this->createOrder(collect([$this->product2]), [10], $this->startDate, $this->endDate);
+        $productsOutOfStockCount = $this->service->countProductsOutOfStock($products);
+        $this->assertEquals(0, $productsOutOfStockCount);
+
+        $this->createSale(collect([$this->product1]), [8], $this->startDate, $this->endDate);
+        $productsOutOfStockCount = $this->service->countProductsOutOfStock($products);
+        $this->assertEquals(0, $productsOutOfStockCount);
+
+        $this->createSale(collect([$this->product1]), [2], $this->startDate, $this->endDate);
+        $productsOutOfStockCount = $this->service->countProductsOutOfStock($products);
+        $this->assertEquals(1, $productsOutOfStockCount);
+
+        $this->createSale(collect([$this->product2]), [5], $this->startDate, $this->endDate);
+        $productsOutOfStockCount = $this->service->countProductsOutOfStock($products);
+        $this->assertEquals(1, $productsOutOfStockCount);
+
+        $this->createSale(collect([$this->product2]), [5], $this->startDate, $this->endDate);
+        $productsOutOfStockCount = $this->service->countProductsOutOfStock($products);
+        $this->assertEquals(2, $productsOutOfStockCount);
+
+        $this->createOrder($products, [1, 1], $this->startDate, $this->endDate);
+        $productsOutOfStockCount = $this->service->countProductsOutOfStock($products);
+        $this->assertEquals(0, $productsOutOfStockCount);
+    }
+
+    public function testGetLowStockProducts(): void
+    {
+        $products = collect([$this->product1, $this->product2]);
+
+        $lowStockProducts = $this->service->getLowStockProducts($products);
+        $this->assertCount(2, $lowStockProducts);
+        $this->assertEquals($this->product1->id, $lowStockProducts[0]['id']);
+        $this->assertEquals($this->product2->id, $lowStockProducts[1]['id']);
+
+        $this->createOrder(collect([$this->product1]), [4], $this->startDate, $this->endDate);
+        $lowStockProducts = $this->service->getLowStockProducts($products);
+        $this->assertCount(2, $lowStockProducts);
+        $this->assertEquals($this->product1->id, $lowStockProducts[0]['id']);
+        $this->assertEquals($this->product2->id, $lowStockProducts[1]['id']);
+
+        $this->createOrder(collect([$this->product1]), [1], $this->startDate, $this->endDate);
+        $lowStockProducts = $this->service->getLowStockProducts($products);
+        $this->assertCount(1, $lowStockProducts);
+        $this->assertEquals($this->product2->id, $lowStockProducts[0]['id']);
+
+        $this->createOrder(collect([$this->product2]), [1], $this->startDate, $this->endDate);
+        $lowStockProducts = $this->service->getLowStockProducts($products);
+        $this->assertCount(0, $lowStockProducts);
+
+        $this->createSale($products, [1, 1], $this->startDate, $this->endDate);
+        $lowStockProducts = $this->service->getLowStockProducts($products);
+        $this->assertCount(2, $lowStockProducts);
+        $this->assertEquals($this->product1->id, $lowStockProducts[0]['id']);
+        $this->assertEquals($this->product2->id, $lowStockProducts[1]['id']);
+    }
+
+
+    public function testGetExcessiveStockProducts(): void
+    {
+        $products = collect([$this->product1, $this->product2]);
+
+        $excessiveStockProducts = $this->service->getExcessiveStockProducts($products);
+        $this->assertCount(0, $excessiveStockProducts);
+
+        $this->createOrder(collect([$this->product1]), [15], $this->startDate, $this->endDate);
+        $excessiveStockProducts = $this->service->getExcessiveStockProducts($products);
+        $this->assertCount(0, $excessiveStockProducts);
+
+        $this->createOrder(collect([$this->product1]), [1], $this->startDate, $this->endDate);
+        $excessiveStockProducts = $this->service->getExcessiveStockProducts($products);
+        $this->assertCount(1, $excessiveStockProducts);
+        $this->assertEquals($this->product1->id, $excessiveStockProducts[0]['id']);
+
+        $this->createOrder(collect([$this->product2]), [10], $this->startDate, $this->endDate);
+        $excessiveStockProducts = $this->service->getExcessiveStockProducts($products);
+        $this->assertCount(1, $excessiveStockProducts);
+
+        $this->createOrder(collect([$this->product2]), [1], $this->startDate, $this->endDate);
+        $excessiveStockProducts = $this->service->getExcessiveStockProducts($products);
+        $this->assertCount(2, $excessiveStockProducts);
+        $this->assertEquals($this->product1->id, $excessiveStockProducts[0]['id']);
+        $this->assertEquals($this->product2->id, $excessiveStockProducts[1]['id']);
+
+        $this->createSale($products, [1, 1], $this->startDate, $this->endDate);
+        $excessiveStockProducts = $this->service->getExcessiveStockProducts($products);
+        $this->assertCount(0, $excessiveStockProducts);
+    }
+}

@@ -20,6 +20,7 @@ class SaleProduct extends Pivot
         'total_sale',
         'unit_cost',
         'total_cost',
+        'currency',
     ];
 
     public function sale(): BelongsTo

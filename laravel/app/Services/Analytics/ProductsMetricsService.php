@@ -3,9 +3,7 @@
 namespace App\Services\Analytics;
 
 use App\Models\Product;
-use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Collection;
-use InvalidArgumentException;
+use Illuminate\Support\Collection;
 
 class ProductsMetricsService implements ProductsMetricsInterface
 {
@@ -20,10 +18,10 @@ class ProductsMetricsService implements ProductsMetricsInterface
     {
         $products = $this->getProductSalesData($startDate, $endDate);
 
-        $topSellers = $this->calculateTopSellingProducts($products);
-        $leastSellers = $this->calculateLeastSellingProducts($products);
-        $highestRevenueProducts = $this->calculateHighestRevenueProducts($products);
-        $lowestRevenueProducts = $this->calculateLowestRevenueProducts($products);
+        $topSellers = $this->getTopSellingProducts($products);
+        $leastSellers = $this->getLeastSellingProducts($products);
+        $highestRevenueProducts = $this->getHighestRevenueProducts($products);
+        $lowestRevenueProducts = $this->getLowestRevenueProducts($products);
 
         return [
             'top_selling_products' => $topSellers,
@@ -33,51 +31,57 @@ class ProductsMetricsService implements ProductsMetricsInterface
         ];
     }
 
-    private function getProductSalesData(string $startDate, string $endDate): Collection
+    public function getProductSalesData(string $startDate, string $endDate): Collection
     {
-        return Product::with(['sales' => function ($query) use ($startDate, $endDate) {
+        return Product::whereHas('sales', function ($query) use ($startDate, $endDate) {
+            $query->whereBetween('sales.date', [$startDate, $endDate]);
+        })->with(['sales' => function ($query) use ($startDate, $endDate) {
             $query->whereBetween('sales.date', [$startDate, $endDate]);
         }])->get();
     }
 
-    private function calculateTopSellingProducts(Collection $products): array
+    public function getTopSellingProducts(Collection $products): array
     {
         return $products->map(function ($product) {
             return [
+                'id' => $product->id,
                 'name' => $product->name,
-                'quantity' => $product->sales ? $product->sales->sum('pivot.quantity') : 0
+                'quantity' => $product->sales()->sum('quantity') ?: 0
             ];
-        })->sortByDesc('quantity')->take(5)->pluck('name')->toArray();
+        })->sortByDesc('quantity')->take(5)->values()->toArray();
     }
 
-    private function calculateLeastSellingProducts(Collection $products): array
+    public function getLeastSellingProducts(Collection $products): array
     {
         return $products->map(function ($product) {
             return [
+                'id' => $product->id,
                 'name' => $product->name,
-                'quantity' => $product->sales ? $product->sales->sum('pivot.quantity') : 0
+                'quantity' => $product->sales()->sum('quantity') ?: 0
             ];
-        })->sortBy('quantity')->take(5)->pluck('name')->toArray();
+        })->sortBy('quantity')->take(5)->values()->toArray();
     }
 
-    private function calculateHighestRevenueProducts(Collection $products): array
+    public function getHighestRevenueProducts(Collection $products): array
     {
         return $products->map(function ($product) {
             return [
+                'id' => $product->id,
                 'name' => $product->name,
-                'revenue' => $product->sales ? $product->sales->sum('pivot.total_sale') : 0
+                'revenue' => $product->sales()->sum('total_sale') ?: 0
             ];
-        })->sortByDesc('revenue')->take(5)->pluck('name')->toArray();
+        })->sortByDesc('revenue')->take(5)->values()->toArray();
     }
 
-    private function calculateLowestRevenueProducts(Collection $products): array
+    public function getLowestRevenueProducts(Collection $products): array
     {
         return $products->map(function ($product) {
             return [
+                'id' => $product->id,
                 'name' => $product->name,
-                'revenue' => $product->sales ? $product->sales->sum('pivot.total_sale') : 0
+                'revenue' => $product->sales()->sum('total_sale') ?: 0
             ];
-        })->sortBy('revenue')->take(5)->pluck('name')->toArray();
+        })->sortBy('revenue')->take(5)->values()->toArray();
     }
 
     public function getDetailedMetrics(string $startDate, string $endDate): array
@@ -86,7 +90,7 @@ class ProductsMetricsService implements ProductsMetricsInterface
         return $this->calculateDetailedMetrics($products, $startDate, $endDate);
     }
 
-    private function getProducts(string $startDate, string $endDate): Collection
+    public function getProducts(string $startDate, string $endDate): Collection
     {
         return Product::with([
             'sales' => function ($query) use ($startDate, $endDate) {
@@ -95,7 +99,7 @@ class ProductsMetricsService implements ProductsMetricsInterface
         ])->orderByDesc('category_id')->get();
     }
 
-    private function calculateDetailedMetrics(Collection $products, string $startDate, string $endDate): array
+    public function calculateDetailedMetrics(Collection $products, string $startDate, string $endDate): array
     {
         return $products->map(function ($product) use ($startDate, $endDate) {
             $totalQuantitySold = $product->sales()->sum('quantity');
@@ -118,7 +122,7 @@ class ProductsMetricsService implements ProductsMetricsInterface
         })->toArray();
     }
 
-    private function getStockBalanceAt(Product $product, string $date): int
+    public function getStockBalanceAt(Product $product, string $date): int
     {
         return $product->inventoryTransactions()
             ->where('date', '<=', $date)

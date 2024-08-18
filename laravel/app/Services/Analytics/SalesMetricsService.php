@@ -16,67 +16,72 @@ class SalesMetricsService implements SalesMetricsInterface
      */
     public function getOverviewMetrics(string $startDate, string $endDate): array
     {
-        $sales = Sale::whereBetween('sales.date', [$startDate, $endDate])
-            ->with('products')
-            ->get();
+        $sales = $this->getSalesData($startDate, $endDate);
 
-        $numberOfSales = $this->calculateNumberOfSales($sales);
+        $salesCount = $this->countSales($sales);
+        $highestSale = $this->getHighestSale($sales);
+        $lowestSale = $this->getLowestSale($sales);
         $totalItemsSold = $this->calculateTotalItemsSold($sales);
         $totalSalesValue = $this->calculateTotalSalesValue($sales);
-        $highestSale = $this->findHighestSale($sales);
-        $lowestSale = $this->findLowestSale($sales);
-        $mostItemsSold = $this->findSaleWithMostItems($sales);
-        $leastItemsSold = $this->findSaleWithLeastItems($sales);
+        $maxItemsSoldInSale = $this->getMaxItemsSoldInSale($sales);
+        $minItemsSoldInSale = $this->getMinItemsSoldInSale($sales);
 
         return [
-            'number_of_sales' => $numberOfSales,
+            'sales_count' => $salesCount,
+            'highest_sale' => $highestSale,
+            'lowest_sale' => $lowestSale,
             'total_items_sold' => $totalItemsSold,
             'total_sales_value' => $totalSalesValue,
-            'highest_sale' => $highestSale / 100,
-            'lowest_sale' => $lowestSale / 100,
-            'sale_with_most_items' => $mostItemsSold,
-            'sale_with_least_items' => $leastItemsSold,
+            'max_items_sold_in_sale' => $maxItemsSoldInSale,
+            'min_items_sold_in_sale' => $minItemsSoldInSale,
         ];
     }
 
-    private function calculateNumberOfSales($sales): int
+    public function getSalesData(string $startDate, string $endDate): Collection
     {
-        return $sales->count() ?? 0;
+        return Sale::whereBetween('sales.date', [$startDate, $endDate])
+            ->with('products')
+            ->get();
     }
 
-    private function calculateTotalItemsSold($sales): int
+    public function countSales($sales): int
+    {
+        return $sales->count();
+    }
+
+    public function getHighestSale($sales): int
+    {
+        return $sales->max('sale') / 100;
+    }
+
+    public function getLowestSale($sales): int
+    {
+        return $sales->min('sale') / 100;
+    }
+
+    public function calculateTotalItemsSold($sales): int
     {
         return $sales->sum(function ($sale) {
-            return $sale->products()->count();
-        }) ?? 0;
+            return $sale->products()->sum('quantity');
+        });
     }
 
-    private function calculateTotalSalesValue($sales): int
+    public function calculateTotalSalesValue($sales): int
     {
-        return $sales->sum('sale') ?? 0;
+        return $sales->sum('sale') /100;
     }
 
-    private function findHighestSale($sales): int
-    {
-        return $sales->max('sale') ?? 0;
-    }
-
-    private function findLowestSale($sales): int
-    {
-        return $sales->min('sale') ?? 0;
-    }
-
-    private function findSaleWithMostItems($sales): int
+    public function getMaxItemsSoldInSale($sales): int
     {
         return $sales->map(function ($sale) {
-            return $sale->products()->count();
+            return $sale->products()->sum('quantity');
         })->max() ?? 0;
     }
 
-    private function findSaleWithLeastItems($sales): int
+    public function getMinItemsSoldInSale($sales): int
     {
         return $sales->map(function ($sale) {
-            return $sale->products()->count();
+            return $sale->products()->sum('quantity');
         })->min() ?? 0;
     }
 

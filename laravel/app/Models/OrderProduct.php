@@ -18,6 +18,7 @@ class OrderProduct extends Pivot
         'quantity',
         'unit_cost',
         'total_cost',
+        'currency',
     ];
 
     public function order(): BelongsTo

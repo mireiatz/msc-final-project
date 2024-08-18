@@ -46,9 +46,9 @@ class SaleFactory extends Factory
             $total_cost = 0;
             $productsAttached = false;
 
-            $products->each(function ($product) use ($sale, &$total_sale, &$total_cost) {
+            $products->each(function ($product) use ($sale, &$total_sale, &$total_cost, &$productsAttached) {
                 $quantity = $this->faker->numberBetween(1, $product->stock_balance);
-                if ($product->stock_balance <= $quantity) {
+                if ($product->stock_balance < $quantity) {
                     return;
                 }
                 $unitSale = $product->sale;
