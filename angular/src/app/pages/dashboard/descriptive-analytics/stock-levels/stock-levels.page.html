@@ -4,7 +4,7 @@
       [isLoading]="isLoading"
     ></app-loader>
 
-    <div *ngIf="stockData && colourScheme">
+    <div *ngIf="stockData">
       <div *ngFor="let category of stockData">
         <h2>{{ category.name }}</h2>
         <ngx-charts-bar-horizontal
@@ -12,7 +12,7 @@
           [xAxis]="true"
           [yAxis]="true"
           [legend]="false"
-          [scheme]="colourScheme"
+          [customColors]="customColours"
           [roundEdges]="false">
         </ngx-charts-bar-horizontal>
       </div>

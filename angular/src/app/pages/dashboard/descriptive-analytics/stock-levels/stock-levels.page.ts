@@ -2,7 +2,6 @@ import { Component, OnDestroy } from "@angular/core";
 import { finalize, Subject, take } from "rxjs";
 import { HttpErrorResponse } from "@angular/common/http";
 import { ApiService } from "../../../../shared/services/api/services/api.service";
-import { Color, ScaleType } from "@swimlane/ngx-charts";
 import { StockDetailedMetrics } from "../../../../shared/services/api/models/stock-detailed-metrics";
 
 type ProductStatus = 'understocked' | 'overstocked' | 'within_range';
@@ -27,7 +26,7 @@ export class StockLevelsPage implements OnDestroy {
       status: ProductStatus
     }>
   }> = [];
-  public colourScheme: Color | undefined = undefined;
+  public customColours: { name: string; value: string }[] = [];
 
   constructor(
     protected apiService: ApiService
@@ -62,28 +61,30 @@ export class StockLevelsPage implements OnDestroy {
 
     this.stockData = this.metrics.map((data) => ({
       name: data.category.name,
-      series: data.products.map(product => ({
-        name: product.name,
-        value: product.current,
-        status: product.status as ProductStatus,
-      }))
-    }));
+      series: data.products
+        .filter(product => product.current > 0)
+        .map(product => ({
+          name: product.name,
+          value: product.current,
+          status: product.status as ProductStatus,
+        }))
+    })).filter(category => category.series.length > 0);
 
-    this.setColorScheme();
+    this.setColourScheme()
   }
 
-  private setColorScheme(): void {
+  private setColourScheme(): void {
     const colors: Record<ProductStatus, string> = {
       understocked: '#FF4136',
       overstocked: '#1b82ff',
       within_range: '#2ECC40',
     };
 
-    this.colourScheme = {
-      name: 'custom',
-      selectable: true,
-      group: ScaleType.Ordinal,
-      domain: this.stockData.flatMap(category => category.series.map(product => colors[product.status]))
-    };
+    this.customColours = this.stockData.flatMap(category =>
+      category.series.map(product => ({
+        name: product.name,
+        value: colors[product.status],
+      }))
+    );
   }
 }
