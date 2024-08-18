@@ -3,6 +3,7 @@
 namespace App\Services\Analytics;
 
 use App\Models\Product;
+use Illuminate\Support\Collection;
 
 class StockMetricsService implements StockMetricsInterface
 {
@@ -87,44 +88,49 @@ class StockMetricsService implements StockMetricsInterface
 
     public function getDetailedMetrics(): array
     {
-        return Product::select('id', 'name', 'min_stock_level', 'max_stock_level', 'category_id')
-            ->with('category')
-            ->get()
-            ->groupBy('category')
-            ->map(function ($products) {
-                $categoryId = $products->first()->category->id;
-                $categoryName = $products->first()->category->name;
+        $products = $this->getProductsGroupedByCategory();
 
-                return [
-                    'category' => [
-                        'id' => $categoryId,
-                        'name' => $categoryName,
-                    ],
-                    'products' => $products->map(function ($product) {
-                        $stock_balance = $product->stock_balance;
-
-                        return [
-                            'id' => $product->id,
-                            'name' => $product->name,
-                            'min' => $product->min_stock_level,
-                            'max' => $product->max_stock_level,
-                            'current' => $stock_balance,
-                            'range' => $product->max_stock_level - $product->min_stock_level,
-                            'status' => $this->getStockStatus($stock_balance, $product->min_stock_level, $product->max_stock_level),
-                        ];
-                    }),
-                ];
-            })->values()->toArray();
+        return $this->mapProducts($products);
     }
 
-    public function getStockStatus($balance, $min, $max): string
+    public function getProductsGroupedByCategory(): Collection
+    {
+        return Product::with('category')->get()->groupBy('category_id');
+    }
+
+    public function mapProducts(Collection $products): array
+    {
+        return $products->map(function ($products) {
+            return [
+                'category' => [
+                    'id' => $products->first()->category_id,
+                    'name' => $products->first()->category->name,
+                ],
+                'products' => $products->map(fn ($product) => $this->mapProductDetails($product)),
+            ];
+        })->values()->toArray();
+    }
+
+    private function mapProductDetails(Product $product): array
+    {
+        return [
+            'id' => $product->id,
+            'name' => $product->name,
+            'min' => $product->min_stock_level,
+            'max' => $product->max_stock_level,
+            'current' => $product->stock_balance,
+            'range' => $product->max_stock_level - $product->min_stock_level,
+            'status' => $this->getStockStatus($product->stock_balance, $product->min_stock_level, $product->max_stock_level),
+        ];
+    }
+
+    public function getStockStatus(int $balance, int $min, int $max): string
     {
         if ($balance < $min) {
             return 'understocked';
         } elseif ($balance > $max) {
             return 'overstocked';
-        } else {
-            return 'within_range';
         }
+        return 'within_range';
     }
 }

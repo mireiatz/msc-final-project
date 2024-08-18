@@ -16,7 +16,7 @@ class SalesMetricsService implements SalesMetricsInterface
      */
     public function getOverviewMetrics(string $startDate, string $endDate): array
     {
-        $sales = $this->getSalesData($startDate, $endDate);
+        $sales = $this->getSales($startDate, $endDate);
 
         $salesCount = $this->countSales($sales);
         $highestSale = $this->getHighestSale($sales);
@@ -37,7 +37,7 @@ class SalesMetricsService implements SalesMetricsInterface
         ];
     }
 
-    public function getSalesData(string $startDate, string $endDate): Collection
+    public function getSales(string $startDate, string $endDate): Collection
     {
         return Sale::whereBetween('sales.date', [$startDate, $endDate])
             ->with('products')
@@ -87,7 +87,8 @@ class SalesMetricsService implements SalesMetricsInterface
 
     public function getDetailedMetrics(string $startDate, string $endDate): array
     {
-        $sales = $this->getSales($startDate, $endDate);
+        $sales = $this->getSalesGroupedByDate($startDate, $endDate);
+
         $allSales = $this->mapAllSales($sales);
         $salesPerCategory = $this->mapSalesPerCategory($sales);
         $salesPerProduct = $this->mapSalesPerProduct($sales);
@@ -99,7 +100,7 @@ class SalesMetricsService implements SalesMetricsInterface
         ];
     }
 
-    public function getSales(string $startDate, string $endDate): Collection
+    public function getSalesGroupedByDate(string $startDate, string $endDate): Collection
     {
         return Sale::whereBetween('date', [$startDate, $endDate])
             ->with('products.category')

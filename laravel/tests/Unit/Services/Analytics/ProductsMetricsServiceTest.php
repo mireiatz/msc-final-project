@@ -5,13 +5,14 @@ namespace Tests\Unit\Services\Analytics;
 
 use App\Models\Product;
 use App\Services\Analytics\ProductsMetricsService;
+use App\Traits\OrderCreation;
 use App\Traits\SaleCreation;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
 class ProductsMetricsServiceTest extends TestCase
 {
-    use DatabaseTransactions, SaleCreation;
+    use DatabaseTransactions, SaleCreation, OrderCreation;
 
     private ProductsMetricsService $service;
     private Product $product1;
@@ -209,5 +210,55 @@ class ProductsMetricsServiceTest extends TestCase
         $this->assertContains($this->product5->id, $lowestRevenueProductIds);
         $this->assertContains($this->product6->id, $lowestRevenueProductIds);
         $this->assertNotContains($this->product4->id, $lowestRevenueProductIds);
+    }
+
+    public function testCalculateTotalQuantitySold(): void
+    {
+        $products = collect([$this->product1, $this->product2]);
+
+        $this->createSale($products, [10, 5], $this->startDate, $this->endDate);
+
+        $quantitySold1 = $this->service->calculateTotalQuantitySold($this->product1);
+        $quantitySold2 = $this->service->calculateTotalQuantitySold($this->product2);
+
+        $this->assertEquals(10, $quantitySold1);
+        $this->assertEquals(5, $quantitySold2);
+    }
+
+    public function testCalculateTotalSalesRevenue(): void
+    {
+        $products = collect([$this->product1, $this->product2]);
+
+        $this->createSale($products, [10, 5], $this->startDate, $this->endDate);
+
+        $revenue1 = $this->service->calculateTotalSalesRevenue($this->product1);
+        $revenue2 = $this->service->calculateTotalSalesRevenue($this->product2);
+
+        $this->assertEquals(200.00, $revenue1);
+        $this->assertEquals(250.00, $revenue2);
+    }
+
+    public function testGetStockBalanceAt(): void
+    {
+        $balanceAtStart = $this->service->getStockBalanceAt($this->product1, $this->startDate);
+        $this->assertEquals(0, $balanceAtStart);
+
+        $this->createOrder(collect([$this->product1]), [10], $this->startDate, $this->startDate);
+        $balanceAfterOrder = $this->service->getStockBalanceAt($this->product1, $this->startDate);
+        $this->assertEquals(10, $balanceAfterOrder);
+
+        $saleDate = now()->subDays(9)->toDateString();
+        $this->createSale(collect([$this->product1]), [4], $saleDate, $saleDate);
+        $balanceAfterSale = $this->service->getStockBalanceAt($this->product1, $saleDate);
+        $this->assertEquals(6, $balanceAfterSale);
+
+        $laterDate = now()->subDays(5)->toDateString();
+        $balanceLater = $this->service->getStockBalanceAt($this->product1, $laterDate);
+        $this->assertEquals(6, $balanceLater);
+
+        $finalDate = now()->subDays(3)->toDateString();
+        $this->createOrder(collect([$this->product1]), [5], $finalDate, $finalDate);
+        $finalBalance = $this->service->getStockBalanceAt($this->product1, $finalDate);
+        $this->assertEquals(11, $finalBalance);
     }
 }

@@ -87,7 +87,10 @@ class ProductsMetricsService implements ProductsMetricsInterface
     public function getDetailedMetrics(string $startDate, string $endDate): array
     {
         $products = $this->getProducts($startDate, $endDate);
-        return $this->calculateDetailedMetrics($products, $startDate, $endDate);
+
+        return $products->map(function ($product) use ($startDate, $endDate) {
+            return $this->calculateProductMetrics($product, $startDate, $endDate);
+        })->toArray();
     }
 
     public function getProducts(string $startDate, string $endDate): Collection
@@ -99,27 +102,29 @@ class ProductsMetricsService implements ProductsMetricsInterface
         ])->orderByDesc('category_id')->get();
     }
 
-    public function calculateDetailedMetrics(Collection $products, string $startDate, string $endDate): array
+    protected function calculateProductMetrics(Product $product, string $startDate, string $endDate): array
     {
-        return $products->map(function ($product) use ($startDate, $endDate) {
-            $totalQuantitySold = $product->sales()->sum('quantity');
-            $totalSalesRevenue = $product->sales()->sum('total_sale');
+        return [
+            'id' => $product->id,
+            'name' => $product->name,
+            'category' => $product->category->name,
+            'provider' => $product->provider->name,
+            'sale' => $product->sale / 100,
+            'total_quantity_sold' => $this->calculateTotalQuantitySold($product),
+            'total_sales_revenue' => $this->calculateTotalSalesRevenue($product),
+            'initial_stock_balance' => $this->getStockBalanceAt($product, $startDate),
+            'final_stock_balance' => $this->getStockBalanceAt($product, $endDate),
+        ];
+    }
 
-            $initialStock = $this->getStockBalanceAt($product, $startDate);
-            $finalStock = $this->getStockBalanceAt($product, $endDate);
+    public function calculateTotalQuantitySold(Product $product): int
+    {
+        return $product->sales()->sum('quantity');
+    }
 
-            return [
-                'id' => $product->id,
-                'name' => $product->name,
-                'category' => $product->category->name,
-                'provider' => $product->provider->name,
-                'sale' => $product->sale / 100,
-                'total_quantity_sold' => $totalQuantitySold,
-                'total_sales_revenue' => $totalSalesRevenue / 100,
-                'initial_stock_balance' => $initialStock,
-                'final_stock_balance' => $finalStock,
-            ];
-        })->toArray();
+    public function calculateTotalSalesRevenue(Product $product): float
+    {
+        return $product->sales()->sum('total_sale') / 100;
     }
 
     public function getStockBalanceAt(Product $product, string $date): int
