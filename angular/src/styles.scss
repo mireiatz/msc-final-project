@@ -15,8 +15,7 @@ $font-size-large: 24px;
 $font-size-medium: 20px;
 $font-size-small: 14px;
 $font-weight-primary: 400;
-$font-weight-bold: 500;
-$font-weight-x-bold: 600;
+$font-weight-bold: 600;
 
 // Spacing
 $padding-large: 30px;
@@ -104,11 +103,15 @@ $border-radius-large: 12px;
   font-weight: $font-weight-bold;
 }
 
-.font-weight-x-bold {
-  font-weight: $font-weight-x-bold;
+// Main body
+:host {
+  width: 100%;
 }
 
-// Main body
+.main-page {
+  margin: 30px;
+}
+
 body {
   font-family: $font-family-primary;
   font-size: $font-size-base;
@@ -121,12 +124,14 @@ body {
 }
 
 // Buttons
-.button {
+.btn {
   color: #ffffff;
+  font-weight: $font-weight-bold;
   padding: $padding-small $padding-base;
   margin: $margin-small;
-  border: none;
   border-radius: $border-radius-base;
+  border: 1px solid $border-color;
+  height: fit-content;
   cursor: pointer;
   transition: background-color 0.3s;
 
@@ -214,3 +219,22 @@ table {
     background-color: $warning-color;
   }
 }
+
+// Forms
+.form-group {
+  margin-right: 8px;
+
+  label {
+    font-size: $font-size-small;
+    font-weight: $font-weight-bold;
+    margin: 0;
+  }
+}
+
+// Loading
+.data-display {
+  position: relative;
+  min-height: 200px;
+  max-height: 100vh;
+}
+

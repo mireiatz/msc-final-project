@@ -41,6 +41,10 @@ class Sale extends Model
                 ]);
             });
         });
+
+        static::deleting(function ($sale) {
+            $sale->inventoryTransactions()->delete();
+        });
     }
 
     public function store(): BelongsTo

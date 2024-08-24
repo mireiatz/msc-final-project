@@ -18,6 +18,7 @@ class Order extends Model
         'provider_id',
         'date',
         'cost',
+        'currency',
     ];
 
     protected static function boot(): void
@@ -36,6 +37,10 @@ class Order extends Model
                     'stock_balance' => $product->stock_balance + $quantity,
                 ]);
             });
+        });
+
+        static::deleting(function ($order) {
+            $order->inventoryTransactions()->delete();
         });
     }
 

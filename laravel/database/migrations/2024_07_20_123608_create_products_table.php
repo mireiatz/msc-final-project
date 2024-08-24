@@ -13,14 +13,14 @@ return new class extends Migration
     {
         Schema::create('products', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('provider_id')->constrained('providers');
-            $table->foreignUuid('category_id')->constrained('categories');
-            $table->string('name');
+            $table->foreignUuid('provider_id')->index()->constrained('providers');
+            $table->foreignUuid('category_id')->index()->constrained('categories');
+            $table->string('name')->index();
             $table->string('description')->nullable();
             $table->string('unit');
             $table->string('amount_per_unit');
-            $table->integer('min_stock_level');
-            $table->integer('max_stock_level');
+            $table->integer('min_stock_level')->index();
+            $table->integer('max_stock_level')->index();
             $table->integer('sale');
             $table->integer('cost');
             $table->string('currency');

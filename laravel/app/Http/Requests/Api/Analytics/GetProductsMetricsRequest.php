@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\Api;
+namespace App\Http\Requests\Api\Analytics;
 
 use App\Http\Requests\ApiBaseRequest;
 
-class GetOverviewMetricsRequest extends ApiBaseRequest
+class GetProductsMetricsRequest extends ApiBaseRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,7 +24,8 @@ class GetOverviewMetricsRequest extends ApiBaseRequest
     public function rules(): array
     {
         return [
-            'period' => 'required|string',
+            'start_date' => 'required|date_format:Y-m-d H:i:s',
+            'end_date'   => 'required|date_format:Y-m-d H:i:s',
         ];
     }
 }

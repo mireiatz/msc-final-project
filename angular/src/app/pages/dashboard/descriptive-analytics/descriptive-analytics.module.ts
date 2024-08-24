@@ -8,6 +8,7 @@ import { SalesPage } from "./sales/sales.page";
 import { StockLevelsPage } from "./stock-levels/stock-levels.page";
 import { DescriptiveAnalyticsPage } from "./descriptive-analytics.page";
 import { SharedModule } from "../../../shared/shared.module";
+import { NgxChartsModule } from "@swimlane/ngx-charts";
 
 const PAGES = [
   DescriptiveAnalyticsPage,
@@ -26,6 +27,7 @@ const PAGES = [
     CommonModule,
     RouterModule,
     SharedModule,
-  ]
+    NgxChartsModule,
+  ],
 })
 export class DescriptiveAnalyticsModule {}

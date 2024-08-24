@@ -3,5 +3,5 @@ namespace App\Services\Analytics;
 
 interface OverviewMetricsInterface
 {
-    public function getOverviewMetrics(string $period): array;
+    public function getMetrics(string $startDate, string $endDate): array;
 }

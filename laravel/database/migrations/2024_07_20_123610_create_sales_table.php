@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('sales', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('store_id')->constrained('stores');
-            $table->dateTime('date');
+            $table->foreignUuid('store_id')->index()->constrained('stores');
+            $table->dateTime('date')->index();
             $table->integer('sale');
             $table->integer('cost');
             $table->integer('vat');

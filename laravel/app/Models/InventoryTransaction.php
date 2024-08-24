@@ -18,6 +18,7 @@ class InventoryTransaction extends Model
         'parent_id',
         'parent_type',
         'product_id',
+        'date',
         'quantity',
         'stock_balance',
     ];

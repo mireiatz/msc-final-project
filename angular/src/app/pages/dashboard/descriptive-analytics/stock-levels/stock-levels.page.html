@@ -1,3 +1,21 @@
-<div>
-  Stock level
+<div class="main-page">
+  <div class="data-display">
+    <app-loader
+      [isLoading]="isLoading"
+    ></app-loader>
+
+    <div *ngIf="stockData">
+      <div *ngFor="let category of stockData">
+        <h2>{{ category.name }}</h2>
+        <ngx-charts-bar-horizontal
+          [results]="category.series"
+          [xAxis]="true"
+          [yAxis]="true"
+          [legend]="false"
+          [customColors]="customColours"
+          [roundEdges]="false">
+        </ngx-charts-bar-horizontal>
+      </div>
+    </div>
+  </div>
 </div>

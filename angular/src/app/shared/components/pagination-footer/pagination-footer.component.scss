@@ -1,0 +1,15 @@
+.page {
+
+  &-link {
+    background-color: transparent;
+    border: none;
+  }
+
+  &-item {
+
+    &.disabled {
+      display: none;
+    }
+  }
+}
+

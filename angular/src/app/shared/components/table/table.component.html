@@ -1,0 +1,17 @@
+<table class="table">
+  <thead>
+  <tr>
+    <th *ngFor="let column of columns" (click)="onSort(column.field)">
+      {{ column.header }}
+      <span *ngIf="sortColumn === column.field">
+           {{ sortDirection === 'asc' ? '↑' : '↓' }}
+        </span>
+    </th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr *ngFor="let row of data">
+    <td *ngFor="let column of columns">{{ row[column.field] }}</td>
+  </tr>
+  </tbody>
+</table>

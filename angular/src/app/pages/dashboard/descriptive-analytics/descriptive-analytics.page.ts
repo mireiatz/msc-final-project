@@ -1,4 +1,5 @@
-import { Component } from "@angular/core";
+import { Component, OnDestroy } from "@angular/core";
+import { Subject } from "rxjs";
 
 @Component({
 	selector: 'page-descriptive-analytics',
@@ -6,8 +7,9 @@ import { Component } from "@angular/core";
 	styleUrls: ['./descriptive-analytics.page.scss'],
 })
 
-export class DescriptiveAnalyticsPage {
+export class DescriptiveAnalyticsPage implements OnDestroy {
 
+  public onDestroy: Subject<void> = new Subject();
   public tabs = [
     {
       label: 'Overview',
@@ -30,6 +32,13 @@ export class DescriptiveAnalyticsPage {
       key: 'stock-levels',
     },
   ];
+  public activeTab: string = '';
 
-  constructor() {}
+  constructor() {
+    this.activeTab = window.location.href.split('/').pop() ?? '';
+  }
+
+  public ngOnDestroy(): void {
+    this.onDestroy.next();
+  }
 }
