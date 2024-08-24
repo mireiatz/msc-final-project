@@ -1,17 +1,17 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Angular;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Analytics\GetOverviewMetricsRequest;
 use App\Http\Requests\Api\Analytics\GetProductsMetricsRequest;
 use App\Http\Requests\Api\Analytics\GetSalesMetricsRequest;
+use App\Http\Responses\JsonResponse as Json;
 use App\Services\Analytics\OverviewMetricsInterface;
 use App\Services\Analytics\ProductsMetricsInterface;
 use App\Services\Analytics\SalesMetricsInterface;
 use App\Services\Analytics\StockMetricsInterface;
 use Illuminate\Http\JsonResponse;
-use App\Http\Responses\JsonResponse as Json;
 
 class AnalyticsController extends Controller
 {

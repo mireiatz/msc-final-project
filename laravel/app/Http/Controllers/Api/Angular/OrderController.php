@@ -1,20 +1,20 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Angular;
 
 use App\Http\Controllers\Controller;
-use App\Models\Provider;
+use App\Models\Order;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 
-class ProviderController extends Controller
+class OrderController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index(): Collection
     {
-        return Provider::all();
+        return Order::all();
     }
 
     /**

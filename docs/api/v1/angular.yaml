@@ -7,8 +7,9 @@ info:
   contact:
     name: Mireia
   description: API spec
+  summary: Documentation for the Angular part of the API.
 servers:
-  - url: 'http://localhost:8000/api/v1'
+  - url: 'http://localhost:8000/api/v1/angular'
     description: local
 paths:
   /categories:
