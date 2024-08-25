@@ -5,12 +5,12 @@ import { ApiService } from "../../../../shared/services/api/services/api.service
 import { ProductDetailedMetrics } from "../../../../shared/services/api/models/product-detailed-metrics";
 
 @Component({
-	selector: 'page-product-performance',
-	templateUrl: './product-performance.page.html',
-	styleUrls: ['./product-performance.page.scss'],
+	selector: 'page-products-performance',
+	templateUrl: './products-performance.page.html',
+	styleUrls: ['./products-performance.page.scss'],
 })
 
-export class ProductPerformancePage implements OnDestroy {
+export class ProductsPerformancePage implements OnDestroy {
 
   public onDestroy: Subject<void> = new Subject();
   public isLoading: boolean = true;

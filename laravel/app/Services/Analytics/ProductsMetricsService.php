@@ -3,6 +3,10 @@
 namespace App\Services\Analytics;
 
 use App\Models\Product;
+use DateInterval;
+use DatePeriod;
+use DateTime;
+use Exception;
 use Illuminate\Support\Collection;
 
 class ProductsMetricsService implements ProductsMetricsInterface
@@ -133,5 +137,80 @@ class ProductsMetricsService implements ProductsMetricsInterface
             ->where('date', '<=', $date)
             ->orderByDesc('date')
             ->value('stock_balance') ?? 0;
+    }
+
+    /**
+     * @throws Exception
+     */
+    /**
+     * @throws Exception
+     */
+    public function getProductSpecificMetrics(Product $product, string $startDate, string $endDate): array
+    {
+        $dateRange = $this->generateDateRange($startDate, $endDate);
+
+        $quantitySoldSeries = [];
+        $salesRevenueSeries = [];
+        $stockBalanceSeries = [];
+
+        foreach ($dateRange as $date) {
+            $dailyQuantitySold = $this->calculateProductQuantitySold($product, $date);
+            $dailySalesRevenue = $this->calculateProductSalesRevenue($product, $date);
+            $stockBalance = $this->getStockBalanceAt($product, $date);
+
+            // Populate the arrays with the correct structure
+            $quantitySoldSeries[] = [
+                'date' => $date,
+                'amount' => $dailyQuantitySold,
+            ];
+
+            $salesRevenueSeries[] = [
+                'date' => $date,
+                'amount' => $dailySalesRevenue,
+            ];
+
+            $stockBalanceSeries[] = [
+                'date' => $date,
+                'amount' => $stockBalance,
+            ];
+        }
+
+        return [
+            'quantity_sold' => $quantitySoldSeries,
+            'sales_revenue' => $salesRevenueSeries,
+            'stock_balance' => $stockBalanceSeries,
+        ];
+    }
+
+
+    /**
+     * @throws Exception
+     */
+    private function generateDateRange(string $startDate, string $endDate): array
+    {
+        $period = new DatePeriod(
+            new DateTime($startDate),
+            new DateInterval('P1D'),
+            (new DateTime($endDate))->modify('+1 day')
+        );
+
+        return array_map(
+            fn($date) => $date->format('Y-m-d'),
+            iterator_to_array($period)
+        );
+    }
+
+    public function calculateProductQuantitySold(Product $product, string $date): int
+    {
+        return $product->sales()
+            ->whereDate('sales.date', $date)
+            ->sum('quantity') ?: 0;
+    }
+
+    public function calculateProductSalesRevenue(Product $product, string $date): float
+    {
+        return $product->sales()
+            ->whereDate('sales.date', $date)
+            ->sum('total_sale') / 100 ?: 0;
     }
 }

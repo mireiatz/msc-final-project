@@ -3,6 +3,11 @@ import { ApiService } from "../../../../shared/services/api/services/api.service
 import { finalize, Subject, take } from "rxjs";
 import { HttpErrorResponse } from "@angular/common/http";
 import { OverviewMetrics } from "../../../../shared/services/api/models/overview-metrics";
+import { ModalService } from "../../../../shared/services/modal/modal.service";
+import { Product } from "../../../../shared/services/api/models/product";
+import {
+  ProductPerformanceModalComponent
+} from "../modals/product-performance-modal/product-performance-modal.component";
 
 @Component({
 	selector: 'page-overview',
@@ -24,6 +29,7 @@ export class OverviewPage implements OnDestroy {
 
   constructor(
     protected apiService: ApiService,
+    protected modalService: ModalService,
   ) {}
 
   public ngOnDestroy(): void {
@@ -102,5 +108,16 @@ export class OverviewPage implements OnDestroy {
         "value": this.metrics.sales.min_items_sold_in_sale,
       },
     ];
+  }
+
+  public displayProductInfo(product: Product) {
+
+    const data: any = {
+      title: 'Product Data',
+      product: product,
+      start_date: this.startDate,
+      end_date: this.endDate,
+    }
+    this.modalService.open(ProductPerformanceModalComponent, data);
   }
 }

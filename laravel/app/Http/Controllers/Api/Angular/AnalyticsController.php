@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Api\Angular;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Analytics\GetOverviewMetricsRequest;
+use App\Http\Requests\Api\Analytics\GetProductMetricsRequest;
 use App\Http\Requests\Api\Analytics\GetProductsMetricsRequest;
 use App\Http\Requests\Api\Analytics\GetSalesMetricsRequest;
 use App\Http\Responses\JsonResponse as Json;
+use App\Models\Product;
 use App\Services\Analytics\OverviewMetricsInterface;
 use App\Services\Analytics\ProductsMetricsInterface;
 use App\Services\Analytics\SalesMetricsInterface;
@@ -79,5 +81,21 @@ class AnalyticsController extends Controller
         $metrics = $this->productsMetricsInterface->getDetailedMetrics($data['start_date'], $data['end_date']);
 
         return Json::paginate($metrics);
+    }
+
+    /**
+     * Get product metrics.
+     *
+     * @param GetProductMetricsRequest $request
+     * @param Product $product
+     * @return JsonResponse
+     */
+    public function getProductMetrics(GetProductMetricsRequest $request, Product $product): JsonResponse
+    {
+        $data = $request->validated();
+
+        $metrics = $this->productsMetricsInterface->getProductSpecificMetrics($product, $data['start_date'], $data['end_date']);
+
+        return Json::success($metrics);
     }
 }

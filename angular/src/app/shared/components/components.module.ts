@@ -8,6 +8,7 @@ import { DateRangePickerComponent } from "./date-range-picker/date-range-picker.
 import { FormsModule } from "@angular/forms";
 import { PaginationFooterComponent } from "./pagination-footer/pagination-footer.component";
 import { LoaderComponent } from "./loader/loader.component";
+import { ModalComponent } from "./modal/modal.component";
 
 const COMPONENTS = [
   SidebarComponent,
@@ -16,6 +17,7 @@ const COMPONENTS = [
   DateRangePickerComponent,
   PaginationFooterComponent,
   LoaderComponent,
+  ModalComponent,
 ]
 @NgModule({
   declarations: [
