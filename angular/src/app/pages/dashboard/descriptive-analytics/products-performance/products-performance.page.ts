@@ -17,6 +17,7 @@ export class ProductsPerformancePage implements OnDestroy {
   public onDestroy: Subject<void> = new Subject();
   public isLoading: boolean = true;
   public metrics: ProductDetailedMetrics[] | undefined = undefined;
+  public filteredMetrics: ProductDetailedMetrics[] | undefined = undefined;
   public errors: string[] = [];
   public startDate: string = '';
   public endDate: string = '';
@@ -65,6 +66,7 @@ export class ProductsPerformancePage implements OnDestroy {
     ).subscribe({
         next: response => {
           this.metrics = response.data.items;
+          this.filteredMetrics = response.data.items;
           this.pagination = response.data.pagination;
         },
         error: (error: HttpErrorResponse) => {
@@ -98,5 +100,19 @@ export class ProductsPerformancePage implements OnDestroy {
       end_date: this.endDate,
     }
     this.modalService.open(ProductPerformanceModalComponent, data);
+  }
+
+  public onSearch(query: string): void {
+    this.filterMetrics(query);
+  }
+
+  public filterMetrics(query: string = ''): void {
+    if (!this.metrics) {
+      return;
+    }
+
+    this.filteredMetrics = this.metrics.filter(metric =>
+      metric.name.toLowerCase().includes(query.toLowerCase())
+    );
   }
 }
