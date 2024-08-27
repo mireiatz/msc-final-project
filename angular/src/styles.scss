@@ -1,7 +1,8 @@
 // Colours
 $primary-color: #3498db;
-$secondary-color: lighten($primary-color, 20%);
+$light-primary-color: mix(white, $primary-color, 30%);
 $accent-color: #e67e22;
+$light-accent-color: mix(white, $accent-color, 30%);
 $success-color: #2ecc71;
 $warning-color: #e74c3c;
 $background-color: #f9f9f9;
@@ -139,7 +140,7 @@ body {
     background-color: $primary-color;
 
     &:hover {
-      background-color: $secondary-color;
+      background-color: $light-primary-color;
     }
   }
 
@@ -191,33 +192,6 @@ p {
 .card {
   padding: $padding-base;
   margin: $margin-base $margin-base 0 0;
-}
-
-// Table Styles
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: $margin-base;
-
-  th, td {
-    border: 1px solid $border-color;
-    padding: $padding-small;
-    text-align: left;
-    font-size: $font-size-base;
-  }
-
-  th {
-    background-color: $background-color;
-    font-weight: bold;
-  }
-
-  tr:nth-child(even) {
-    background-color: $background-color;
-  }
-
-  tr:hover {
-    background-color: $warning-color;
-  }
 }
 
 // Forms

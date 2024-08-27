@@ -1,3 +1,14 @@
+@import '../../../../styles.scss';
+
+.pagination-container {
+  background-color: white;
+  width: 100%;
+  margin-left: 0;
+  padding-top: $padding-base;
+  border-bottom-left-radius: $border-radius-base;
+  border-bottom-right-radius: $border-radius-base;
+}
+
 .page {
 
   &-link {
@@ -6,6 +17,13 @@
   }
 
   &-item {
+
+    &.active {
+
+      a {
+        border-radius: 50%;
+      }
+    }
 
     &.disabled {
       display: none;

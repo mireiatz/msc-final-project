@@ -10,7 +10,7 @@
   </tr>
   </thead>
   <tbody>
-  <tr *ngFor="let row of data">
+  <tr *ngFor="let row of data" (click)="onCellClick(row)">
     <td *ngFor="let column of columns">{{ row[column.field] }}</td>
   </tr>
   </tbody>

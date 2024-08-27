@@ -261,4 +261,50 @@ class ProductsMetricsServiceTest extends TestCase
         $finalBalance = $this->service->getStockBalanceAt($this->product1, $finalDate);
         $this->assertEquals(11, $finalBalance);
     }
+
+    public function testCalculateProductQuantitySold(): void
+    {
+        $saleDate1 = now()->subDays(5)->toDateString();
+        $saleDate2 = now()->subDays(3)->toDateString();
+
+        $quantitySold = $this->service->calculateProductQuantitySold($this->product1, $saleDate1);
+        $this->assertEquals(0, $quantitySold);
+        $quantitySold = $this->service->calculateProductQuantitySold($this->product1, $saleDate2);
+        $this->assertEquals(0, $quantitySold);
+        $quantitySold = $this->service->calculateProductQuantitySold($this->product2, $saleDate1);
+        $this->assertEquals(0, $quantitySold);
+        $quantitySold = $this->service->calculateProductQuantitySold($this->product2, $saleDate2);
+        $this->assertEquals(0, $quantitySold);
+
+        $this->createSale(collect([$this->product1]), [5], $saleDate1, $saleDate1);
+        $this->createSale(collect([$this->product1]), [3], $saleDate2, $saleDate2);
+        $quantitySoldOnDate1 = $this->service->calculateProductQuantitySold($this->product1, $saleDate1);
+        $quantitySoldOnDate2 = $this->service->calculateProductQuantitySold($this->product1, $saleDate2);
+        $this->assertEquals(5, $quantitySoldOnDate1);
+        $this->assertEquals(3, $quantitySoldOnDate2);
+    }
+
+    public function testCalculateDailyProductSalesRevenue(): void
+    {
+        $saleDate1 = now()->subDays(7)->toDateString();
+        $saleDate2 = now()->subDays(4)->toDateString();
+
+        $salesRevenue = $this->service->calculateProductSalesRevenue($this->product1, $saleDate1);
+        $this->assertEquals(0.00, $salesRevenue);
+        $salesRevenue = $this->service->calculateProductSalesRevenue($this->product1, $saleDate2);
+        $this->assertEquals(0.00, $salesRevenue);
+        $salesRevenue = $this->service->calculateProductSalesRevenue($this->product2, $saleDate1);
+        $this->assertEquals(0.00, $salesRevenue);
+        $salesRevenue = $this->service->calculateProductSalesRevenue($this->product2, $saleDate2);
+        $this->assertEquals(0.00, $salesRevenue);
+
+        $this->createSale(collect([$this->product2]), [2], $saleDate1, $saleDate1);
+        $this->createSale(collect([$this->product2]), [4], $saleDate2, $saleDate2);
+
+        $revenueOnDate1 = $this->service->calculateProductSalesRevenue($this->product2, $saleDate1);
+        $revenueOnDate2 = $this->service->calculateProductSalesRevenue($this->product2, $saleDate2);
+
+        $this->assertEquals(100.00, $revenueOnDate1);
+        $this->assertEquals(200.00, $revenueOnDate2);
+    }
 }

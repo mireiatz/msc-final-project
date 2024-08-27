@@ -1,0 +1,54 @@
+@import '../../../../styles.scss';
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 0;
+
+  th,
+  td {
+    background-color: white;
+    border: none;
+    padding: $padding-small $padding-base;
+    text-align: left;
+    font-size: $font-size-base;
+  }
+
+  th {
+    font-weight: $font-weight-bold;
+  }
+
+  tr {
+    cursor: pointer;
+    border-bottom: 1px solid $border-color;
+
+    &:hover {
+
+      td {
+        background-color: $accent-color;
+        color: white;
+
+      }
+    }
+  }
+
+  thead {
+    tr:first-child th:first-child {
+      border-top-left-radius: $border-radius-base;
+    }
+
+    tr:first-child th:last-child {
+      border-top-right-radius: $border-radius-base;
+    }
+  }
+
+  tbody {
+    tr:last-child td:first-child {
+      border-bottom-left-radius: $border-radius-base;
+    }
+
+    tr:last-child td:last-child {
+      border-bottom-right-radius: $border-radius-base;
+    }
+  }
+}

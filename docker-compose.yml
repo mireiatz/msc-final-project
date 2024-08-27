@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   angular:
     container_name: angular
@@ -63,5 +61,6 @@ volumes:
 
 networks:
   project-network:
+    driver: bridge
     external: true
     name: project-module-2024-apr-mireiatz_default
