@@ -4,49 +4,53 @@
   </ng-container>
 
   <ng-container content>
-    <div>
-      <h2>Quantity Sold</h2>
-      <ngx-charts-line-chart
-        [view]="[700, 300]"
-        [results]="quantitySoldData"
-        [xAxis]="true"
-        [yAxis]="true"
-        [legend]="false"
-        [showXAxisLabel]="true"
-        [showYAxisLabel]="true"
-        [xAxisLabel]="'Date'"
-        [yAxisLabel]="'Quantity Sold'">
-      </ngx-charts-line-chart>
-    </div>
+    <div class="row">
+      <div class="col-12">
+        <h2>Sales</h2>
+        <ngx-charts-line-chart
+          [view]="[950, 300]"
+          [results]="quantitySoldData"
+          [xAxis]="true"
+          [yAxis]="true"
+          [legend]="false"
+          [showXAxisLabel]="true"
+          [showYAxisLabel]="true"
+          [xAxisLabel]="'Date'"
+          [yAxisLabel]="'Quantity'"
+          [tooltipDisabled]="true">
+        </ngx-charts-line-chart>
+      </div>
 
-    <div>
-      <h2>Sales Revenue</h2>
-      <ngx-charts-line-chart
-        [view]="[700, 300]"
-        [results]="salesRevenueData"
-        [xAxis]="true"
-        [yAxis]="true"
-        [legend]="false"
-        [showXAxisLabel]="true"
-        [showYAxisLabel]="true"
-        [xAxisLabel]="'Date'"
-        [yAxisLabel]="'Sales Revenue'">
-      </ngx-charts-line-chart>
-    </div>
+      <div class="col-12">
+        <ngx-charts-line-chart
+          [view]="[950, 300]"
+          [results]="salesRevenueData"
+          [xAxis]="true"
+          [yAxis]="true"
+          [legend]="false"
+          [showXAxisLabel]="true"
+          [showYAxisLabel]="true"
+          [xAxisLabel]="'Date'"
+          [yAxisLabel]="'Revenue'"
+          [tooltipDisabled]="true">
+        </ngx-charts-line-chart>
+      </div>
 
-    <div>
-      <h2>Stock Balance</h2>
-      <ngx-charts-line-chart
-        [view]="[700, 300]"
-        [results]="stockBalanceData"
-        [xAxis]="true"
-        [yAxis]="true"
-        [legend]="false"
-        [showXAxisLabel]="true"
-        [showYAxisLabel]="true"
-        [xAxisLabel]="'Date'"
-        [yAxisLabel]="'Stock Balance'">
-      </ngx-charts-line-chart>
+      <div class="col-12">
+        <h2>Stock</h2>
+        <ngx-charts-line-chart
+          [view]="[950, 400]"
+          [results]="stockBalanceData"
+          [xAxis]="true"
+          [yAxis]="true"
+          [legend]="false"
+          [showXAxisLabel]="true"
+          [showYAxisLabel]="true"
+          [xAxisLabel]="'Date'"
+          [yAxisLabel]="'Balance'"
+          [tooltipDisabled]="true">
+        </ngx-charts-line-chart>
+      </div>
     </div>
   </ng-container>
 

@@ -7,7 +7,9 @@ import { ModalService } from "../../services/modal/modal.service";
   styleUrls: ['./modal.component.scss'],
 })
 export class ModalComponent {
-  constructor(private modalService: ModalService) {}
+  constructor(
+    protected modalService: ModalService,
+  ) {}
 
   close() {
     this.modalService.close();

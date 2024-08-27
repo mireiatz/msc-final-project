@@ -40,9 +40,9 @@ export class ProductPerformanceModalComponent {
       }
     }).subscribe({
       next: response => {
-        this.quantitySoldData = this.formatChartData(response.data.quantity_sold);
-        this.salesRevenueData = this.formatChartData(response.data.sales_revenue);
-        this.stockBalanceData = this.formatChartData(response.data.stock_balance);
+        this.quantitySoldData = this.formatChartData(response.data.quantity_sold, 'Quantity');
+        this.salesRevenueData = this.formatChartData(response.data.sales_revenue, 'Revenue');
+        this.stockBalanceData = this.formatChartData(response.data.stock_balance, 'Stock');
       },
       error: (error: HttpErrorResponse) => {
         for (let errorList in error.error.errors) {
@@ -52,11 +52,14 @@ export class ProductPerformanceModalComponent {
     });
   }
 
-  formatChartData(data: { date: string; amount: number }[]): any[] {
-    return data.map(item => ({
-      name: item.date,
-      value: item.amount
-    }));
+  formatChartData(data: { date: string; amount: number }[], name: string): any[] {
+    return [{
+      name: name,
+      series: data.map(item => ({
+        name: new Date(item.date),
+        value: item.amount
+      }))
+    }];
   }
 
 }

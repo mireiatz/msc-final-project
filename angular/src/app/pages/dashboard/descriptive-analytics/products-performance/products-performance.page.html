@@ -11,11 +11,12 @@
     <app-table
       [columns]="columns"
       [data]="metrics"
+      (cellClicked)="displayProductInfo($event)"
     ></app-table>
-  </div>
 
-  <app-pagination-footer
-    [pagination]="pagination"
-    (pageChange)="onPageChange($event)">
-  </app-pagination-footer>
+    <app-pagination-footer
+      [pagination]="pagination"
+      (pageChange)="onPageChange($event)">
+    </app-pagination-footer>
+  </div>
 </div>

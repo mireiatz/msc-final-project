@@ -113,7 +113,7 @@ export class OverviewPage implements OnDestroy {
   public displayProductInfo(product: Product) {
 
     const data: any = {
-      title: 'Product Data',
+      title: 'Product: ' + product.name,
       product: product,
       start_date: this.startDate,
       end_date: this.endDate,

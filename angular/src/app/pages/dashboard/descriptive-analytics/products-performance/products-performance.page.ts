@@ -3,6 +3,8 @@ import { finalize, Subject, take } from "rxjs";
 import { HttpErrorResponse } from "@angular/common/http";
 import { ApiService } from "../../../../shared/services/api/services/api.service";
 import { ProductDetailedMetrics } from "../../../../shared/services/api/models/product-detailed-metrics";
+import { ModalService } from "../../../../shared/services/modal/modal.service";
+import { ProductPerformanceModalComponent } from "../modals/product-performance-modal/product-performance-modal.component";
 
 @Component({
 	selector: 'page-products-performance',
@@ -40,7 +42,8 @@ export class ProductsPerformancePage implements OnDestroy {
   };
 
   constructor(
-    protected apiService: ApiService
+    protected apiService: ApiService,
+    protected modalService: ModalService,
   ) {}
 
   public ngOnDestroy(): void {
@@ -85,5 +88,15 @@ export class ProductsPerformancePage implements OnDestroy {
     this.page = page;
     this.pagination.current_page = page;
     this.getProductsMetrics(this.page);
+  }
+
+  public displayProductInfo(product: any) {
+    const data: any = {
+      title: 'Product: ' + product.name,
+      product: product,
+      start_date: this.startDate,
+      end_date: this.endDate,
+    }
+    this.modalService.open(ProductPerformanceModalComponent, data);
   }
 }

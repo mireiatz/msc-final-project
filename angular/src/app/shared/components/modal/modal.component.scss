@@ -18,6 +18,11 @@
   z-index: 1001;
   width: 100%;
   max-width: 1000px;
+  max-height: 700px;
+}
+
+.modal-body {
+  width: 100%;
   overflow: scroll;
 }
 

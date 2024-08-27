@@ -14,7 +14,7 @@ Route::prefix('/stock')->group(function () {
 Route::prefix('/products')->group(function () {
     Route::post('/', [AnalyticsController::class, 'getProductsMetrics'])->name('getProductsMetrics');
 
-    Route::prefix('/{productId}')->group(function () {
+    Route::prefix('/{product}')->group(function () {
         Route::post('/', [AnalyticsController::class, 'getProductMetrics'])->name('getProductMetrics');
     });
 });

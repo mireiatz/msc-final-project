@@ -142,9 +142,6 @@ class ProductsMetricsService implements ProductsMetricsInterface
     /**
      * @throws Exception
      */
-    /**
-     * @throws Exception
-     */
     public function getProductSpecificMetrics(Product $product, string $startDate, string $endDate): array
     {
         $dateRange = $this->generateDateRange($startDate, $endDate);
@@ -158,7 +155,6 @@ class ProductsMetricsService implements ProductsMetricsInterface
             $dailySalesRevenue = $this->calculateProductSalesRevenue($product, $date);
             $stockBalance = $this->getStockBalanceAt($product, $date);
 
-            // Populate the arrays with the correct structure
             $quantitySoldSeries[] = [
                 'date' => $date,
                 'amount' => $dailyQuantitySold,
