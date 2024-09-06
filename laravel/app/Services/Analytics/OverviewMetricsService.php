@@ -13,7 +13,7 @@ readonly class OverviewMetricsService implements OverviewMetricsInterface
     {}
 
     /**
-     * Get overview analytics for the stock.
+     * Get overview metrics, including stock, sales and products metrics, for the specified date range.
      *
      * @param string $startDate
      * @param string $endDate

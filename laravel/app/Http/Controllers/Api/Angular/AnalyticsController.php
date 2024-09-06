@@ -26,7 +26,7 @@ class AnalyticsController extends Controller
     {}
 
     /**
-     * Get overview metrics.
+     * Get overview metrics for the specified date range.
      *
      * @param GetOverviewMetricsRequest $request
      * @return JsonResponse
@@ -36,10 +36,7 @@ class AnalyticsController extends Controller
         $data = $request->validated();
         $metrics = $this->overviewMetricsInterface->getMetrics($data['start_date'], $data['end_date']);
 
-        return response()->json([
-            'data' => $metrics,
-            'success' => true,
-        ]);
+        return Json::success($metrics);
     }
 
     /**
@@ -55,7 +52,7 @@ class AnalyticsController extends Controller
     }
 
     /**
-     * Get sales metrics.
+     * Get sales metrics for the specified date range.
      *
      * @param GetSalesMetricsRequest $request
      * @return JsonResponse
@@ -69,7 +66,7 @@ class AnalyticsController extends Controller
     }
 
     /**
-     * Get products metrics.
+     * Get products metrics for the specified date range.
      *
      * @param GetProductsMetricsRequest $request
      * @return JsonResponse
@@ -84,7 +81,7 @@ class AnalyticsController extends Controller
     }
 
     /**
-     * Get product metrics.
+     * Get metrics for a specific product for the specified date range.
      *
      * @param GetProductMetricsRequest $request
      * @param Product $product
