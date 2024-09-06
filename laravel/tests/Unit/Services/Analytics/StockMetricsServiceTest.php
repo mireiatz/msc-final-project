@@ -19,6 +19,10 @@ class StockMetricsServiceTest extends TestCase
     private Product $product2;
     private string $startDate;
     private string $endDate;
+
+    /**
+     * Setup necessary data for testing the stock metrics service.
+     */
     protected function setUp(): void
     {
         parent::setUp();
@@ -45,6 +49,9 @@ class StockMetricsServiceTest extends TestCase
         $this->endDate = now()->toDateString();
     }
 
+    /**
+     * Test the `calculateInventoryValue` method to ensure it calculates the correct total value of inventory.
+     */
     public function testCalculateInventoryValue(): void
     {
         $products = collect([$this->product1, $this->product2]);
@@ -85,6 +92,9 @@ class StockMetricsServiceTest extends TestCase
         $this->assertEquals(300.00, $inventoryValue);
     }
 
+    /**
+     * Test the `calculateTotalItemsInStock` method to ensure it calculates the correct total number of items in stock.
+     */
     public function testCalculateTotalItemsInStock(): void
     {
         $products = collect([$this->product1, $this->product2]);
@@ -117,6 +127,9 @@ class StockMetricsServiceTest extends TestCase
         $this->assertEquals(50, $totalItems);
     }
 
+    /**
+     * Test the `countProductsInStock` method to ensure it counts the correct number of products in stock.
+     */
     public function testCountProductsInStock(): void
     {
         $products = collect([$this->product1, $this->product2]);
@@ -145,6 +158,9 @@ class StockMetricsServiceTest extends TestCase
         $this->assertEquals(0, $productsInStockCount);
     }
 
+    /**
+     * Test the `countProductsOutOfStock` method to ensure it counts the correct number of products out of stock.
+     */
     public function testCountProductsOutOfStock(): void
     {
         $products = collect([$this->product1, $this->product2]);
@@ -181,6 +197,9 @@ class StockMetricsServiceTest extends TestCase
         $this->assertEquals(0, $productsOutOfStockCount);
     }
 
+    /**
+     * Test the `getLowStockProducts` method to ensure it returns products with stock below their minimum.
+     */
     public function testGetLowStockProducts(): void
     {
         $products = collect([$this->product1, $this->product2]);
@@ -212,7 +231,9 @@ class StockMetricsServiceTest extends TestCase
         $this->assertEquals($this->product2->id, $lowStockProducts[1]['id']);
     }
 
-
+    /**
+     * Test the `getExcessiveStockProducts` method to ensure it returns products with stock above their maximum.
+     */
     public function testGetExcessiveStockProducts(): void
     {
         $products = collect([$this->product1, $this->product2]);
@@ -244,6 +265,9 @@ class StockMetricsServiceTest extends TestCase
         $this->assertCount(0, $excessiveStockProducts);
     }
 
+    /**
+     * Test the `getDetailedMetrics` method to ensure it returns the correct detailed stock metrics.
+     */
     public function testGetDetailedMetrics(): void
     {
         $products = collect([$this->product1, $this->product2]);

@@ -8,7 +8,7 @@ use Illuminate\Support\Collection;
 class StockMetricsService implements StockMetricsInterface
 {
     /**
-     * Get overview analytics for the stock.
+     * Get an overview of stock metrics.
      *
      * @return array
      */
@@ -35,7 +35,13 @@ class StockMetricsService implements StockMetricsInterface
         ];
     }
 
-    public function calculateInventoryValue($products): int
+    /**
+     * Calculate the inventory value for all products.
+     *
+     * @param Collection $products
+     * @return int
+     */
+    public function calculateInventoryValue(Collection $products): int
     {
         return $products->reduce(function ($carry, $product) {
             $productValue = $product->stock_balance * $product->cost;
@@ -43,26 +49,50 @@ class StockMetricsService implements StockMetricsInterface
         }, 0) / 100;
     }
 
-    public function calculateTotalItemsInStock($products): int
+    /**
+     * Calculate the total number of items in stock.
+     *
+     * @param Collection $products
+     * @return int
+     */
+    public function calculateTotalItemsInStock(Collection $products): int
     {
         return $products->sum('stock_balance');
     }
 
-    public function countProductsInStock($products): int
+    /**
+     * Count the number of products currently in stock.
+     *
+     * @param Collection $products
+     * @return int
+     */
+    public function countProductsInStock(Collection $products): int
     {
         return $products->filter(function ($product) {
             return $product->stock_balance > 0;
         })->count();
     }
 
-    public function countProductsOutOfStock($products): int
+    /**
+     * Count the number of products currently out of stock.
+     *
+     * @param Collection $products
+     * @return int
+     */
+    public function countProductsOutOfStock(Collection $products): int
     {
         return $products->filter(function ($product) {
             return $product->stock_balance <= 0;
         })->count();
     }
 
-    public function getLowStockProducts($products): array
+    /**
+     * Get products with stock levels below their minimum.
+     *
+     * @param Collection $products
+     * @return array
+     */
+    public function getLowStockProducts(Collection $products): array
     {
         return $products->filter(function ($product) {
             return $product->stock_balance < $product->min_stock_level;
@@ -74,7 +104,13 @@ class StockMetricsService implements StockMetricsInterface
         })->toArray();
     }
 
-    public function getExcessiveStockProducts($products): array
+    /**
+     * Get products with stock levels above their maximum.
+     *
+     * @param Collection $products
+     * @return array
+     */
+    public function getExcessiveStockProducts(Collection $products): array
     {
         return $products->filter(function ($product) {
             return $product->stock_balance > $product->max_stock_level;
@@ -86,6 +122,11 @@ class StockMetricsService implements StockMetricsInterface
         })->toArray();
     }
 
+    /**
+     * Get detailed stock metrics grouped by product category.
+     *
+     * @return array
+     */
     public function getDetailedMetrics(): array
     {
         $products = $this->getProductsGroupedByCategory();
@@ -93,11 +134,22 @@ class StockMetricsService implements StockMetricsInterface
         return $this->mapProducts($products);
     }
 
+    /**
+     * Get products grouped by category.
+     *
+     * @return Collection
+     */
     public function getProductsGroupedByCategory(): Collection
     {
         return Product::with('category')->get()->groupBy('category_id');
     }
 
+    /**
+     * Map product details for stock reporting purposes.
+     *
+     * @param Collection $products
+     * @return array
+     */
     public function mapProducts(Collection $products): array
     {
         return $products->map(function ($products) {
@@ -111,6 +163,12 @@ class StockMetricsService implements StockMetricsInterface
         })->values()->toArray();
     }
 
+    /**
+     * Map detailed product information.
+     *
+     * @param Product $product
+     * @return array
+     */
     private function mapProductDetails(Product $product): array
     {
         return [
@@ -124,6 +182,14 @@ class StockMetricsService implements StockMetricsInterface
         ];
     }
 
+    /**
+     * Get the stock status (understocked, overstocked, or within range) for a product.
+     *
+     * @param int $balance
+     * @param int $min
+     * @param int $max
+     * @return string
+     */
     public function getStockStatus(int $balance, int $min, int $max): string
     {
         if ($balance < $min) {
