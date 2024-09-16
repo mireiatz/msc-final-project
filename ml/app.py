@@ -1,10 +1,10 @@
-from flask import Flask
+from preprocessing.preprocessing_pipeline import PreprocessingPipeline
+import pandas as pd
 
-app = Flask(__name__)
+# Define the input data directory and output path
+data_directory = './ml/data/raw/'
+output_path = './ml/data/scaled'
 
-@app.route('/')
-def home():
-    return "Hello, Flask!"
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5002)
+# Initialise and run the data pipeline
+pipeline = PreprocessingPipeline(data_dir=data_directory, output_path=output_path)
+final_data = pipeline.run()
