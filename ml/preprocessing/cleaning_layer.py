@@ -44,22 +44,13 @@ class CleaningLayer:
 
         return hashlib.md5(unique_string.encode()).hexdigest()[:8]  # Return shortened hashed
 
-    def handle_missing_product_ids(self, df):
+    def handle_product_ids(self, df):
         """
         Handle missing product IDs.
         """
-        # Find products with missing ids
-        for index, row in df[df['product_id'].isna()].iterrows():
-            # Find products with matching names
-            matched_row = df[(df['product_name'] == row['product_name']) &
-                             (df['category'] == row['category']) &
-                             df['product_id'].notna()]
+        df = df.rename(columns={'product_id': 'original_product_id'})
 
-            # If a product with a matching name is found, use it. Otherwise generate a new id.
-            if not matched_row.empty:
-                df.at[index, 'product_id'] = matched_row.iloc[0]['product_id']
-            else:
-                df.at[index, 'product_id'] = self.generate_unique_id(row['product_name'], row['category'])
+        df['product_id'] =  df.apply(lambda row: self.generate_unique_id(row['product_name'], row['category']), axis=1)
 
         return df
 
@@ -100,24 +91,26 @@ class CleaningLayer:
 
         return df
 
-    def standardise_categories(self, df):
+    def standardise_column(self, df, column):
         """
-        Standardise the 'category' column.
+        Standardise string values in a column.
         """
         # Clean the labels
-        df['category'] = df['category'].str.lower()  # Lowercase everything
-        df['category'] = df['category'].str.replace(r'[^\w\s]', ' ', regex=True)  # Remove special characters
-        df['category'] = df['category'].str.replace(r'\s+', '_', regex=True)  # Replace spaces with underscores
+        df[column] = df[column].str.lower()  # Lowercase everything
+        df[column] = df[column].str.replace(r'[^\w\s]', ' ', regex=True)  # Remove special characters
+        df[column] = df[column].str.replace(r'\s+', '_', regex=True)  # Replace spaces with underscores
 
-        # Perform specific replacements
-        df['category'] = df['category'].replace({
-           'sauces_pickle': 'sauces_pickles',
-           'washing_powder': 'washing_powders',
-           'petfood': 'pet_food',
-           'lower_rate': 'miscellaneous',
-           'standard_rate': 'miscellaneous',
-           'zero_rate': 'miscellaneous',
-        })
+        if column == 'category':
+            # Perform specific replacements
+            df['category'] = df['category'].replace({
+                'sauces_pickle': 'sauces_pickles',
+                'washing_powder': 'washing_powders',
+                'petfood': 'pet_food',
+                'lower_rate': 'miscellaneous',
+                'standard_rate': 'miscellaneous',
+                'zero_rate': 'miscellaneous',
+                '': 'miscellaneous'
+            })
 
         return df
 
@@ -161,9 +154,8 @@ class CleaningLayer:
         """
         Drop duplicates based on product IDs, names, dates and sales values.
         """
-        df = df.drop_duplicates(subset=columns)
 
-        return df
+        return df.drop_duplicates(subset=columns, keep='first')
 
     def process(self):
         """
@@ -184,14 +176,14 @@ class CleaningLayer:
         print(f"Clean values at {datetime.now()}")
         df = self.clean_value_column(df)
         print(f"Standardise categories at {datetime.now()}")
-        df = self.standardise_categories(self.data)
-        print(f"Handle missing product ids at {datetime.now()}")
-        df = self.handle_missing_product_ids(df)
+        df = self.standardise_column(df, 'category')
+        print(f"Drop duplicate products at {datetime.now()}")
+        df = self.drop_duplicates(df, ['product_name', 'category', 'year', 'week'])
+        print(f"Handle product ids at {datetime.now()}")
+        df = self.handle_product_ids(df)
         print(f"Standardise in stock at {datetime.now()}")
         df = self.standardise_in_stock(df)
         print(f"Fill missing products at {datetime.now()}")
         df = self.insert_missing_product_weeks(df)
-        print(f"Drop duplicates at {datetime.now()}")
-        df = self.drop_duplicates(df, ['product_id', 'product_name', 'week', 'year', 'monday', 'tuesday', 'wednesday','thursday', 'friday', 'saturday', 'sunday'])
 
         return df

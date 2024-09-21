@@ -3,7 +3,7 @@ import pandas as pd
 
 # Define the input data directory and output path
 data_directory = './ml/data/raw/'
-output_path = './ml/data/scaled'
+output_path = './ml/data/processed'
 
 # Initialise and run the data pipeline
 pipeline = PreprocessingPipeline(data_dir=data_directory, output_path=output_path)
