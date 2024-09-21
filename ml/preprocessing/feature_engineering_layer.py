@@ -12,11 +12,11 @@ class FeatureEngineeringLayer:
         self.label_encoder = LabelEncoder()
         self.scaler = MinMaxScaler()
 
-    def encode_categories(self, df):
+    def encode_categorical_features(self, df, feature):
         """
         Apply Label Encoding to convert categories into numerical values.
         """
-        df['category_encoded'] = self.label_encoder.fit_transform(df['category'])
+        df[feature + '_encoded'] = self.label_encoder.fit_transform(df[feature])
 
         return df
 
@@ -62,6 +62,7 @@ class FeatureEngineeringLayer:
             year = row['year']
             week = row['week']
             product_id = row['product_id']
+            product_id_encoded = row['product_id_encoded']
             product_name = row['product_name']
             category = row['category']
             category_encoded = row['category_encoded']
@@ -79,6 +80,7 @@ class FeatureEngineeringLayer:
 
                 daily_rows.append({
                     'product_id': product_id,
+                    'product_id_encoded': product_id_encoded,
                     'product_name': product_name,
                     'category': category,
                     'category_encoded': category_encoded,
@@ -98,7 +100,7 @@ class FeatureEngineeringLayer:
 
         return pd.DataFrame(daily_rows)
 
-    def adjust_in_stock(self, df):
+    def adjust_in_stock_features(self, df):
         """
         Adjust the 'in_stock' status for each product.
         """
@@ -111,6 +113,12 @@ class FeatureEngineeringLayer:
         # Ensure 'in_stock' is 1 if the product had sales on that day
         df['in_stock'] = df.apply(lambda row: 1 if row['quantity'] > 0 else row['in_stock'], axis=1).astype(int)
 
+        # Create flag feature to highlight instances with stock and no sales
+        df['in_stock_no_sales'] = df.apply(
+            lambda row: 1 if (row['in_stock'] == 1 and row['quantity'] == 0) else 0,
+            axis=1
+        )
+
         return df
 
     def add_holiday_flag(self, df):
@@ -121,7 +129,7 @@ class FeatureEngineeringLayer:
         holiday_periods = [
             ((7, 26), (8, 1)),  # Specific holiday (July 26 to August 1)
             ((10, 24), (10, 31)),  # Halloween (October 24 to October 31)
-            ((12, 11), (12, 24)),  # Christmas (December 11 to December 24)
+            ((12, 18), (12, 24)),  # Christmas (December 18 to December 24)
             ((3, 28), (4, 4))  # Easter (March 28 to April 4)
         ]
 
@@ -151,7 +159,7 @@ class FeatureEngineeringLayer:
 
         return df.sort_values(by=columns)
 
-    def create_lag_columns(self, df, column, lag_days=[1, 7, 30, 365]):
+    def create_lag_features(self, df, column, lag_days=[7, 30, 365]):
         """
         Create lagged columns for a given column across specified days.
         """
@@ -170,7 +178,7 @@ class FeatureEngineeringLayer:
 
         return df
 
-    def create_rolling_avg_columns(self, df, column, windows=[7, 30, 365]):
+    def create_rolling_avg_features(self, df, column, windows=[1, 7, 30, 365]):
         """
         Create rolling average columns for the given column based on specified windows.
         """
@@ -215,26 +223,29 @@ class FeatureEngineeringLayer:
         """
         Re-structure the DataFrame and create new features:
         - Encode categories.
-        - Pivot weekly data.
+        - Pivot weekly data to daily.
         - Adjust the stock data.
         - Add a holiday flag.
         - Create lag and rolling columns.
+        - Scale relevant columns.
         - Save the data into a file.
         """
         print(f"Encode categories at {datetime.now()}")
-        df = self.encode_categories(self.data)
+        df = self.encode_categorical_features(self.data, 'category')
+        print(f"Encode product ids at {datetime.now()}")
+        df = self.encode_categorical_features(df, 'product_id')
         print(f"Pivot at {datetime.now()}")
         df = self.pivot_weekly_data(df)
         print(f"Adjust in stock at {datetime.now()}")
-        df = self.adjust_in_stock(df)
+        df = self.adjust_in_stock_features(df)
         print(f"Add holiday flag at {datetime.now()}")
         df = self.add_holiday_flag(df)
         print(f"Create lag columns at {datetime.now()}")
-        df = self.create_lag_columns(df, 'quantity')
+        df = self.create_lag_features(df, 'quantity')
         print(f"Create rolling columns at {datetime.now()}")
-        df = self.create_rolling_avg_columns(df, 'quantity')
-        print(f"Scaling features at {datetime.now()}")
-        df = self.scale_features(df)
+        df = self.create_rolling_avg_features(df, 'quantity')
+#         print(f"Scaling features at {datetime.now()}")
+#         df = self.scale_features(df)
         print(f"Save data at {datetime.now()}")
         self.save_data(df)
 

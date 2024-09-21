@@ -1,6 +1,5 @@
 import os
 import pandas as pd
-import logging
 
 class IngestionLayer:
 
@@ -25,12 +24,12 @@ class IngestionLayer:
                 logging.warning(f"Skipping empty file: {filename}")
 
         # Concatenate all DataFrames
-        combined_df = pd.concat(combined_data, ignore_index=True)
+        df = pd.concat(combined_data, ignore_index=True)
 
-        if combined_df.empty:
+        if df.empty:
             raise ValueError("No valid data was found in the provided directory.")
 
-        return combined_df
+        return df
 
     def save_data(self, df):
         """Save the combined DataFrame to a CSV file."""
@@ -40,11 +39,10 @@ class IngestionLayer:
         """Load, combine, and cache data from CSV files, or load from cache if available."""
         # If cached data is available, read and return it
         if os.path.exists(self.output_path):
-            logging.info(f"Loading cached data from {self.output_path}")
-            return pd.read_csv(self.output_path, dtype={'product_id': str})
+            return pd.read_csv(self.output_path, dtype={
+            'product_id': 'str'})
 
-        logging.info("No cache found, loading and combining data files.")
         # Load and combine data if no cached file is available
-        combined_df = self.load_and_combine_weekly_files()
-        self.save_data(combined_df)
-        return combined_df
+        df = self.load_and_combine_weekly_files()
+        self.save_data(df)
+        return df
