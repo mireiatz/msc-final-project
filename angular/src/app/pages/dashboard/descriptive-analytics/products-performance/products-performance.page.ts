@@ -3,18 +3,21 @@ import { finalize, Subject, take } from "rxjs";
 import { HttpErrorResponse } from "@angular/common/http";
 import { ApiService } from "../../../../shared/services/api/services/api.service";
 import { ProductDetailedMetrics } from "../../../../shared/services/api/models/product-detailed-metrics";
+import { ModalService } from "../../../../shared/services/modal/modal.service";
+import { ProductPerformanceModalComponent } from "../modals/product-performance-modal/product-performance-modal.component";
 
 @Component({
-	selector: 'page-product-performance',
-	templateUrl: './product-performance.page.html',
-	styleUrls: ['./product-performance.page.scss'],
+	selector: 'page-products-performance',
+	templateUrl: './products-performance.page.html',
+	styleUrls: ['./products-performance.page.scss'],
 })
 
-export class ProductPerformancePage implements OnDestroy {
+export class ProductsPerformancePage implements OnDestroy {
 
   public onDestroy: Subject<void> = new Subject();
   public isLoading: boolean = true;
   public metrics: ProductDetailedMetrics[] | undefined = undefined;
+  public filteredMetrics: ProductDetailedMetrics[] | undefined = undefined;
   public errors: string[] = [];
   public startDate: string = '';
   public endDate: string = '';
@@ -40,7 +43,8 @@ export class ProductPerformancePage implements OnDestroy {
   };
 
   constructor(
-    protected apiService: ApiService
+    protected apiService: ApiService,
+    protected modalService: ModalService,
   ) {}
 
   public ngOnDestroy(): void {
@@ -62,6 +66,7 @@ export class ProductPerformancePage implements OnDestroy {
     ).subscribe({
         next: response => {
           this.metrics = response.data.items;
+          this.filteredMetrics = response.data.items;
           this.pagination = response.data.pagination;
         },
         error: (error: HttpErrorResponse) => {
@@ -85,5 +90,29 @@ export class ProductPerformancePage implements OnDestroy {
     this.page = page;
     this.pagination.current_page = page;
     this.getProductsMetrics(this.page);
+  }
+
+  public displayProductInfo(product: any) {
+    const data: any = {
+      title: 'Product: ' + product.name,
+      product: product,
+      start_date: this.startDate,
+      end_date: this.endDate,
+    }
+    this.modalService.open(ProductPerformanceModalComponent, data);
+  }
+
+  public onSearch(query: string): void {
+    this.filterMetrics(query);
+  }
+
+  public filterMetrics(query: string = ''): void {
+    if (!this.metrics) {
+      return;
+    }
+
+    this.filteredMetrics = this.metrics.filter(metric =>
+      metric.name.toLowerCase().includes(query.toLowerCase())
+    );
   }
 }

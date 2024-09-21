@@ -2,7 +2,7 @@ import { RouterModule, Routes } from "@angular/router";
 import { NgModule } from "@angular/core";
 import { SalesPage } from "./sales/sales.page";
 import { OverviewPage } from "./overview/overview.page";
-import { ProductPerformancePage } from "./product-performance/product-performance.page";
+import { ProductsPerformancePage } from "./products-performance/products-performance.page";
 import { StockLevelsPage } from "./stock-levels/stock-levels.page";
 import { DescriptiveAnalyticsPage } from "./descriptive-analytics.page";
 
@@ -22,7 +22,7 @@ const routes: Routes = [
       },
       {
         path: 'product-performance',
-        component: ProductPerformancePage,
+        component: ProductsPerformancePage,
       },
       {
         path: 'sales',

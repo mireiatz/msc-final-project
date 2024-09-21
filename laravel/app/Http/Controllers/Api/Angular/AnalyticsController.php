@@ -1,17 +1,19 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Angular;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Analytics\GetOverviewMetricsRequest;
+use App\Http\Requests\Api\Analytics\GetProductMetricsRequest;
 use App\Http\Requests\Api\Analytics\GetProductsMetricsRequest;
 use App\Http\Requests\Api\Analytics\GetSalesMetricsRequest;
+use App\Http\Responses\JsonResponse as Json;
+use App\Models\Product;
 use App\Services\Analytics\OverviewMetricsInterface;
 use App\Services\Analytics\ProductsMetricsInterface;
 use App\Services\Analytics\SalesMetricsInterface;
 use App\Services\Analytics\StockMetricsInterface;
 use Illuminate\Http\JsonResponse;
-use App\Http\Responses\JsonResponse as Json;
 
 class AnalyticsController extends Controller
 {
@@ -24,7 +26,7 @@ class AnalyticsController extends Controller
     {}
 
     /**
-     * Get overview metrics.
+     * Get overview metrics for the specified date range.
      *
      * @param GetOverviewMetricsRequest $request
      * @return JsonResponse
@@ -34,10 +36,7 @@ class AnalyticsController extends Controller
         $data = $request->validated();
         $metrics = $this->overviewMetricsInterface->getMetrics($data['start_date'], $data['end_date']);
 
-        return response()->json([
-            'data' => $metrics,
-            'success' => true,
-        ]);
+        return Json::success($metrics);
     }
 
     /**
@@ -53,7 +52,7 @@ class AnalyticsController extends Controller
     }
 
     /**
-     * Get sales metrics.
+     * Get sales metrics for the specified date range.
      *
      * @param GetSalesMetricsRequest $request
      * @return JsonResponse
@@ -67,7 +66,7 @@ class AnalyticsController extends Controller
     }
 
     /**
-     * Get products metrics.
+     * Get products metrics for the specified date range.
      *
      * @param GetProductsMetricsRequest $request
      * @return JsonResponse
@@ -79,5 +78,21 @@ class AnalyticsController extends Controller
         $metrics = $this->productsMetricsInterface->getDetailedMetrics($data['start_date'], $data['end_date']);
 
         return Json::paginate($metrics);
+    }
+
+    /**
+     * Get metrics for a specific product for the specified date range.
+     *
+     * @param GetProductMetricsRequest $request
+     * @param Product $product
+     * @return JsonResponse
+     */
+    public function getProductMetrics(GetProductMetricsRequest $request, Product $product): JsonResponse
+    {
+        $data = $request->validated();
+
+        $metrics = $this->productsMetricsInterface->getProductSpecificMetrics($product, $data['start_date'], $data['end_date']);
+
+        return Json::success($metrics);
     }
 }

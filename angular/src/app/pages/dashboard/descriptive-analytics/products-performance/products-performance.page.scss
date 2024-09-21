@@ -1,0 +1,13 @@
+.filters {
+  width: 100%;
+  display: flex;
+  padding-left: 15px;
+
+  .date-range-picker-container {
+    width: 75%;
+  }
+
+  .search-bar-container {
+    width: 25%;
+  }
+}

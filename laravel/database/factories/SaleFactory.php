@@ -40,46 +40,48 @@ class SaleFactory extends Factory
     public function configure(): self
     {
         return $this->afterCreating(function (Sale $sale) {
-            $amount = $this->faker->numberBetween(1, 5);
-            $products = $this->getRandomModelInstances(Product::class, $amount);
-            $total_sale = 0;
-            $total_cost = 0;
             $productsAttached = false;
 
-            $products->each(function ($product) use ($sale, &$total_sale, &$total_cost, &$productsAttached) {
-                $quantity = $this->faker->numberBetween(1, $product->stock_balance);
-                if ($product->stock_balance < $quantity) {
-                    return;
-                }
-                $unitSale = $product->sale;
-                $totalSale = $quantity * $unitSale;
-                $unitCost = $product->cost;
-                $totalCost = $quantity * $unitCost;
+            while(!$productsAttached) {
+                $amount = $this->faker->numberBetween(1, 5);
+                $products = $this->getRandomModelInstances(Product::class, $amount);
+                $total_sale = 0;
+                $total_cost = 0;
 
-                $sale->products()->attach($product->id, [
-                    'quantity' => $quantity,
-                    'unit_sale' => $unitSale,
-                    'total_sale' => $totalSale,
-                    'unit_cost' => $unitCost,
-                    'total_cost' => $totalCost,
-                    'currency' => $product->currency,
-                ]);
+                $products->each(function ($product) use ($sale, &$total_sale, &$total_cost, &$productsAttached) {
+                    if ($product->stock_balance == 0) {
+                        return;
+                    }
 
-                $sale->inventoryTransactions()->create([
-                    'store_id' => $sale->store_id,
-                    'product_id' => $product->id,
-                    'date' => $sale->date,
-                    'quantity' => -1 * $quantity,
-                    'stock_balance' => $product->stock_balance - $quantity,
-                ]);
+                    $quantity = $this->faker->numberBetween(1, $product->stock_balance);
+                    $unitSale = $product->sale;
+                    $totalSale = $quantity * $unitSale;
+                    $unitCost = $product->cost;
+                    $totalCost = $quantity * $unitCost;
 
-                $total_sale += $totalSale;
-                $total_cost += $totalCost;
-                $productsAttached = true;
-            });
+                    $sale->products()->attach($product->id, [
+                        'quantity' => $quantity,
+                        'unit_sale' => $unitSale,
+                        'total_sale' => $totalSale,
+                        'unit_cost' => $unitCost,
+                        'total_cost' => $totalCost,
+                        'currency' => $product->currency,
+                    ]);
 
-            if ($productsAttached) {
-                $vat = (int) round($total_sale * 0.2);
+                    $sale->inventoryTransactions()->create([
+                        'store_id' => $sale->store_id,
+                        'product_id' => $product->id,
+                        'date' => $sale->date,
+                        'quantity' => -1 * $quantity,
+                        'stock_balance' => $product->stock_balance - $quantity,
+                    ]);
+
+                    $total_sale += $totalSale;
+                    $total_cost += $totalCost;
+                    $productsAttached = true;
+                });
+
+                $vat = (int)round($total_sale * 0.2);
                 $net = $total_sale + $vat;
                 $sale->update([
                     'sale' => $total_sale,
@@ -88,8 +90,6 @@ class SaleFactory extends Factory
                     'net_sale' => $net,
                     'margin' => $total_sale - $total_cost,
                 ]);
-            } else {
-                $sale->forceDelete();
             }
         });
     }

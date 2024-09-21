@@ -1,0 +1,60 @@
+<app-modal>
+  <ng-container header>
+    <h3>{{ title }}</h3>
+  </ng-container>
+
+  <ng-container content>
+    <div class="row">
+      <div class="col-12">
+        <h2>Sales</h2>
+        <ngx-charts-line-chart
+          [view]="[950, 300]"
+          [results]="quantitySoldData"
+          [xAxis]="true"
+          [yAxis]="true"
+          [legend]="false"
+          [showXAxisLabel]="true"
+          [showYAxisLabel]="true"
+          [xAxisLabel]="'Date'"
+          [yAxisLabel]="'Quantity'"
+          [tooltipDisabled]="true">
+        </ngx-charts-line-chart>
+      </div>
+
+      <div class="col-12">
+        <ngx-charts-line-chart
+          [view]="[950, 300]"
+          [results]="salesRevenueData"
+          [xAxis]="true"
+          [yAxis]="true"
+          [legend]="false"
+          [showXAxisLabel]="true"
+          [showYAxisLabel]="true"
+          [xAxisLabel]="'Date'"
+          [yAxisLabel]="'Revenue'"
+          [tooltipDisabled]="true">
+        </ngx-charts-line-chart>
+      </div>
+
+      <div class="col-12">
+        <h2>Stock</h2>
+        <ngx-charts-line-chart
+          [view]="[950, 400]"
+          [results]="stockBalanceData"
+          [xAxis]="true"
+          [yAxis]="true"
+          [legend]="false"
+          [showXAxisLabel]="true"
+          [showYAxisLabel]="true"
+          [xAxisLabel]="'Date'"
+          [yAxisLabel]="'Balance'"
+          [tooltipDisabled]="true">
+        </ngx-charts-line-chart>
+      </div>
+    </div>
+  </ng-container>
+
+  <ng-container footer>
+    <a (click)="close()" class="btn btn-primary">Close</a>
+  </ng-container>
+</app-modal>

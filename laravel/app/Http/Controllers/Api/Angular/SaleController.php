@@ -1,20 +1,20 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Angular;
 
 use App\Http\Controllers\Controller;
-use App\Models\Store;
+use App\Models\Sale;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 
-class StoreController extends Controller
+class SaleController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index(): Collection
     {
-        return Store::all();
+        return Sale::all();
     }
 
     /**
