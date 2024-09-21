@@ -44,7 +44,7 @@ class TestFeatureEngineeringLayer(unittest.TestCase):
         # Initialise the layer
         self.layer = FeatureEngineeringLayer(self.data, 'output_path.csv')
 
-    def test_encode_categories(self):
+    def test_encode_categorical_features(self):
         """
         Test that the 'category' column is properly encoded using label encoding.
         """
@@ -54,8 +54,8 @@ class TestFeatureEngineeringLayer(unittest.TestCase):
             'category': ['cat1', 'cat2']
         })
 
-        # Invoke method from the class
-        df = self.layer.encode_categories(test_data)
+        # Invoke method from the class, for the 'category' column
+        df = self.layer.encode_categorical_features(test_data, 'category')
 
         # Label encoding was applied
         self.assertIn('category_encoded', df.columns)  # 'category_encoded' exists
@@ -63,6 +63,16 @@ class TestFeatureEngineeringLayer(unittest.TestCase):
         actual_categories = df['category_encoded'].tolist()
         expected_categories = [0, 1]
         self.assertEqual(actual_categories, expected_categories)  # Correct labels
+
+        df = self.layer.encode_categorical_features(test_data, 'product_id')
+
+        # Label encoding was applied, for the 'product_id' column
+        self.assertIn('product_id_encoded', df.columns)  # 'product_id_encoded' exists
+        self.assertTrue(pd.api.types.is_integer_dtype(df['product_id_encoded']))  # The categories are integers
+        actual_categories = df['product_id_encoded'].tolist()
+        expected_categories = [0, 1]
+        self.assertEqual(actual_categories, expected_categories)  # Correct labels
+
 
     def test_extract_date_features(self):
         """
@@ -130,6 +140,7 @@ class TestFeatureEngineeringLayer(unittest.TestCase):
         # Weekly data
         test_data = pd.DataFrame({
             'product_id': ['1234', '1111'],
+            'product_id_encoded': [0, 1],
             'product_name': ['Product A', 'Product B'],
             'category': ['cat_1', 'cat_2'],
             'category_encoded': [0, 1],
@@ -179,7 +190,7 @@ class TestFeatureEngineeringLayer(unittest.TestCase):
         self.assertEqual(df['year'].tolist(), expected_data['year'].tolist(), "Mismatch in 'year' values")
         self.assertEqual(df['month'].tolist(), expected_data['month'].tolist(), "Mismatch in 'month' values")
 
-    def test_adjust_in_stock(self):
+    def test_adjust_in_stock_features(self):
         """
         Test the adjustment of stock data.
         """
@@ -194,7 +205,7 @@ class TestFeatureEngineeringLayer(unittest.TestCase):
         })
 
         # Invoke method from the class
-        df = self.layer.adjust_in_stock(test_data)
+        df = self.layer.adjust_in_stock_features(test_data)
 
         # 'in_stock' column shifts 7 days and is adjusted based on sales quantity
         expected_data = [0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
@@ -265,12 +276,12 @@ class TestFeatureEngineeringLayer(unittest.TestCase):
             df.reset_index(drop=True)
         )
 
-    def test_create_lag_columns(self):
+    def test_create_lag_features(self):
         """
         Test the creation of lag columns for different lag periods.
         """
         # Invoke method from the class
-        df = self.layer.create_lag_columns(self.data, 'quantity', [1, 5, 10, 15, 30])
+        df = self.layer.create_lag_features(self.data, 'quantity', [1, 5, 10, 15, 30])
 
         # Lag columns exist
         self.assertIn('quantity_lag_1', df.columns)
@@ -321,12 +332,12 @@ class TestFeatureEngineeringLayer(unittest.TestCase):
         actual_lag_30 = df[df['product_id'] == 'B']['quantity_lag_30'].tolist()
         self.assertEqual(actual_lag_30, expected_lag_30)
 
-    def test_create_rolling_avg_columns(self):
+    def test_create_rolling_avg_features(self):
         """
         Test the creation of rolling average columns for different window sizes.
         """
         # Invoke method from the class
-        df = self.layer.create_rolling_avg_columns(self.data, 'quantity', [7, 30])
+        df = self.layer.create_rolling_avg_features(self.data, 'quantity', [7, 30])
 
         # Rolling average columns exist
         self.assertIn('quantity_rolling_avg_7', df.columns)
@@ -354,65 +365,25 @@ class TestFeatureEngineeringLayer(unittest.TestCase):
         actual_rolling_avg_30 = df[df['product_id'] == 'B']['quantity_rolling_avg_30'].tolist()
         self.assertEqual(actual_rolling_avg_30, expected_rolling_avg_30)
 
-    def test_scale_features(self):
-        """
-        Test the scaling of fetaures.
-        """
-        # Sample dataframe with columns to scale.
-        test_data = pd.DataFrame({
-            'quantity_lag_1': [5, 10, 15],
-            'quantity_lag_7': [2, 4, 6],
-            'quantity_lag_30': [3, 6, 9],
-            'quantity_lag_365': [1, 5, 10],
-            'quantity_rolling_avg_7': [4, 8, 12],
-            'quantity_rolling_avg_30': [7, 14, 21],
-            'quantity_rolling_avg_365': [9, 18, 27],
-            'month_sin': [0.0, 0.5, 1.0],
-            'month_cos': [1.0, 0.5, 0.0],
-            'weekday_sin': [0.0, -0.5, -1.0],
-            'weekday_cos': [1.0, 0.5, 0.0],
-            'per_item_value': [0.5, 1.0, 1.5],
-        })
+    def test_cyclic_encoding(self):
+        # Test cases for cyclic encoding
+        test_cases = [
+            (0, 7, 0.0, 1.0),  # Weekday example, 0th day of the week (Sunday)
+            (3, 7, 0.43, -0.9),  # Midweek (Wednesday, assuming 0-based indexing)
+            (6, 7, -0.78, 0.62),  # Last day of the week (Saturday)
+            (0, 12, 0.0, 1.0),  # Month example, first month (January)
+            (6, 12, 0.0, -1.0),  # Midyear (July)
+            (11, 12, -0.5, 0.87)  # Last month (December)
+        ]
 
         # Invoke method from the class
-        df = self.layer.scale_features(test_data)
+        for value, max_value, expected_sin, expected_cos in test_cases:
+            # Get the cyclic encoding values
+            sin_value, cos_value = self.layer.cyclic_encoding(value, max_value)
 
-        # Scaled values are correct
-        self.assertAlmostEqual(df['quantity_lag_1'].min(), 0.0, places=2, msg="Scaling not applied correctly to quantity_lag_1")
-        self.assertAlmostEqual(df['quantity_lag_1'].max(), 1.0, places=2, msg="Scaling not applied correctly to quantity_lag_1")
-
-        self.assertAlmostEqual(df['quantity_lag_7'].min(), 0.0, places=2, msg="Scaling not applied correctly to quantity_lag_7")
-        self.assertAlmostEqual(df['quantity_lag_7'].max(), 1.0, places=2, msg="Scaling not applied correctly to quantity_lag_7")
-
-        self.assertAlmostEqual(df['quantity_lag_30'].min(), 0.0, places=2, msg="Scaling not applied correctly to quantity_lag_30")
-        self.assertAlmostEqual(df['quantity_lag_30'].max(), 1.0, places=2, msg="Scaling not applied correctly to quantity_lag_30")
-
-        self.assertAlmostEqual(df['quantity_lag_365'].min(), 0.0, places=2, msg="Scaling not applied correctly to quantity_lag_365")
-        self.assertAlmostEqual(df['quantity_lag_365'].max(), 1.0, places=2, msg="Scaling not applied correctly to quantity_lag_365")
-
-        self.assertAlmostEqual(df['quantity_rolling_avg_7'].min(), 0.0, places=2, msg="Scaling not applied correctly to quantity_rolling_avg_7")
-        self.assertAlmostEqual(df['quantity_rolling_avg_7'].max(), 1.0, places=2, msg="Scaling not applied correctly to quantity_rolling_avg_7")
-
-        self.assertAlmostEqual(df['quantity_rolling_avg_30'].min(), 0.0, places=2, msg="Scaling not applied correctly to quantity_rolling_avg_30")
-        self.assertAlmostEqual(df['quantity_rolling_avg_30'].max(), 1.0, places=2, msg="Scaling not applied correctly to quantity_rolling_avg_30")
-
-        self.assertAlmostEqual(df['quantity_rolling_avg_365'].min(), 0.0, places=2, msg="Scaling not applied correctly to quantity_rolling_avg_365")
-        self.assertAlmostEqual(df['quantity_rolling_avg_365'].max(), 1.0, places=2, msg="Scaling not applied correctly to quantity_rolling_avg_365")
-
-        self.assertAlmostEqual(df['month_sin'].min(), 0.0, places=2, msg="Scaling not applied correctly to month_sin")
-        self.assertAlmostEqual(df['month_sin'].max(), 1.0, places=2, msg="Scaling not applied correctly to month_sin")
-
-        self.assertAlmostEqual(df['month_cos'].min(), 0.0, places=2, msg="Scaling not applied correctly to month_cos")
-        self.assertAlmostEqual(df['month_cos'].max(), 1.0, places=2, msg="Scaling not applied correctly to month_cos")
-
-        self.assertAlmostEqual(df['weekday_sin'].min(), 0.0, places=2, msg="Scaling not applied correctly to weekday_sin")
-        self.assertAlmostEqual(df['weekday_sin'].max(), 1.0, places=2, msg="Scaling not applied correctly to weekday_sin")
-
-        self.assertAlmostEqual(df['weekday_cos'].min(), 0.0, places=2, msg="Scaling not applied correctly to weekday_cos")
-        self.assertAlmostEqual(df['weekday_cos'].max(), 1.0, places=2, msg="Scaling not applied correctly to weekday_cos")
-
-        self.assertAlmostEqual(df['per_item_value'].min(), 0.0, places=2, msg="Scaling not applied correctly to per_item_value")
-        self.assertAlmostEqual(df['per_item_value'].max(), 1.0, places=2, msg="Scaling not applied correctly to per_item_value")
+            # sin and cos values are correct
+            self.assertEqual(sin_value, expected_sin)
+            self.assertEqual(cos_value, expected_cos)
 
 if __name__ == '__main__':
     unittest.main()

@@ -49,7 +49,7 @@ class TestCleaningLayer(unittest.TestCase):
         })
 
         # Invoke method from the class
-        df = self.layer.drop_duplicates(test_data, ['product_id', 'product_name', 'week', 'year', 'monday', 'tuesday', 'wednesday','thursday', 'friday', 'saturday', 'sunday'])
+        df = self.layer.drop_duplicates(test_data, ['product_id', 'week', 'year', 'monday', 'tuesday', 'wednesday','thursday', 'friday', 'saturday', 'sunday'])
 
         # No instances of exact product, date and value duplicates
         expected_data = pd.DataFrame({
@@ -114,31 +114,24 @@ class TestCleaningLayer(unittest.TestCase):
         expected_id = hashlib.md5('Product C_CAT'.encode()).hexdigest()[:8]
         self.assertEqual(actual_id, expected_id)
 
-    def test_handle_missing_product_ids(self):
+    def test_handle_product_ids(self):
         """
-        Test the handling of missing values in the 'product_id' column.
+        Test the handling of the product IDs.
         """
+
+        # Make a copy of the original product ids
+        original_product_ids = self.data['product_id'].tolist()
+
         # Invoke method from the class
-        df = self.layer.handle_missing_product_ids(self.data.copy())
+        df = self.layer.handle_product_ids(self.data.copy())
 
-        # If the product name matches a product with an ID, that ID is used
-        actual_product_a_id = df[df['product_name'] == 'Product A']['product_id'].unique()
-        expected_product_a_id = '1234'
-        self.assertEqual(actual_product_a_id, expected_product_a_id)
-        self.assertEqual(len(actual_product_a_id), 1)
+        # The original 'product_id' column was transferred to 'original_product_id'
+        self.assertIn('original_product_id', df.columns)
+        self.assertEqual(original_product_ids, df['original_product_id'].tolist())
 
-        # If the product name is not found in the products list, a unique ID is assigned
-        actual_product_b_id = df[df['product_name'] == 'Product B']['product_id'].unique()
-        expected_product_b_id = ''
-        self.assertTrue(pd.notna(actual_product_b_id))
-        self.assertNotEqual(actual_product_b_id, expected_product_b_id)
-        self.assertEqual(len(actual_product_b_id), 1)
-
-        # Existing IDs are transferred accordingly
-        actual_product_c_id = df[df['product_name'] == 'Product C']['product_id'].unique()
-        expected_product_c_id = 'ABC'
-        self.assertEqual(actual_product_c_id, expected_product_c_id)
-        self.assertEqual(len(actual_product_c_id), 1)
+        # 'product_id' has been encoded based on 'product_name' and 'category'
+        expected_product_ids = df.apply(lambda row: self.layer.generate_unique_id(row['product_name'], row['category']), axis=1).tolist()
+        self.assertEqual(expected_product_ids, df['product_id'].tolist())
 
     def test_clean_sales_columns(self):
         """
@@ -275,7 +268,7 @@ class TestCleaningLayer(unittest.TestCase):
         expected_in_stock = [0, 1, 0, 1, 0, 1, 0, 0, 1, 1]
         self.assertEqual(actual_in_stock, expected_in_stock, "In_stock standardisation failed")
 
-    def test_standardise_categories(self):
+    def test_standardise_category_column(self):
         """
         Test that the 'category' column is standardised.
         """
@@ -295,7 +288,7 @@ class TestCleaningLayer(unittest.TestCase):
         ]
         test_data['category'] = [
             'CAT & 1 / A * x',  # special characters, uppercase, underscores
-            'pet food',
+            'pet food',  # specific case
             'petfood',  # specific case
             'sauces_pickle',  # specific case
             'sauces_pickles',  # specific case
@@ -307,7 +300,7 @@ class TestCleaningLayer(unittest.TestCase):
         ]
 
         # Invoke method from the class
-        df = self.layer.standardise_categories(test_data)
+        df = self.layer.standardise_category_column(test_data)
         actual_categories = df['category'].tolist()
         expected_cleaned_categories = [
             'cat_1_a_x',

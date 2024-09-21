@@ -200,21 +200,6 @@ class FeatureEngineeringLayer:
 
         return df
 
-    def scale_features(self, df):
-        """
-        Apply Min-Max Scaling to numerical columns to normalise them.
-        """
-        cols_to_scale = [
-            'quantity_lag_1', 'quantity_lag_7', 'quantity_lag_30', 'quantity_lag_365',
-            'quantity_rolling_avg_7', 'quantity_rolling_avg_30', 'quantity_rolling_avg_365',
-            'per_item_value', 'month_sin', 'month_cos', 'weekday_sin', 'weekday_cos'
-        ]
-
-        # Apply scaling to the defined columns
-        df[cols_to_scale] = self.scaler.fit_transform(df[cols_to_scale])
-
-        return df
-
     def save_data(self, df):
         """Save the completed DataFrame to a CSV file."""
         df.to_csv(self.output_path, index=False)
@@ -244,8 +229,6 @@ class FeatureEngineeringLayer:
         df = self.create_lag_features(df, 'quantity')
         print(f"Create rolling columns at {datetime.now()}")
         df = self.create_rolling_avg_features(df, 'quantity')
-#         print(f"Scaling features at {datetime.now()}")
-#         df = self.scale_features(df)
         print(f"Save data at {datetime.now()}")
         self.save_data(df)
 

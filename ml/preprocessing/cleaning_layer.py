@@ -46,7 +46,7 @@ class CleaningLayer:
 
     def handle_product_ids(self, df):
         """
-        Handle missing product IDs.
+        Handle product IDs.
         """
         df = df.rename(columns={'product_id': 'original_product_id'})
 
@@ -91,26 +91,25 @@ class CleaningLayer:
 
         return df
 
-    def standardise_column(self, df, column):
+    def standardise_category_column(self, df):
         """
         Standardise string values in a column.
         """
         # Clean the labels
-        df[column] = df[column].str.lower()  # Lowercase everything
-        df[column] = df[column].str.replace(r'[^\w\s]', ' ', regex=True)  # Remove special characters
-        df[column] = df[column].str.replace(r'\s+', '_', regex=True)  # Replace spaces with underscores
+        df['category'] = df['category'].str.lower()  # Lowercase everything
+        df['category'] = df['category'].str.replace(r'[^\w\s]', ' ', regex=True)  # Remove special characters
+        df['category'] = df['category'].str.replace(r'\s+', '_', regex=True)  # Replace spaces with underscores
 
-        if column == 'category':
-            # Perform specific replacements
-            df['category'] = df['category'].replace({
-                'sauces_pickle': 'sauces_pickles',
-                'washing_powder': 'washing_powders',
-                'petfood': 'pet_food',
-                'lower_rate': 'miscellaneous',
-                'standard_rate': 'miscellaneous',
-                'zero_rate': 'miscellaneous',
-                '': 'miscellaneous'
-            })
+        # Perform specific replacements
+        df['category'] = df['category'].replace({
+            'sauces_pickle': 'sauces_pickles',
+            'washing_powder': 'washing_powders',
+            'petfood': 'pet_food',
+            'lower_rate': 'miscellaneous',
+            'standard_rate': 'miscellaneous',
+            'zero_rate': 'miscellaneous',
+            '': 'miscellaneous'
+        })
 
         return df
 
@@ -176,7 +175,7 @@ class CleaningLayer:
         print(f"Clean values at {datetime.now()}")
         df = self.clean_value_column(df)
         print(f"Standardise categories at {datetime.now()}")
-        df = self.standardise_column(df, 'category')
+        df = self.standardise_category_column(df)
         print(f"Drop duplicate products at {datetime.now()}")
         df = self.drop_duplicates(df, ['product_name', 'category', 'year', 'week'])
         print(f"Handle product ids at {datetime.now()}")
