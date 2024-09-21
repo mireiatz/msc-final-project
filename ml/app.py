@@ -1,14 +1,10 @@
-from flask import Flask, request, jsonify
+from preprocessing.preprocessing_pipeline import PreprocessingPipeline
+import pandas as pd
 
-app = Flask(__name__)
+# Define the input data directory and output path
+data_directory = './ml/data/raw/'
+output_path = './ml/data/processed'
 
-@app.route('/train', methods=['POST'])
-def train_model():
-    data = request.json
-
-    print("Received data for training:", data)
-
-    return jsonify({"message": "Training completed successfully!"}), 200
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001)
+# Initialise and run the data pipeline
+pipeline = PreprocessingPipeline(data_dir=data_directory, output_path=output_path)
+final_data = pipeline.run()
