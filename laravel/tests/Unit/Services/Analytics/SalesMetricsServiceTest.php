@@ -22,7 +22,9 @@ class SalesMetricsServiceTest extends TestCase
     private string $startDate;
     private string $endDate;
 
-
+    /**
+     * Setup necessary data for testing the sales metrics service.
+     */
     protected function setUp(): void
     {
         parent::setUp();
@@ -45,6 +47,11 @@ class SalesMetricsServiceTest extends TestCase
         $this->endDate = now()->toDateString();
     }
 
+    /**
+     * Helper function to retrieve sales data for the test products between for the specified date range.
+     *
+     * @return Collection
+     */
     private function getSales(): Collection
     {
         $productIds = [$this->product1->id, $this->product2->id];
@@ -57,6 +64,29 @@ class SalesMetricsServiceTest extends TestCase
             ->get();
     }
 
+    /**
+     * Helper function to retrieve sales data grouped by date for the test products for the specified date range.
+     *
+     * @return Collection
+     */
+    protected function getSalesGroupedByDate(): Collection
+    {
+        $productIds = [$this->product1->id, $this->product2->id];
+
+        return Sale::whereBetween('date', [$this->startDate, $this->endDate])
+            ->whereHas('products', function ($query) use ($productIds) {
+                $query->whereIn('product_id', $productIds);
+            })
+            ->with('products.category')
+            ->get()
+            ->groupBy(function ($sale) {
+                return Carbon::parse($sale->date)->format('Y-m-d');
+            });
+    }
+
+    /**
+     * Test the `countSales` method to ensure it correctly counts the total number of sales.
+     */
     public function testCountSales(): void
     {
         $sales = $this->getSales();
@@ -71,6 +101,9 @@ class SalesMetricsServiceTest extends TestCase
         $this->assertEquals(2, $this->service->countSales($sales));
     }
 
+    /**
+     * Test the `getHighestSale` method to ensure it returns the highest sale value.
+     */
     public function testGetHighestSale(): void
     {
         $products = collect([$this->product1, $this->product2]);
@@ -95,6 +128,9 @@ class SalesMetricsServiceTest extends TestCase
         $this->assertEquals(500.00, $this->service->getHighestSale($sales));
     }
 
+    /**
+     * Test the `getLowestSale` method to ensure it returns the lowest sale value.
+     */
     public function testGetLowestSale(): void
     {
         $products = collect([$this->product1, $this->product2]);
@@ -123,6 +159,9 @@ class SalesMetricsServiceTest extends TestCase
         $this->assertEquals(40.00, $this->service->getLowestSale($sales));
     }
 
+    /**
+     * Test the `calculateTotalItemsSold` method to ensure it correctly calculates the total items sold.
+     */
     public function testCalculateTotalItemsSold(): void
     {
         $products = collect([$this->product1, $this->product2]);
@@ -143,6 +182,9 @@ class SalesMetricsServiceTest extends TestCase
         $this->assertEquals(19, $this->service->calculateTotalItemsSold($sales));
     }
 
+    /**
+     * Test the `calculateTotalSalesValue` method to ensure it correctly calculates the total sales value.
+     */
     public function testCalculateTotalSalesValue(): void
     {
         $products = collect([$this->product1, $this->product2]);
@@ -163,6 +205,9 @@ class SalesMetricsServiceTest extends TestCase
         $this->assertEquals(1500.00, $this->service->calculateTotalSalesValue($sales));
     }
 
+    /**
+     * Test the `getMaxItemsSoldInSale` method to ensure it returns the maximum items sold in a single sale.
+     */
     public function testGetMaxItemsSoldInSale(): void
     {
         $products = collect([$this->product1, $this->product2]);
@@ -187,6 +232,9 @@ class SalesMetricsServiceTest extends TestCase
         $this->assertEquals(15, $this->service->getMaxItemsSoldInSale($sales));
     }
 
+    /**
+     * Test the `getMinItemsSoldInSale` method to ensure it returns the minimum items sold in a single sale.
+     */
     public function testGetMinItemsSoldInSale(): void
     {
         $products = collect([$this->product1, $this->product2]);
@@ -211,21 +259,9 @@ class SalesMetricsServiceTest extends TestCase
         $this->assertEquals(2, $this->service->getMinItemsSoldInSale($sales));
     }
 
-    protected function getSalesGroupedByDate(): Collection
-    {
-        $productIds = [$this->product1->id, $this->product2->id];
-
-        return Sale::whereBetween('date', [$this->startDate, $this->endDate])
-            ->whereHas('products', function ($query) use ($productIds) {
-                $query->whereIn('product_id', $productIds);
-            })
-            ->with('products.category')
-            ->get()
-            ->groupBy(function ($sale) {
-                return Carbon::parse($sale->date)->format('Y-m-d');
-            });
-    }
-
+    /**
+     * Test the `mapAllSales` method to ensure it maps sales data correctly by date.
+     */
     public function testMapAllSales(): void
     {
         $products = collect([$this->product1, $this->product2]);
@@ -256,6 +292,10 @@ class SalesMetricsServiceTest extends TestCase
         $this->assertEquals(20, $allSales[1]['items']);
     }
 
+
+    /**
+     * Test the `mapSalesPerProduct` method to ensure it maps sales data correctly per product.
+     */
     public function testMapSalesPerProduct(): void
     {
         $products = collect([$this->product1, $this->product2]);
@@ -284,6 +324,9 @@ class SalesMetricsServiceTest extends TestCase
         $this->assertEquals(5, $salesPerProduct[1]['quantity']);
     }
 
+    /**
+     * Test the `mapSalesPerCategory` method to ensure it maps sales data correctly per category.
+     */
     public function testMapSalesPerCategory(): void
     {
         $products = collect([$this->product1, $this->product2]);

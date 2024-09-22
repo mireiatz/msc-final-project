@@ -8,7 +8,7 @@ use Illuminate\Support\Collection;
 class SalesMetricsService implements SalesMetricsInterface
 {
     /**
-     * Get sales analytics for the specified period.
+     * Get an overview of sales metrics for the specified date range.
      *
      * @param string $startDate
      * @param string $endDate
@@ -37,6 +37,13 @@ class SalesMetricsService implements SalesMetricsInterface
         ];
     }
 
+    /**
+     * Get sales data for the specified date range.
+     *
+     * @param string $startDate
+     * @param string $endDate
+     * @return Collection
+     */
     public function getSales(string $startDate, string $endDate): Collection
     {
         return Sale::whereBetween('sales.date', [$startDate, $endDate])
@@ -44,47 +51,96 @@ class SalesMetricsService implements SalesMetricsInterface
             ->get();
     }
 
-    public function countSales($sales): int
+    /**
+     * Count the total number of sales for the provided sales data.
+     *
+     * @param Collection $sales
+     * @return int
+     */
+    public function countSales(Collection $sales): int
     {
         return $sales->count();
     }
 
-    public function getHighestSale($sales): int
+    /**
+     * Get the highest sale value for the provided sales data.
+     *
+     * @param Collection $sales
+     * @return int
+     */
+    public function getHighestSale(Collection $sales): int
     {
         return $sales->max('sale') / 100;
     }
 
-    public function getLowestSale($sales): int
+    /**
+     * Get the lowest sale value for the provided sales data.
+     *
+     * @param Collection $sales
+     * @return int
+     */
+    public function getLowestSale(Collection $sales): int
     {
         return $sales->min('sale') / 100;
     }
 
-    public function calculateTotalItemsSold($sales): int
+    /**
+     * Calculate the total number of items sold for the provided sales data.
+     *
+     * @param Collection $sales
+     * @return int
+     */
+    public function calculateTotalItemsSold(Collection $sales): int
     {
         return $sales->sum(function ($sale) {
             return $sale->products()->sum('quantity');
         });
     }
 
-    public function calculateTotalSalesValue($sales): int
+    /**
+     * Calculate the total sales value for the provided sales data.
+     *
+     * @param Collection $sales
+     * @return int
+     */
+    public function calculateTotalSalesValue(Collection $sales): int
     {
-        return $sales->sum('sale') /100;
+        return $sales->sum('sale') / 100;
     }
 
-    public function getMaxItemsSoldInSale($sales): int
+    /**
+     * Get the maximum number of items sold in a single sale for the provided sales data.
+     *
+     * @param Collection $sales
+     * @return int
+     */
+    public function getMaxItemsSoldInSale(Collection $sales): int
     {
         return $sales->map(function ($sale) {
             return $sale->products()->sum('quantity');
         })->max() ?? 0;
     }
 
-    public function getMinItemsSoldInSale($sales): int
+    /**
+     * Get the minimum number of items sold in a single sale for the provided sales data.
+     *
+     * @param Collection $sales
+     * @return int
+     */
+    public function getMinItemsSoldInSale(Collection $sales): int
     {
         return $sales->map(function ($sale) {
             return $sale->products()->sum('quantity');
         })->min() ?? 0;
     }
 
+    /**
+     * Get detailed sales metrics for the specified date range.
+     *
+     * @param string $startDate
+     * @param string $endDate
+     * @return array
+     */
     public function getDetailedMetrics(string $startDate, string $endDate): array
     {
         $sales = $this->getSalesGroupedByDate($startDate, $endDate);
@@ -100,6 +156,13 @@ class SalesMetricsService implements SalesMetricsInterface
         ];
     }
 
+    /**
+     * Get sales data grouped by date for the specified date range.
+     *
+     * @param string $startDate
+     * @param string $endDate
+     * @return Collection
+     */
     public function getSalesGroupedByDate(string $startDate, string $endDate): Collection
     {
         return Sale::whereBetween('date', [$startDate, $endDate])
@@ -110,6 +173,12 @@ class SalesMetricsService implements SalesMetricsInterface
             });
     }
 
+    /**
+     * Map all sales data to an array format.
+     *
+     * @param Collection $sales
+     * @return array
+     */
     public function mapAllSales(Collection $sales): array
     {
         return $sales->map(function ($sales) {
@@ -124,6 +193,12 @@ class SalesMetricsService implements SalesMetricsInterface
     }
 
 
+    /**
+     * Map sales data per product to an array format, grouped by product and date.
+     *
+     * @param Collection $sales
+     * @return array
+     */
     public function mapSalesPerProduct(Collection $sales): array
     {
         return $sales->flatMap(function ($salesOnDay) {
@@ -151,6 +226,12 @@ class SalesMetricsService implements SalesMetricsInterface
         })->values()->toArray();
     }
 
+    /**
+     * Map sales data per category to an array format, grouped by category and date.
+     *
+     * @param Collection $sales
+     * @return array
+     */
     public function mapSalesPerCategory(Collection $sales): array
     {
         return $sales->flatMap(function ($salesOnDay) {

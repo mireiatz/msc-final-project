@@ -1,0 +1,33 @@
+<div *ngIf="metrics || isLoading" class="main-page">
+
+  <div class="filters">
+      <div class="date-range-picker-container">
+        <app-date-range-picker
+          (datesSelected)="setDatesSelected($event)"
+        ></app-date-range-picker>
+      </div>
+
+      <div class="search-bar-container">
+        <app-search-bar
+          (search)="onSearch($event)"
+        ></app-search-bar>
+      </div>
+  </div>
+
+  <div class="data-display">
+    <app-loader
+      [isLoading]="isLoading"
+    ></app-loader>
+
+    <app-table
+      [columns]="columns"
+      [data]="filteredMetrics"
+      (cellClicked)="displayProductInfo($event)"
+    ></app-table>
+
+    <app-pagination-footer
+      [pagination]="pagination"
+      (pageChange)="onPageChange($event)">
+    </app-pagination-footer>
+  </div>
+</div>

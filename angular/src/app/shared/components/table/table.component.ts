@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 @Component({
   selector: 'app-table',
@@ -9,6 +9,7 @@ export class TableComponent {
 
   @Input() columns: Array<{ header: string; field: string }> = [{ header: '', field: '' }];
   @Input() data: any[] | undefined = [];
+  @Output() cellClicked = new EventEmitter<any>();
 
   public sortColumn: string | null = null;
   public sortDirection: 'asc' | 'desc' = 'asc';
@@ -35,5 +36,9 @@ export class TableComponent {
         }
       });
     }
+  }
+
+  onCellClick(row: any): void {
+    this.cellClicked.emit(row);
   }
 }
