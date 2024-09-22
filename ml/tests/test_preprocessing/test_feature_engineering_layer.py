@@ -1,7 +1,7 @@
 import unittest
+from unittest.mock import patch
 import pandas as pd
 import numpy as np
-from datetime import datetime
 from ml.preprocessing.feature_engineering_layer import FeatureEngineeringLayer
 
 class TestFeatureEngineeringLayer(unittest.TestCase):
@@ -42,37 +42,60 @@ class TestFeatureEngineeringLayer(unittest.TestCase):
         })
 
         # Initialise the layer
-        self.layer = FeatureEngineeringLayer(self.data, 'output_path.csv')
+        self.layer = FeatureEngineeringLayer(self.data)
 
-    def test_encode_categorical_features(self):
+    @patch.object(FeatureEngineeringLayer, 'load_mapping')
+    @patch.object(FeatureEngineeringLayer, 'save_mapping')
+    def test_encode_categorical_features(self, mock_save_mapping, mock_load_mapping):
         """
-        Test that the 'category' column is properly encoded using label encoding.
+        Test that features are properly encoded using label encoding.
         """
         # Sample data for label encoding
         test_data = pd.DataFrame({
-            'product_id': ['1234abc', '5678def'],
-            'category': ['cat1', 'cat2']
+            'product_id': ['product_1', 'product_2', 'product_1', 'product_3', 'product_2'],
+            'category': ['pet_food', 'homebaking', 'pet_food', 'general_grocery', 'homebaking']
         })
 
-        # Invoke method from the class, for the 'category' column
+        # Mock the 'load_mapping' method to return a mapping for 'category'
+        mock_load_mapping.return_value = {'pet_food': 1, 'general_grocery': 2}
+
+        # Invoke method from the class, for the 'category' feature
         df = self.layer.encode_categorical_features(test_data, 'category')
 
         # Label encoding was applied
         self.assertIn('category_encoded', df.columns)  # 'category_encoded' exists
         self.assertTrue(pd.api.types.is_integer_dtype(df['category_encoded']))  # The categories are integers
-        actual_categories = df['category_encoded'].tolist()
-        expected_categories = [0, 1]
-        self.assertEqual(actual_categories, expected_categories)  # Correct labels
 
+        # Previously encoded categories persist and new ones are mapped
+        expected_encodings = [1, 3, 1, 2, 3]
+        self.assertEqual(df['category_encoded'].tolist(), expected_encodings)
+
+        # Assert that 'save_mapping' was called to update the mapping with 'homebaking'
+        mock_save_mapping.assert_called_once()
+
+        # 'general_grocery' was added to the mapping with the next code (3)
+        args, kwargs = mock_save_mapping.call_args
+        updated_mapping = args[1]  # The mapping passed to 'save_mapping'
+        self.assertEqual(updated_mapping['homebaking'], 3)
+
+        # Mock the 'load_mapping' method to return a mapping for 'product_id'
+        mock_load_mapping.return_value = {'product_2': 1, 'product_3': 3}
+
+        # Invoke method from the class, for the 'product_id' feature
         df = self.layer.encode_categorical_features(test_data, 'product_id')
 
-        # Label encoding was applied, for the 'product_id' column
+        # Label encoding was applied
         self.assertIn('product_id_encoded', df.columns)  # 'product_id_encoded' exists
-        self.assertTrue(pd.api.types.is_integer_dtype(df['product_id_encoded']))  # The categories are integers
-        actual_categories = df['product_id_encoded'].tolist()
-        expected_categories = [0, 1]
-        self.assertEqual(actual_categories, expected_categories)  # Correct labels
+        self.assertTrue(pd.api.types.is_integer_dtype(df['product_id_encoded']))  # The product IDs are integers
 
+        # Previously encoded product IDs persist and new ones are mapped
+        expected_encodings = [4, 1, 4, 3, 1]
+        self.assertEqual(df['product_id_encoded'].tolist(), expected_encodings)
+
+        # 'product_1' was added to the mapping with the next code (4)
+        args, kwargs = mock_save_mapping.call_args
+        updated_mapping = args[1]  # The mapping passed to 'save_mapping'
+        self.assertEqual(updated_mapping['product_1'], 4)
 
     def test_extract_date_features(self):
         """

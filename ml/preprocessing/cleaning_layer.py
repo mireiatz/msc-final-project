@@ -48,8 +48,10 @@ class CleaningLayer:
         """
         Handle product IDs.
         """
+        # Keep the original product IDs by transferring them to a new column
         df = df.rename(columns={'product_id': 'original_product_id'})
 
+        # Generate new unique IDs based on the product name and category, and save them in the 'product_id' column
         df['product_id'] =  df.apply(lambda row: self.generate_unique_id(row['product_name'], row['category']), axis=1)
 
         return df
@@ -124,7 +126,7 @@ class CleaningLayer:
         # Create a cross join between all_products and all_weeks to get all combinations of products and weeks
         all_combinations = all_products.assign(key=1).merge(all_weeks.assign(key=1), on='key').drop('key', axis=1)
 
-        # Left join with the original dataframe to find missing products for each week
+        # Left join with the original DataFrame to find missing products for each week
         merged_df = pd.merge(all_combinations, df, on=['product_id', 'year', 'week'], how='left', suffixes=('', '_orig'))
 
         # Identify rows that were newly inserted (those with NaNs in the sales columns)
@@ -142,11 +144,11 @@ class CleaningLayer:
             # Fill 'value' with 0 float values
             merged_df.loc[new_rows.index, 'value'] = 0.0
 
-            # Sort the dataframe and apply forward fill to 'in_stock'
+            # Sort the DataFrame and apply forward fill to 'in_stock'
             merged_df = merged_df.sort_values(by=['product_id', 'year', 'week'])
             merged_df['in_stock'] = merged_df.groupby('product_id')['in_stock'].ffill().fillna(0).astype(int)
 
-        # Return the filled dataframe without unnecessary duplicate columns
+        # Return the filled DataFrame without unnecessary duplicate columns
         return merged_df.drop(columns=[col for col in merged_df.columns if col.endswith('_orig')])
 
     def drop_duplicates(self, df, columns):
@@ -159,29 +161,37 @@ class CleaningLayer:
     def process(self):
         """
         Apply the full data cleaning process to the DataFrame:
-        - Drop duplicates.
         - Remove outliers in 'quantity'.
         - Clean sales, 'quantity' and 'value' columns.
-        - Handle missing product IDs.
         - Standardise 'category' and 'in_stock' columns.
+        - Drop duplicates.
+        - Handle product IDs.
         - Fill rows for missing weekly data.
         """
         print(f"Remove outliers at {datetime.now()}")
         df = self.remove_outliers(self.data, 'quantity')
+
         print(f"Clean sales at {datetime.now()}")
         df = self.clean_sales_columns(df)
+
         print(f"Clean quantity at {datetime.now()}")
         df = self.clean_quantity_column(df)
+
         print(f"Clean values at {datetime.now()}")
         df = self.clean_value_column(df)
+
         print(f"Standardise categories at {datetime.now()}")
         df = self.standardise_category_column(df)
+
         print(f"Drop duplicate products at {datetime.now()}")
         df = self.drop_duplicates(df, ['product_name', 'category', 'year', 'week'])
+
         print(f"Handle product ids at {datetime.now()}")
         df = self.handle_product_ids(df)
+
         print(f"Standardise in stock at {datetime.now()}")
         df = self.standardise_in_stock(df)
+
         print(f"Fill missing products at {datetime.now()}")
         df = self.insert_missing_product_weeks(df)
 

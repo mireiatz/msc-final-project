@@ -3,20 +3,67 @@ from datetime import datetime, timedelta
 import numpy as np
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 from datetime import datetime
+import os
 
 class FeatureEngineeringLayer:
 
-    def __init__(self, data, output_path):
+    def __init__(self, data, mapping_dir='./ml/data/mappings/'):
         self.data = data
-        self.output_path = output_path
         self.label_encoder = LabelEncoder()
         self.scaler = MinMaxScaler()
+        self.mapping_dir = mapping_dir
+
+    def load_mapping(self, feature):
+        """
+        Load feature mapping from a CSV file if it exists.
+        """
+        mapping_path = os.path.join(self.mapping_dir, f'{feature}_map.csv')  # Define the path
+
+        # Read and return the mapping of the feature
+        if os.path.exists(mapping_path):
+            return pd.read_csv(mapping_path).set_index(feature).to_dict()[f'{feature}_encoded']
+
+        return {}
+
+    def save_mapping(self, feature, mapping):
+        """
+        Save updated feature mapping to a CSV file.
+        """
+        mapping_path = os.path.join(self.mapping_dir, f'{feature}_map.csv')  # Define the path
+
+        # Save the mapping in a file as a DataFrame
+        mapping_df = pd.DataFrame(list(mapping.items()), columns=[feature, f'{feature}_encoded'])
+        mapping_df.to_csv(mapping_path, index=False)
 
     def encode_categorical_features(self, df, feature):
         """
-        Apply Label Encoding to convert categories into numerical values.
+        Apply Label Encoding to convert categorical features like 'product_id' and 'category' into numerical values.
         """
-        df[feature + '_encoded'] = self.label_encoder.fit_transform(df[feature])
+        # Load existing mapping from the feature if it exists
+        mapping = self.load_mapping(feature)
+
+        # Map existing values
+        df[f'{feature}_encoded'] = df[feature].map(mapping)
+
+        # Find unmapped values
+        unmapped_values = df[feature][df[f'{feature}_encoded'].isna()].unique()
+
+        # If there are unmapped values, assign unmapped encodings
+        if len(unmapped_values) > 0:
+            max_existing_encoding = max(mapping.values()) if mapping else 0  # Begin after the highest code
+            unmapped_encodings = {value: max_existing_encoding + idx + 1 for idx, value in enumerate(unmapped_values)}
+
+            # Update the mapping with unmapped encodings
+            mapping.update(unmapped_encodings)
+
+            # Map the unmapped values in the DataFrame
+            df.loc[df[f'{feature}_encoded'].isna(), f'{feature}_encoded'] = df[feature].map(unmapped_encodings)
+
+            # Save the updated mapping
+            self.save_mapping(feature, mapping)
+
+        # Ensure the values are integers
+        df[f'{feature}_encoded'] = df[f'{feature}_encoded'].astype(int)
 
         return df
 
@@ -24,14 +71,15 @@ class FeatureEngineeringLayer:
         """
         Perform cyclic encoding for a value (e.g., month or weekday).
         """
-        sin_value = np.sin(2 * np.pi * value / max_value)
-        cos_value = np.cos(2 * np.pi * value / max_value)
+        sin_value = np.sin(2 * np.pi * value / max_value)  # sine transformation
+        cos_value = np.cos(2 * np.pi * value / max_value)  # cosine transformation
 
         return round(sin_value, 2), round(cos_value, 2)
 
     def extract_date_features(self, year, week, day_name):
         """
-        Expand the date information from the given year, week, and day of the week by creating numerical date-related features, including cyclic encoding for weekday and month.
+        Expand the date information from the given year, week, and day of the week by creating numerical date-related features,
+        including cyclic encoding for weekday and month.
         """
         # Map day names to offset indices (0 = Monday - 6 = Sunday)
         day_map = {'monday': 0, 'tuesday': 1, 'wednesday': 2, 'thursday': 3, 'friday': 4, 'saturday': 5, 'sunday': 6}
@@ -57,7 +105,7 @@ class FeatureEngineeringLayer:
         daily_rows = []
         day_columns = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
 
-        # Iterate over each row in the dataframe
+        # Iterate over each row in the DataFrame
         for _, row in df.iterrows():
             year = row['year']
             week = row['week']
@@ -102,7 +150,7 @@ class FeatureEngineeringLayer:
 
     def adjust_in_stock_features(self, df):
         """
-        Adjust the 'in_stock' status for each product.
+        Adjust the stock status for each product.
         """
         # Sort data per product and date
         df = self.sort_by_columns(df)
@@ -200,36 +248,46 @@ class FeatureEngineeringLayer:
 
         return df
 
-    def save_data(self, df):
-        """Save the completed DataFrame to a CSV file."""
-        df.to_csv(self.output_path, index=False)
+    def merge_with_historical_data(self, df, historical_data):
+        """
+        Merge current DataFrame with preprocessed historical data.
+        """
 
-    def process(self):
+        return pd.concat([historical_data, df], ignore_index=True)
+
+    def process(self, historical_data=None):
         """
         Re-structure the DataFrame and create new features:
-        - Encode categories.
+        - Encode categories and product IDs.
         - Pivot weekly data to daily.
-        - Adjust the stock data.
+        - Adjust the stock status.
         - Add a holiday flag.
+        - Merge with historical data if it exists.
         - Create lag and rolling columns.
-        - Scale relevant columns.
-        - Save the data into a file.
         """
         print(f"Encode categories at {datetime.now()}")
         df = self.encode_categorical_features(self.data, 'category')
+
         print(f"Encode product ids at {datetime.now()}")
         df = self.encode_categorical_features(df, 'product_id')
+
         print(f"Pivot at {datetime.now()}")
         df = self.pivot_weekly_data(df)
+
         print(f"Adjust in stock at {datetime.now()}")
         df = self.adjust_in_stock_features(df)
+
         print(f"Add holiday flag at {datetime.now()}")
         df = self.add_holiday_flag(df)
+
+        print(f"Merge with historical data at {datetime.now()}")
+        if historical_data is not None:
+            df = self.merge_with_historical_data(df, historical_data)
+
         print(f"Create lag columns at {datetime.now()}")
         df = self.create_lag_features(df, 'quantity')
+
         print(f"Create rolling columns at {datetime.now()}")
         df = self.create_rolling_avg_features(df, 'quantity')
-        print(f"Save data at {datetime.now()}")
-        self.save_data(df)
 
         return df
