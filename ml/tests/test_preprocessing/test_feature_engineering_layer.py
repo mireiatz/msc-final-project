@@ -2,13 +2,14 @@ import unittest
 from unittest.mock import patch
 import pandas as pd
 import numpy as np
+from datetime import datetime, timedelta
 from ml.preprocessing.feature_engineering_layer import FeatureEngineeringLayer
 
 class TestFeatureEngineeringLayer(unittest.TestCase):
 
     def setUp(self):
         """
-        Set up test FeatureEngineeringLayer.
+        Set up test FeatureEngineeringLayer and data sample.
         """
         # Sample 30 day data for lag and rolling feature creation
         product_1_month_9 = pd.date_range(start='2024-09-01', periods=15)
@@ -19,27 +20,14 @@ class TestFeatureEngineeringLayer(unittest.TestCase):
         values_16_31 = list(range(16, 31))
         self.data = pd.DataFrame({
             'product_id': ['A'] * 15 + ['B'] * 15 + ['A'] * 15 + ['B'] * 15,
-            'year': (
-                [d.year for d in product_1_month_9] +
-                [d.year for d in product_2_month_8] +
-                [d.year for d in product_1_month_1] +
-                [d.year for d in product_2_month_3]
-            ),
-            'month': (
-                [d.month for d in product_1_month_9] +
-                [d.month for d in product_2_month_8] +
-                [d.month for d in product_1_month_1] +
-                [d.month for d in product_2_month_3]
-            ),
-            'day_of_month': (
-                [d.day for d in product_1_month_9] +
-                [d.day for d in product_2_month_8] +
-                [d.day for d in product_1_month_1] +
-                [d.day for d in product_2_month_3]
-            ),
+            'date': list(product_1_month_9) + list(product_2_month_8) + list(product_1_month_1) + list(product_2_month_3),
             'quantity': values_16_31 + values_16_31 + values_1_15 + values_1_15,
             'value': values_16_31 + values_16_31 + values_1_15 + values_1_15,
         })
+
+        # Mock data for historical and new data
+        self.historical_data = self.create_mock_historical_data()
+        self.new_data = self.create_mock_new_data()
 
         # Initialise the layer
         self.layer = FeatureEngineeringLayer(self.data)
@@ -48,7 +36,7 @@ class TestFeatureEngineeringLayer(unittest.TestCase):
     @patch.object(FeatureEngineeringLayer, 'save_mapping')
     def test_encode_categorical_features(self, mock_save_mapping, mock_load_mapping):
         """
-        Test that features are properly encoded using label encoding.
+        Test that categorical features are properly encoded using label encoding.
         """
         # Sample data for label encoding
         test_data = pd.DataFrame({
@@ -97,70 +85,11 @@ class TestFeatureEngineeringLayer(unittest.TestCase):
         updated_mapping = args[1]  # The mapping passed to 'save_mapping'
         self.assertEqual(updated_mapping['product_1'], 4)
 
-    def test_extract_date_features(self):
-        """
-        Test the extraction of date-related features, including cyclic encodings.
-        """
-        # Test cases for date features
-        test_cases = [
-            {
-                'day_name': 'monday', 'week': 41, 'year': 2021,
-                'expected': {'date': '2021-10-11', 'day_offset': 0, 'day_of_month': 11, 'month': 10, 'month_sin': -0.87, 'month_cos': 0.5, 'weekday_sin': 0.0, 'weekday_cos': 1.0}
-            },
-            {
-                'day_name': 'tuesday', 'week': 3, 'year': 2022,
-                'expected': {'date': '2022-01-18', 'day_offset': 1, 'day_of_month': 18, 'month': 1, 'month_sin': 0.5, 'month_cos': 0.87, 'weekday_sin': 0.78, 'weekday_cos': 0.62}
-            },
-            {
-                'day_name': 'wednesday', 'week': 12, 'year': 2022,
-                'expected': {'date': '2022-03-23', 'day_offset': 2, 'day_of_month': 23, 'month': 3, 'month_sin': 1.0, 'month_cos': 0.0, 'weekday_sin': 0.97, 'weekday_cos': -0.22}
-            },
-            {
-                'day_name': 'thursday', 'week': 38, 'year': 2023,
-                'expected': {'date': '2023-09-21', 'day_offset': 3, 'day_of_month': 21, 'month': 9, 'month_sin': -1.0, 'month_cos': -0.00, 'weekday_sin': 0.43, 'weekday_cos': -0.9}
-            },
-            {
-                'day_name': 'friday', 'week': 52, 'year': 2023,
-                'expected': {'date': '2023-12-29', 'day_offset': 4, 'day_of_month': 29, 'month': 12, 'month_sin': -0.0, 'month_cos':  1.0, 'weekday_sin': -0.43, 'weekday_cos': -0.9}
-            },
-            {
-                'day_name': 'saturday', 'week': 1, 'year': 2024,
-                'expected': {'date': '2024-01-06', 'day_offset': 5, 'day_of_month': 6, 'month': 1, 'month_sin': 0.5, 'month_cos': 0.87, 'weekday_sin': -0.97, 'weekday_cos': -0.22}
-            },
-            {
-                'day_name': 'sunday', 'week': 22, 'year': 2024,
-                'expected': {'date': '2024-06-02', 'day_offset': 6, 'day_of_month': 2, 'month': 6, 'month_sin': 0.0, 'month_cos': -1.0, 'weekday_sin': -0.78, 'weekday_cos': 0.62}
-            }
-        ]
-
-        # Tolerance value to account for floating-point differences
-        tolerance = 0.01
-
-        # Invoke the method from the class for each test case
-        for case in test_cases:
-            day_name = case['day_name']
-            week = case['week']
-            year = case['year']
-
-            date, day_offset, day_of_month, month, month_sin, month_cos, weekday_sin, weekday_cos = self.layer.extract_date_features(year, week, day_name)
-
-            # Check date features
-            self.assertEqual(date.strftime('%Y-%m-%d'), case['expected']['date'], f"Date mismatch: {date} != {case['expected']['date']}")
-            self.assertEqual(day_offset, case['expected']['day_offset'], f"Day offset mismatch: {day_offset} != {case['expected']['day_offset']}")
-            self.assertEqual(day_of_month, case['expected']['day_of_month'], f"Day of month mismatch: {day_of_month} != {case['expected']['day_of_month']}")
-            self.assertEqual(month, case['expected']['month'], f"Month mismatch: {month} != {case['expected']['month']}")
-
-            # Use np.isclose with assertTrue for floating-point comparisons
-            self.assertTrue(np.isclose(month_sin, case['expected']['month_sin'], atol=tolerance), f"Month sine mismatch: {month_sin} != {case['expected']['month_sin']}")
-            self.assertTrue(np.isclose(month_cos, case['expected']['month_cos'], atol=tolerance), f"Month cosine mismatch: {month_cos} != {case['expected']['month_cos']}")
-            self.assertTrue(np.isclose(weekday_sin, case['expected']['weekday_sin'], atol=tolerance), f"Weekday sine mismatch: {weekday_sin} != {case['expected']['weekday_sin']}")
-            self.assertTrue(np.isclose(weekday_cos, case['expected']['weekday_cos'], atol=tolerance), f"Weekday cosine mismatch: {weekday_cos} != {case['expected']['weekday_cos']}")
-
     def test_pivot_weekly_data(self):
         """
         Test weekly data pivoting to daily format.
         """
-        # Weekly data
+        # Sample weekly data
         test_data = pd.DataFrame({
             'product_id': ['1234', '1111'],
             'product_id_encoded': [0, 1],
@@ -183,19 +112,6 @@ class TestFeatureEngineeringLayer(unittest.TestCase):
 
         # Invoke method from the class
         df = self.layer.pivot_weekly_data(test_data)
-        df['date'] = pd.to_datetime(df['date']).dt.strftime('%Y-%m-%d')  # Convert 'date' column to strings
-
-        # Daily data
-        expected_data = pd.DataFrame({
-            'quantity': [10, 40, 60, 0, 10, 3, 90, 30, 50, 70, 50, 0, 9, 100],
-            'per_item_value': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0],
-            'in_stock': [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
-            'date': ['2022-03-07', '2022-03-08', '2022-03-09', '2022-03-10', '2022-03-11', '2022-03-12', '2022-03-13', '2021-05-31', '2021-06-01', '2021-06-02', '2021-06-03', '2021-06-04', '2021-06-05', '2021-06-06'],
-            'day_offset': [0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6],
-            'day_of_month': [7, 8, 9, 10, 11, 12, 13, 31, 1, 2, 3, 4, 5, 6],
-            'year': [2022, 2022, 2022, 2022, 2022, 2022, 2022, 2021, 2021, 2021, 2021, 2021, 2021, 2021],
-            'month': [3, 3, 3, 3, 3, 3, 3, 5, 6, 6, 6, 6, 6, 6],
-        })
 
         # 7 instances per product for product detailing columns
         self.assertEqual(df['product_id'].value_counts().tolist(), [7, 7], "'product_id' should have 7 instances of '1234' and '1111'")
@@ -205,106 +121,131 @@ class TestFeatureEngineeringLayer(unittest.TestCase):
         self.assertEqual(df['in_stock'].value_counts().tolist(), [7, 7], "'in_stock' should have 7 instances of '1' and '0'")
 
         # Daily values from weekly data
+        expected_data = pd.DataFrame({
+            'quantity': [10, 40, 60, 0, 10, 3, 90, 30, 50, 70, 50, 0, 9, 100],
+            'per_item_value': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0],
+            'in_stock': [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+            'weekday': ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
+            'year': [2022, 2022, 2022, 2022, 2022, 2022, 2022, 2021, 2021, 2021, 2021, 2021, 2021, 2021],
+            'week': [10, 10, 10, 10, 10, 10, 10, 22, 22, 22, 22, 22, 22, 22,]
+        })
         self.assertEqual(df['quantity'].tolist(), expected_data['quantity'].tolist(), "Mismatch in 'quantity' values")
         self.assertEqual(df['per_item_value'].tolist(), expected_data['per_item_value'].tolist(), "Mismatch in 'per_item_value'")
-        self.assertEqual(df['date'].tolist(), expected_data['date'].tolist(), "Mismatch in 'date' values")
-        self.assertEqual(df['day_offset'].tolist(), expected_data['day_offset'].tolist(), "Mismatch in 'day_offset' values")
-        self.assertEqual(df['day_of_month'].tolist(), expected_data['day_of_month'].tolist(), "Mismatch in 'day_of_month' values")
+        self.assertEqual(df['weekday'].tolist(), expected_data['weekday'].tolist(), "Mismatch in 'weekday' values")
         self.assertEqual(df['year'].tolist(), expected_data['year'].tolist(), "Mismatch in 'year' values")
-        self.assertEqual(df['month'].tolist(), expected_data['month'].tolist(), "Mismatch in 'month' values")
+        self.assertEqual(df['week'].tolist(), expected_data['week'].tolist(), "Mismatch in 'month' values")
 
-    def test_adjust_in_stock_features(self):
+    def test_cyclic_encoding(self):
+        # Test cases for cyclic encoding
+        test_cases = [
+            (0, 7, 0.0, 1.0),  # Weekday example, 0th day of the week (Sunday)
+            (3, 7, 0.43, -0.9),  # Midweek (Wednesday, assuming 0-based indexing)
+            (6, 7, -0.78, 0.62),  # Last day of the week (Saturday)
+            (0, 12, 0.0, 1.0),  # Month example, first month (January)
+            (6, 12, 0.0, -1.0),  # Midyear (July)
+            (11, 12, -0.5, 0.87)  # Last month (December)
+        ]
+
+        # Invoke method from the class
+        for value, max_value, expected_sin, expected_cos in test_cases:
+            # Get the cyclic encoding values
+            sin_value, cos_value = self.layer.cyclic_encoding(value, max_value)
+
+            # sin and cos values are correct
+            self.assertEqual(sin_value, expected_sin)
+            self.assertEqual(cos_value, expected_cos)
+
+    def test_create_date_features(self):
         """
-        Test the adjustment of stock data.
+        Test the extraction of date-related features, including cyclic encodings.
+        """
+        # Test cases for date features
+        test_cases = [
+            {
+                'day_name': 'monday', 'week': 41, 'year': 2021,
+                'expected': {'date': '2021-10-11', 'weekday': 0, 'day_of_month': 11, 'month': 10, 'month_sin': -0.87, 'month_cos': 0.5, 'weekday_sin': 0.0, 'weekday_cos': 1.0}
+            },
+            {
+                'day_name': 'tuesday', 'week': 3, 'year': 2022,
+                'expected': {'date': '2022-01-18', 'weekday': 1, 'day_of_month': 18, 'month': 1, 'month_sin': 0.5, 'month_cos': 0.87, 'weekday_sin': 0.78, 'weekday_cos': 0.62}
+            },
+            {
+                'day_name': 'wednesday', 'week': 12, 'year': 2022,
+                'expected': {'date': '2022-03-23', 'weekday': 2, 'day_of_month': 23, 'month': 3, 'month_sin': 1.0, 'month_cos': 0.0, 'weekday_sin': 0.97, 'weekday_cos': -0.22}
+            },
+            {
+                'day_name': 'thursday', 'week': 38, 'year': 2023,
+                'expected': {'date': '2023-09-21', 'weekday': 3, 'day_of_month': 21, 'month': 9, 'month_sin': -1.0, 'month_cos': -0.00, 'weekday_sin': 0.43, 'weekday_cos': -0.9}
+            },
+            {
+                'day_name': 'friday', 'week': 52, 'year': 2023,
+                'expected': {'date': '2023-12-29', 'weekday': 4, 'day_of_month': 29, 'month': 12, 'month_sin': -0.0, 'month_cos':  1.0, 'weekday_sin': -0.43, 'weekday_cos': -0.9}
+            },
+            {
+                'day_name': 'saturday', 'week': 1, 'year': 2024,
+                'expected': {'date': '2024-01-06', 'weekday': 5, 'day_of_month': 6, 'month': 1, 'month_sin': 0.5, 'month_cos': 0.87, 'weekday_sin': -0.97, 'weekday_cos': -0.22}
+            },
+            {
+                'day_name': 'sunday', 'week': 22, 'year': 2024,
+                'expected': {'date': '2024-06-02', 'weekday': 6, 'day_of_month': 2, 'month': 6, 'month_sin': 0.0, 'month_cos': -1.0, 'weekday_sin': -0.78, 'weekday_cos': 0.62}
+            }
+        ]
+
+        # Tolerance value to account for floating-point differences
+        tolerance = 0.01
+
+        # Convert test cases into a DataFrame
+        test_df = pd.DataFrame({
+            'year': [case['year'] for case in test_cases],
+            'week': [case['week'] for case in test_cases],
+            'weekday': [case['day_name'] for case in test_cases]
+        })
+
+        # Invoke the method from the class
+        df_with_date_features = self.layer.create_date_features(test_df)
+
+        # Check date features for each test case
+        for idx, case in enumerate(test_cases):
+            expected = case['expected']
+            row = df_with_date_features.iloc[idx]
+
+            # Check date
+            self.assertEqual(row['date'].strftime('%Y-%m-%d'), expected['date'], f"Date mismatch: {row['date']} != {expected['date']}")
+            self.assertEqual(row['weekday'], expected['weekday'], f"Day offset mismatch: {row['weekday']} != {expected['weekday']}")
+            self.assertEqual(row['day_of_month'], expected['day_of_month'], f"Day of month mismatch: {row['day_of_month']} != {expected['day_of_month']}")
+            self.assertEqual(row['month'], expected['month'], f"Month mismatch: {row['month']} != {expected['month']}")
+
+            # Check cyclic encodings with tolerance
+            self.assertTrue(np.isclose(row['month_sin'], expected['month_sin'], atol=tolerance), f"Month sine mismatch: {row['month_sin']} != {expected['month_sin']}")
+            self.assertTrue(np.isclose(row['month_cos'], expected['month_cos'], atol=tolerance), f"Month cosine mismatch: {row['month_cos']} != {expected['month_cos']}")
+            self.assertTrue(np.isclose(row['weekday_sin'], expected['weekday_sin'], atol=tolerance), f"Weekday sine mismatch: {row['weekday_sin']} != {expected['weekday_sin']}")
+            self.assertTrue(np.isclose(row['weekday_cos'], expected['weekday_cos'], atol=tolerance), f"Weekday cosine mismatch: {row['weekday_cos']} != {expected['weekday_cos']}")
+
+    def test_adjust_in_stock(self):
+        """
+        Test the adjustment of stock status.
         """
         # Sample data with 28 days of 'in_stock' and 'quantity' values
         test_data = pd.DataFrame({
             'product_id': ['1111'] * 14 + ['1234'] * 14,
-            'year': [2021] * 14 + [2022] * 14,
-            'month': [1] * 14 + [1] * 14,
-            'day_of_month': [1] * 14 + [1] * 14,
+            'date': ['2021-01-01', '2021-01-02', '2021-01-03', '2021-01-04', '2021-01-05', '2021-01-06', '2021-01-07', '2021-01-08', '2021-01-09', '2021-01-10', '2021-01-11', '2021-01-12', '2021-01-13', '2021-01-14', '2022-01-01', '2022-01-02', '2022-01-03', '2022-01-04', '2022-01-05', '2022-01-06', '2022-01-07', '2022-01-08', '2022-01-09', '2022-01-10', '2022-01-11', '2022-01-12', '2022-01-13', '2022-01-14'],
             'quantity': [0, 10, 10, 0, 10, 10, 0, 10, 10, 0, 10, 10, 0, 10, 10, 0, 10, 10, 0, 10, 10, 0, 10, 10, 0, 0, 0, 0],
             'in_stock': [0] * 7 + [1] * 14 + [0] * 7,
         })
 
         # Invoke method from the class
-        df = self.layer.adjust_in_stock_features(test_data)
+        df = self.layer.adjust_in_stock(test_data)
 
         # 'in_stock' column shifts 7 days and is adjusted based on sales quantity
         expected_data = [0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
         self.assertEqual(df['in_stock'].tolist(), expected_data)
 
-    def test_add_holiday_flag(self):
+    def test_create_time_series_features(self):
         """
-        Test the holiday flag is set for known holiday periods.
-        """
-        # Sample data with months and days for holiday and non-holiday dates
-        test_data = pd.DataFrame({
-            'month': [
-                7, 10, 12, 4,  # Holidays
-                7, 12  # Non-holidays
-            ],
-            'day_of_month': [
-                26, 28, 24, 1,
-                25, 26
-            ]
-        })
-
-        # Invoke method from the class
-        df = self.layer.add_holiday_flag(test_data)
-
-        # Holiday flags are 1 for holidays, and 0 for non-holidays
-        expected_data = [1, 1, 1, 1, 0, 0]
-        self.assertEqual(df['is_holiday'].tolist(), expected_data)
-
-    def test_sort_by_columns(self):
-        """
-        Test sorting dataframe by columns.
-        """
-        # Sample data with columns that are typically used to order data
-        test_data = pd.DataFrame({
-            'product_id': ['Product B', 'Product B', 'Product E', 'Product A', 'Product C'],
-            'month': [8, 3, 6, 1, 12],
-            'day_of_month': [26, 12, 3, 1, 30],
-            'year': [2022, 2024, 2022, 2021, 2023]
-        })
-
-        # Invoke method from the class
-        df = self.layer.sort_by_columns(test_data, ['product_id', 'year', 'month', 'day_of_month'])
-
-        # Sorted first by 'product_id' and then date
-        expected_data = pd.DataFrame({
-            'product_id': ['Product A', 'Product B', 'Product B', 'Product C', 'Product E'],
-            'month': [1, 8, 3, 12, 6],
-            'day_of_month': [1, 26, 12, 30, 3],
-            'year': [2021, 2022, 2024, 2023, 2022]
-        })
-        pd.testing.assert_frame_equal(
-            expected_data.reset_index(drop=True),
-            df.reset_index(drop=True)
-        )
-
-        # Invoke method from the class
-        df = self.layer.sort_by_columns(df)
-
-        # Sorted by date only
-        expected_data = pd.DataFrame({
-            'product_id': ['Product A', 'Product E', 'Product B', 'Product C', 'Product B'],
-            'month': [1, 6, 8, 12, 3],
-            'day_of_month': [1, 3, 26, 30, 12],
-            'year': [2021, 2022, 2022, 2023, 2024]
-        })
-        pd.testing.assert_frame_equal(
-            expected_data.reset_index(drop=True),
-            df.reset_index(drop=True)
-        )
-
-    def test_create_lag_features(self):
-        """
-        Test the creation of lag columns for different lag periods.
+        Test the creation of lag and rolling average columns for different periods.
         """
         # Invoke method from the class
-        df = self.layer.create_lag_features(self.data, 'quantity', [1, 5, 10, 15, 30])
+        df = self.layer.create_time_series_features(self.data, 'quantity', [1, 5, 10, 15, 30])
 
         # Lag columns exist
         self.assertIn('quantity_lag_1', df.columns)
@@ -355,12 +296,8 @@ class TestFeatureEngineeringLayer(unittest.TestCase):
         actual_lag_30 = df[df['product_id'] == 'B']['quantity_lag_30'].tolist()
         self.assertEqual(actual_lag_30, expected_lag_30)
 
-    def test_create_rolling_avg_features(self):
-        """
-        Test the creation of rolling average columns for different window sizes.
-        """
         # Invoke method from the class
-        df = self.layer.create_rolling_avg_features(self.data, 'quantity', [7, 30])
+        df = self.layer.create_time_series_features(self.data, 'quantity', [7, 30])
 
         # Rolling average columns exist
         self.assertIn('quantity_rolling_avg_7', df.columns)
@@ -388,25 +325,63 @@ class TestFeatureEngineeringLayer(unittest.TestCase):
         actual_rolling_avg_30 = df[df['product_id'] == 'B']['quantity_rolling_avg_30'].tolist()
         self.assertEqual(actual_rolling_avg_30, expected_rolling_avg_30)
 
-    def test_cyclic_encoding(self):
-        # Test cases for cyclic encoding
-        test_cases = [
-            (0, 7, 0.0, 1.0),  # Weekday example, 0th day of the week (Sunday)
-            (3, 7, 0.43, -0.9),  # Midweek (Wednesday, assuming 0-based indexing)
-            (6, 7, -0.78, 0.62),  # Last day of the week (Saturday)
-            (0, 12, 0.0, 1.0),  # Month example, first month (January)
-            (6, 12, 0.0, -1.0),  # Midyear (July)
-            (11, 12, -0.5, 0.87)  # Last month (December)
-        ]
+    def create_mock_historical_data(self):
+        """
+        Sample mock historical data
+        """
+        dates = pd.date_range(end='2023-12-31', periods=35, freq='D')  # Last 35 days of 2023
+        return pd.DataFrame({
+            'date': dates,
+            'quantity': range(1, 36),
+            'product_id': [1] * 35
+        })
 
-        # Invoke method from the class
-        for value, max_value, expected_sin, expected_cos in test_cases:
-            # Get the cyclic encoding values
-            sin_value, cos_value = self.layer.cyclic_encoding(value, max_value)
+    def create_mock_new_data(self):
+        """
+        Sample mock new data
+        """
+        dates = pd.date_range(start='2024-01-01', periods=10, freq='D')
+        return pd.DataFrame({
+            'date': dates,
+            'quantity': range(1, 11),
+            'product_id': [1] * 10
+        })
 
-            # sin and cos values are correct
-            self.assertEqual(sin_value, expected_sin)
-            self.assertEqual(cos_value, expected_cos)
+    @patch('pandas.read_csv')
+    def test_fetch_historical_data(self, mock_read_csv):
+        # Mock the read_csv to return the historical data
+        mock_read_csv.return_value = self.historical_data
+
+        last_date = datetime.strptime('2023-12-31', '%Y-%m-%d')
+
+        # Test the fetching of historical data
+        fetched_data = self.layer.fetch_historical_data(last_date)
+        self.assertEqual(len(fetched_data), 35)  # Should fetch 35 days of data
+        self.assertEqual(fetched_data['date'].max(), pd.Timestamp('2023-12-31'))
+
+    @patch('pandas.read_csv')
+    def test_merge_historical_data(self, mock_read_csv):
+        # Mock the read_csv to return the historical data
+        mock_read_csv.return_value = self.historical_data
+
+        # Test the merging of historical data with new data
+        merged_data = self.layer.merge_historical_data(self.new_data)
+        self.assertEqual(len(merged_data), 45)  # 35 days historical + 10 days new data
+        self.assertEqual(merged_data['date'].min(), pd.Timestamp('2023-11-27'))  # Oldest in historical
+        self.assertEqual(merged_data['date'].max(), pd.Timestamp('2024-01-10'))  # Latest in new data
+
+    def test_remove_historical_data(self):
+        # Set the mock to return True
+        self.layer.historical_data_fetched = True
+
+        # Manually merge historical and new data for this test
+        combined_data = pd.concat([self.historical_data, self.new_data], ignore_index=True)
+
+        # Test the removal of historical data
+        cleaned_data = self.layer.remove_historical_data(combined_data)
+        self.assertEqual(len(cleaned_data), 10)  # Only the 10 days of new data should remain
+        self.assertEqual(cleaned_data['date'].min(), pd.Timestamp('2024-01-01'))  # Oldest in new data
+        self.assertEqual(cleaned_data['date'].max(), pd.Timestamp('2024-01-10'))  # Latest in new data
 
 if __name__ == '__main__':
     unittest.main()
