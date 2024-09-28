@@ -145,30 +145,22 @@ class FeatureEngineeringLayer:
         # Map day names to offset indices (0 = Monday - 6 = Sunday)
         day_map = {'monday': 0, 'tuesday': 1, 'wednesday': 2, 'thursday': 3, 'friday': 4, 'saturday': 5, 'sunday': 6}
 
-        # Apply the transformation to generate date-related features
-        def generate_date_features(row):
-            year = row['year']
-            week = row['week']
-            weekday = day_map[row['weekday'].lower()]  # Encode the weekday
+        # Convert year, week, and weekday to datetime
+        # Create a column for numeric weekdays
+        df['weekday'] = df['weekday'].str.lower().map(day_map)
 
-            # Calculate the date
-            date = datetime.strptime(f'{year}-W{int(week)}-1', "%Y-W%W-%w") + timedelta(days=weekday)
+        # Vectorized date construction using pandas' datetime module
+        df['date'] = pd.to_datetime(df['year'].astype(str) + '-W' + df['week'].astype(str) + '-1', format='%Y-W%W-%w') + pd.to_timedelta(df['weekday'], unit='D')
 
-            # Extract 'day_of_month' and 'month'
-            day_of_month = date.day
-            month = date.month
+        # Extract day of the month and month directly from the date
+        df['day_of_month'] = df['date'].dt.day
+        df['month'] = df['date'].dt.month
 
-            # Cyclic encoding for month and weekday
-            month_sin, month_cos = self.cyclic_encoding(month, 12)
-            weekday_sin, weekday_cos = self.cyclic_encoding(weekday, 7)
+        # Cyclic encoding for month and weekday
+        df['month_sin'], df['month_cos'] = self.cyclic_encoding(df['month'], 12)
+        df['weekday_sin'], df['weekday_cos'] = self.cyclic_encoding(df['weekday'], 7)
 
-            # Return all the date-related features
-            return pd.Series([date, weekday, day_of_month, month, month_sin, month_cos, weekday_sin, weekday_cos])
-
-        # Apply the date feature generation to each row
-        df[['date', 'weekday', 'day_of_month', 'month', 'month_sin', 'month_cos', 'weekday_sin', 'weekday_cos']] = df.apply(generate_date_features, axis=1)
-
-        logging.info("Create date features")
+        logging.info("Date features created")
 
         return df
 

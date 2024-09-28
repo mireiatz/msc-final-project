@@ -79,6 +79,8 @@ class CleaningLayer:
         Calculate the cutoff year and week based on the current year/week and the cutoff period in weeks.
         """
         # Create a datetime object for the first day of the given week
+        year = int(year)
+        week = int(week)
         current_date = f"{year}-W{week}-1"
         current_date = pd.to_datetime(current_date, format="%Y-W%U-%w")
 
@@ -109,7 +111,6 @@ class CleaningLayer:
             (last_appearance['year'] > cutoff_year) |
             ((last_appearance['year'] == cutoff_year) & (last_appearance['week'] >= cutoff_week))
         ].index
-
 
         # Keep only active products
         total_products_before = df['product_id'].nunique()  # Count products for logging
