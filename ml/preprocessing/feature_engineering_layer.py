@@ -1,22 +1,131 @@
+import os
 import pandas as pd
-from datetime import datetime, timedelta
 import numpy as np
+import logging
+from datetime import datetime, timedelta
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
-from datetime import datetime
 
 class FeatureEngineeringLayer:
 
-    def __init__(self, data, output_path):
+    def __init__(self, data, mapping_dir='./ml/data/mappings/', historical_data_path='./ml/data/historical/processed/processed_data.csv', days=35):
         self.data = data
-        self.output_path = output_path
         self.label_encoder = LabelEncoder()
         self.scaler = MinMaxScaler()
+        self.mapping_dir = mapping_dir
+        self.historical_data_path = historical_data_path
+        self.historical_data_fetched = False
+        self.days = days
+
+    def load_mapping(self, feature):
+        """
+        Load the mapping for a specific feature from a CSV file, if it exists.
+        """
+        # Save to a file with the name of the feature
+        mapping_path = os.path.join(self.mapping_dir, f'{feature}_map.csv')
+
+        # Read and return the mapping of the feature
+        if os.path.exists(mapping_path):
+            return pd.read_csv(mapping_path).set_index(feature).to_dict()[f'{feature}_encoded']
+
+        logging.info(f"Mapping loaded for {feature}")
+
+        return {}
+
+    def save_mapping(self, feature, mapping):
+        """
+        Save the updated mapping for a specific feature to a CSV file.
+        """
+        # Save to a file with the name of the feature
+        mapping_path = os.path.join(self.mapping_dir, f'{feature}_map.csv')
+
+        # Convert mapping dictionary to DataFrame and save to CSV
+        mapping_df = pd.DataFrame(list(mapping.items()), columns=[feature, f'{feature}_encoded'])
+        mapping_df.to_csv(mapping_path, index=False)
+
+        logging.info(f"Mapping saved for {feature}")
 
     def encode_categorical_features(self, df, feature):
         """
-        Apply Label Encoding to convert categories into numerical values.
+        Apply Label Encoding to convert categorical features like 'product_id' and 'category' into numerical values, reusing existing mappings and assigning new encodings to previously unseen values.
         """
-        df[feature + '_encoded'] = self.label_encoder.fit_transform(df[feature])
+        # Load existing mapping if it exists
+        mapping = self.load_mapping(feature)
+
+        # Map existing values
+        df[f'{feature}_encoded'] = df[feature].map(mapping)
+
+        # Identify new values that need to be encoded
+        unmapped_values = df[feature][df[f'{feature}_encoded'].isna()].unique()
+
+        # Assign new encodings to the unmapped values
+        if len(unmapped_values) > 0:
+            # Determine the starting value for new encodings
+            max_existing_encoding = max(mapping.values()) if mapping else 0
+
+            # Assign new encoding starting from the last used value
+            new_encodings = {value: max_existing_encoding + idx + 1 for idx, value in enumerate(unmapped_values)}
+
+            # Update the mapping with the new encodings
+            mapping.update(new_encodings)
+
+            # Apply the new encodings to the DataFrame
+            df.loc[df[f'{feature}_encoded'].isna(), f'{feature}_encoded'] = df[feature].map(new_encodings)
+
+            # Save the updated mapping
+            self.save_mapping(feature, mapping)
+
+        # Ensure all encoded values are integers
+        df[f'{feature}_encoded'] = df[f'{feature}_encoded'].astype(int)
+
+        logging.info(f"'{feature}' encoded")
+
+        return df
+
+    def pivot_weekly_data(self, df):
+        """
+        Pivot the weekly data into daily records.
+        """
+        # Define the columns representing the weekdays
+        day_columns = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+
+        # Iterate through the weeks
+        daily_rows = []
+        for _, row in df.iterrows():
+            # Extract shared values from the row
+            year = row['year']
+            week = row['week']
+            product_id = row['product_id']
+            product_name = row['product_name']
+            category = row['category']
+            product_id_encoded = row['product_id_encoded']
+            category_encoded = row['category_encoded']
+            in_stock = row['in_stock']
+
+            # Calculate per item value for the entire week
+            per_item_value = round(row['value'] / row['quantity'], 2) if row['quantity'] > 0 else 0
+
+            # Iterate over each day of the week and create a daily record
+            for day in day_columns:
+                daily_quantity = row[day]
+
+                daily_rows.append({
+                    'product_id': product_id,
+                    'product_name': product_name,
+                    'category': category,
+                    'product_id_encoded': product_id_encoded,
+                    'category_encoded': category_encoded,
+                    'quantity': daily_quantity,
+                    'per_item_value': per_item_value,
+                    'in_stock': in_stock,
+                    'year': year,
+                    'week': week,
+                    'weekday': day
+                })
+
+        # Convert the list of daily records into a DataFrame
+        df = pd.DataFrame(daily_rows)
+
+        logging.info("Weekly records pivoted to daily")
 
         return df
 
@@ -24,212 +133,159 @@ class FeatureEngineeringLayer:
         """
         Perform cyclic encoding for a value (e.g., month or weekday).
         """
-        sin_value = np.sin(2 * np.pi * value / max_value)
-        cos_value = np.cos(2 * np.pi * value / max_value)
+        sin_value = np.sin(2 * np.pi * value / max_value)  # sine transformation
+        cos_value = np.cos(2 * np.pi * value / max_value)  # cosine transformation
 
         return round(sin_value, 2), round(cos_value, 2)
 
-    def extract_date_features(self, year, week, day_name):
+    def create_date_features(self, df):
         """
-        Expand the date information from the given year, week, and day of the week by creating numerical date-related features, including cyclic encoding for weekday and month.
+        Create date-related features.
         """
         # Map day names to offset indices (0 = Monday - 6 = Sunday)
         day_map = {'monday': 0, 'tuesday': 1, 'wednesday': 2, 'thursday': 3, 'friday': 4, 'saturday': 5, 'sunday': 6}
-        day_offset = day_map[day_name.lower()]
 
-        # Get the date and extract the day and month
-        date = datetime.strptime(f'{year}-W{int(week)}-1', "%Y-W%W-%w") + timedelta(days=day_offset)
-        day_of_month = date.day
-        month = date.month
+        # Convert year, week, and weekday to datetime
+        # Create a column for numeric weekdays
+        df['weekday'] = df['weekday'].str.lower().map(day_map)
 
-        # Cyclic encoding for month (12 months in a year)
-        month_sin, month_cos = self.cyclic_encoding(month, 12)
+        # Vectorized date construction using pandas' datetime module
+        df['date'] = pd.to_datetime(df['year'].astype(str) + '-W' + df['week'].astype(str) + '-1', format='%Y-W%W-%w') + pd.to_timedelta(df['weekday'], unit='D')
 
-        # Cyclic encoding for weekday (7 days in a week)
-        weekday_sin, weekday_cos = self.cyclic_encoding(day_offset, 7)
+        # Extract day of the month and month directly from the date
+        df['day_of_month'] = df['date'].dt.day
+        df['month'] = df['date'].dt.month
 
-        return date, day_offset, day_of_month, month, month_sin, month_cos, weekday_sin, weekday_cos
+        # Cyclic encoding for month and weekday
+        df['month_sin'], df['month_cos'] = self.cyclic_encoding(df['month'], 12)
+        df['weekday_sin'], df['weekday_cos'] = self.cyclic_encoding(df['weekday'], 7)
 
-    def pivot_weekly_data(self, df):
-        """
-        Pivot the weekly data into daily records.
-        """
-        daily_rows = []
-        day_columns = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-
-        # Iterate over each row in the dataframe
-        for _, row in df.iterrows():
-            year = row['year']
-            week = row['week']
-            product_id = row['product_id']
-            product_id_encoded = row['product_id_encoded']
-            product_name = row['product_name']
-            category = row['category']
-            category_encoded = row['category_encoded']
-            in_stock = row['in_stock']
-
-            # Calculate per-item value if quantity is greater than 0
-            per_item_value = round(row['value'] / row['quantity'], 2) if row['quantity'] > 0 else 0
-
-            # Generate a row for each day of the week
-            for day in day_columns:
-                quantity = row[day]
-
-                # Extract the date features for the day
-                date, day_offset, day_of_month, month, month_sin, month_cos, weekday_sin, weekday_cos = self.extract_date_features(year, week, day)
-
-                daily_rows.append({
-                    'product_id': product_id,
-                    'product_id_encoded': product_id_encoded,
-                    'product_name': product_name,
-                    'category': category,
-                    'category_encoded': category_encoded,
-                    'quantity': quantity,
-                    'per_item_value': per_item_value,
-                    'in_stock': in_stock,
-                    'date': date,
-                    'day_offset': day_offset,
-                    'day_of_month': day_of_month,
-                    'year': year,
-                    'month': month,
-                    'month_sin': month_sin,
-                    'month_cos': month_cos,
-                    'weekday_sin': weekday_sin,
-                    'weekday_cos': weekday_cos
-                })
-
-        return pd.DataFrame(daily_rows)
-
-    def adjust_in_stock_features(self, df):
-        """
-        Adjust the 'in_stock' status for each product.
-        """
-        # Sort data per product and date
-        df = self.sort_by_columns(df)
-
-        # Shift 'in_stock' values by 7 days (1 week) to adjust based on previous week's stock
-        df['in_stock'] = df.groupby(['product_id'])['in_stock'].shift(7).fillna(df['in_stock']).astype(int)
-
-        # Ensure 'in_stock' is 1 if the product had sales on that day
-        df['in_stock'] = df.apply(lambda row: 1 if row['quantity'] > 0 else row['in_stock'], axis=1).astype(int)
-
-        # Create flag feature to highlight instances with stock and no sales
-        df['in_stock_no_sales'] = df.apply(
-            lambda row: 1 if (row['in_stock'] == 1 and row['quantity'] == 0) else 0,
-            axis=1
-        )
+        logging.info("Date features created")
 
         return df
 
-    def add_holiday_flag(self, df):
+    def adjust_in_stock(self, df):
         """
-        Add a column indicating whether a date is considered a holiday.
+        Adjust the stock status for each product based on previous week's stock.
         """
-        # Define holiday periods
-        holiday_periods = [
-            ((7, 26), (8, 1)),  # Specific holiday (July 26 to August 1)
-            ((10, 24), (10, 31)),  # Halloween (October 24 to October 31)
-            ((12, 18), (12, 24)),  # Christmas (December 18 to December 24)
-            ((3, 28), (4, 4))  # Easter (March 28 to April 4)
-        ]
+        # Ensure 'date' is in datetime format and sort it
+        if not pd.api.types.is_datetime64_any_dtype(df['date']):
+            df['date'] = pd.to_datetime(df['date'], format='%Y-%m-%d')
+        df = df.sort_values(by=['product_id', 'date'])
 
-        # Set holiday flag to false for all rows
-        df['is_holiday'] = 0
+        # Shift 'in_stock' values by 1 week
+        df['in_stock_shifted'] = df.groupby('product_id')['in_stock'].shift(7)
 
-        # Set the holiday flag to true if the date is within the holiday periods
-        for (start_month, start_day), (end_month, end_day) in holiday_periods:
-            if start_month == end_month:
-                # For holidays within the same month
-                mask = (df['month'] == start_month) & (df['day_of_month'].between(start_day, end_day))
-            else:
-                # For holidays spanning two different months
-                mask = (
-                    ((df['month'] == start_month) & (df['day_of_month'] >= start_day)) |
-                    ((df['month'] == end_month) & (df['day_of_month'] <= end_day)) |
-                    ((df['month'] > start_month) & (df['month'] < end_month))
-                )
-            df['is_holiday'] |= mask.astype(int)
+        # Fill missing shifted values with the original 'in_stock' values
+        df['in_stock'] = df['in_stock_shifted'].fillna(df['in_stock']).astype(int)
+
+        df.loc[df['quantity'] > 0, 'in_stock'] = 1
+
+        # Drop the temporary 'in_stock_shifted' column
+        df.drop(columns=['in_stock_shifted'], inplace=True)
+
+        logging.info("Stock status adjusted")
 
         return df
 
-    def sort_by_columns(self, df, columns=['year', 'month', 'day_of_month']):
+    def fetch_historical_data(self, last_date):
         """
-        Sort the data by the specified columns (date as default).
+        Fetch historical data from the preprocessed historical dataset based on the given date.
         """
+        try:
+            # Load the preprocessed historical data
+            historical_data = pd.read_csv(self.historical_data_path, parse_dates=['date'])
 
-        return df.sort_values(by=columns)
+            if historical_data.empty:
+                return pd.DataFrame()
 
-    def create_lag_features(self, df, column, lag_days=[7, 30, 365]):
+            # Filter historical data based on the 'self.days' threshold
+            start_date = last_date - pd.to_timedelta(self.days, unit='D')
+            df = historical_data[historical_data['date'] >= start_date]
+
+            logging.info("Historical data fetched")
+
+            return df
+
+        except FileNotFoundError:
+            logging.info(f"Historical data file not found for merging at {self.historical_data_path}")
+            return pd.DataFrame()
+
+    def merge_historical_data(self, df):
         """
-        Create lagged columns for a given column across specified days.
+        Merge current DataFrame with preprocessed historical data.
         """
-        if column not in df.columns:
-            raise ValueError(f"'{column}' column not found in DataFrame.")
+        df['date'] = pd.to_datetime(df['date'], format='%Y-%m-%d', errors='coerce')
 
-        # Sort data per product and date
-        df = self.sort_by_columns(df)
+        # Fetch the data
+        historical_data = self.fetch_historical_data(df['date'].min())
 
-        # Create lag columns for each specified amount of days
-        for lag in lag_days:
-            lag_col_name = f'{column}_lag_{lag}'
+        # If historical data exists, concatenate with current data
+        if not historical_data.empty:
+            df = pd.concat([historical_data, df], ignore_index=True)
+            self.historical_data_fetched = True
 
-            # Group by 'product_id' and shift by the specified lag days
-            df[lag_col_name] = df.groupby('product_id')[column].shift(lag).fillna(0).astype(int)
+            logging.info("Historical data merged")
 
         return df
 
-    def create_rolling_avg_features(self, df, column, windows=[1, 7, 30, 365]):
+    def create_time_series_features(self, df, column, periods=[1, 7, 14, 30, 90, 365]):
         """
-        Create rolling average columns for the given column based on specified windows.
+        Create lag and rolling average columns for a given feature, e.g., 'quantity' across specified days.
         """
-        if column not in df.columns:
-            raise ValueError(f"'{column}' column not found in DataFrame.")
+        # Ensure 'date' is in datetime format, sort it and group it
+        if not pd.api.types.is_datetime64_any_dtype(df['date']):
+            df['date'] = pd.to_datetime(df['date'], format='%Y-%m-%d')
+        df = df.sort_values(by=['product_id', 'date'])
+        grouped = df.groupby('product_id')
 
-        # Sort data per product and date
-        df = self.sort_by_columns(df)
+        # Loop through defined periods of time
+        for period in periods:
+            # Create lags
+            lag_col_name = f'{column}_lag_{period}'
+            df[lag_col_name] = grouped[column].shift(period)
 
-        # Create rolling columns for each window
-        for window in windows:
-            rolling_col_name = f'{column}_rolling_avg_{window}'
+            # Create rolling averages, except for 1 day period
+            if period != 1:
+                rolling_col_name = f'{column}_rolling_avg_{period}'
+                df[rolling_col_name] = grouped[column].transform(lambda x: x.rolling(period, min_periods=1).mean())
 
-            # Apply rolling mean within each 'product_id' group
-            df[rolling_col_name] = df.groupby('product_id')[column].transform(
-                lambda x: x.rolling(window, min_periods=1).mean()
-            )
-            df[rolling_col_name] = df[rolling_col_name].fillna(0).round(2)
+        # Fill missing values with 0
+        df.fillna(0, inplace=True)
+
+        logging.info("Time series features created")
 
         return df
 
-    def save_data(self, df):
-        """Save the completed DataFrame to a CSV file."""
-        df.to_csv(self.output_path, index=False)
+    def remove_historical_data(self, df):
+        """
+        Remove historical data rows older than the 'self.days' threshold from the current dataset.
+        """
+        # Remove historical data if it was fetched
+        if self.historical_data_fetched:
+            # Calculate the cutoff date based on the minimum date in the current data
+            cutoff_date = df['date'].min() + pd.to_timedelta(self.days, unit='D')
+
+            # Filter out rows older than the cutoff date
+            df = df[df['date'] >= cutoff_date].reset_index(drop=True)
+
+            logging.info("Historical data removed")
+
+        return df
 
     def process(self):
         """
-        Re-structure the DataFrame and create new features:
-        - Encode categories.
-        - Pivot weekly data to daily.
-        - Adjust the stock data.
-        - Add a holiday flag.
-        - Create lag and rolling columns.
-        - Scale relevant columns.
-        - Save the data into a file.
+        Re-structure the DataFrame and create new features.
         """
-        print(f"Encode categories at {datetime.now()}")
+        logging.info("Starting feature engineering process...")
+
         df = self.encode_categorical_features(self.data, 'category')
-        print(f"Encode product ids at {datetime.now()}")
         df = self.encode_categorical_features(df, 'product_id')
-        print(f"Pivot at {datetime.now()}")
         df = self.pivot_weekly_data(df)
-        print(f"Adjust in stock at {datetime.now()}")
-        df = self.adjust_in_stock_features(df)
-        print(f"Add holiday flag at {datetime.now()}")
-        df = self.add_holiday_flag(df)
-        print(f"Create lag columns at {datetime.now()}")
-        df = self.create_lag_features(df, 'quantity')
-        print(f"Create rolling columns at {datetime.now()}")
-        df = self.create_rolling_avg_features(df, 'quantity')
-        print(f"Save data at {datetime.now()}")
-        self.save_data(df)
+        df = self.create_date_features(df)
+        df = self.adjust_in_stock(df)
+        df = self.merge_historical_data(df)
+        df = self.create_time_series_features(df, 'quantity')
+        df = self.remove_historical_data(df)
 
         return df

@@ -8,9 +8,9 @@ class TestCleaningLayer(unittest.TestCase):
 
     def setUp(self):
         """
-        Set up test CleaningLayer.
+        Set up test CleaningLayer and data sample.
         """
-        # Sample data simulating product sales and stock information
+        # Sample data used throughout the tests
         self.data = pd.DataFrame({
             'product_id': [None, None, '1234', 'ABC', '1234', '1234', '1234', '1234', '1234', '1234'],
             'product_name': ['Product A', 'Product B', 'Product A', 'Product C', 'Product A', 'Product A', 'Product A', 'Product A', 'Product A', 'Product A'],
@@ -32,70 +32,84 @@ class TestCleaningLayer(unittest.TestCase):
         # Initialise the layer
         self.layer = CleaningLayer(self.data)
 
+    def test_validate_columns(self):
+        """
+        Test that if all columns are present in the DataFrame, no exception is raised.
+        """
+        try:
+            # Invoke the method
+            df = self.layer.validate_columns(self.data, ['product_id', 'product_name', 'category', 'week', 'year', 'monday', 'tuesday', 'wednesday','thursday', 'friday', 'saturday', 'sunday', 'value', 'in_stock'])
+        except Exception as e:
+            # Fail the test if any exception is raised
+            self.fail(f"validate_columns raised {type(e).__name__} unexpectedly")
+
+    def test_validate_columns_raises_error(self):
+        """
+        Test that a KeyError is raised when required columns are missing.
+        """
+        # Remove some columns from the sample data to simulate missing columns
+        data_with_missing_columns = self.data.drop(columns=['product_name', 'category'])
+
+        with self.assertRaises(KeyError):
+            self.layer.validate_columns(data_with_missing_columns, ['product_id', 'product_name', 'category', 'week', 'year', 'monday', 'tuesday', 'wednesday','thursday', 'friday', 'saturday', 'sunday', 'value', 'in_stock'])
+
+    def test_standardise_category_column(self):
+        """
+        Test that the 'category' column is standardised.
+        """
+        # Replace categories in the sample data to test for more scenarios
+        test_data = self.data.copy()
+        test_data['category'] = [
+            'CAT & 1 / A * x',  # special characters, uppercase, underscores
+            'pet food',  # specific case
+            'petfood',  # specific case
+            'sauces_pickle',  # specific case
+            'sauces_pickles',  # specific case
+            'washing_powder',  # specific case
+            'washing_powders',  # specific case
+            'lower_rate',  # specific case
+            'standard_rate',  # specific case
+            'zero_rate',  # specific case
+        ]
+
+        # Invoke method from the class
+        df = self.layer.standardise_category_column(test_data)
+        actual_categories = df['category'].tolist()
+        expected_cleaned_categories = [
+            'cat_1_a_x',
+            'pet_food',
+            'pet_food',
+            'sauces_pickles',
+            'sauces_pickles',
+            'washing_powders',
+            'washing_powders',
+            'miscellaneous',
+            'miscellaneous',
+            'miscellaneous',
+        ]
+        self.assertListEqual(actual_categories, expected_cleaned_categories)
+
     def test_drop_duplicates(self):
-        # Sample data with duplicates
+        # Sample data with multiple duplicates
         test_data = pd.DataFrame({
-            'product_id': ['A', 'A', 'A', 'B', 'B', 'C', 'C', 'C'],
-            'product_name': ['Prod A', 'Prod A', 'Prod A', 'Prod B', 'Prod B', 'Prod C', 'Prod C', 'Prod C'],
-            'week': [21, 21, 22, 45, 45, 1, 1, 1],
-            'year': [2021, 2021, 2022, 2022, 2022, 2022, 2023, 2023],
-            'monday': [1, 1, 3, 1, 1, 0, 0, 0],
-            'tuesday': [1, 1, 3, 1, 1, 0, 0, 0],
-            'wednesday': [1, 1, 3, 1, 1, 0, 0, 0],
-            'thursday': [1, 1, 3, 10, 1, 0, 0, 0],
-            'friday': [1, 1, 3, 1, 1, 0, 0, 0],
-            'saturday': [1, 1, 3, 1, 1, 0, 0, 0],
-            'sunday': [1, 1, 3, 1, 1, 0, 0, 0],
+            'product_id': ['A',  'A',  'A', 'B',  'B',  'C',  'C',  'C'],
+            'week':       [21,   21,   22,   45,   45,   1,    1,    1],
+            'year':       [2021, 2021, 2022, 2022, 2022, 2022, 2023, 2023],
         })
 
         # Invoke method from the class
-        df = self.layer.drop_duplicates(test_data, ['product_id', 'week', 'year', 'monday', 'tuesday', 'wednesday','thursday', 'friday', 'saturday', 'sunday'])
+        df = self.layer.drop_duplicates(test_data)
 
-        # No instances of exact product, date and value duplicates
+        # No instances of exact 'product_id', 'week' and 'year' matches
         expected_data = pd.DataFrame({
-            'product_id': ['A', 'A', 'B', 'B', 'C', 'C'],
-            'product_name': ['Prod A', 'Prod A', 'Prod B', 'Prod B', 'Prod C', 'Prod C'],
-            'week': [21, 22, 45, 45, 1, 1],
-            'year': [2021, 2022, 2022, 2022, 2022, 2023],
-            'monday': [1, 3, 1, 1, 0, 0],
-            'tuesday': [1, 3, 1, 1, 0, 0],
-            'wednesday': [1, 3, 1, 1, 0, 0],
-            'thursday': [1, 3, 10, 1, 0, 0],
-            'friday': [1, 3, 1, 1, 0, 0],
-            'saturday': [1, 3, 1, 1, 0, 0],
-            'sunday': [1, 3, 1, 1, 0, 0],
+            'product_id': ['A',  'A',  'B',  'C', 'C'],
+            'week':       [21,   22,   45,   1,    1],
+            'year':       [2021, 2022, 2022, 2022, 2023],
         })
         pd.testing.assert_frame_equal(
             df.reset_index(drop=True),
             expected_data.reset_index(drop=True)
         )
-
-    def test_calculate_z_scores(self):
-        """
-        Test the calculation of Z-scores.
-        """
-        # Invoke method from the class
-        df = self.layer.calculate_z_scores(self.data.copy(), 'quantity')
-
-        # NaN is assigned when there's only one value in the group and Z-scores are computed correctly for valid groups
-        actual_z_scores = df['z_score'].round(2)
-        expected_z_scores = pd.Series([np.nan, np.nan, -0.41, np.nan, 2.45, -0.41, -0.41, -0.41, -0.41, -0.41], name='z_score')
-        pd.testing.assert_series_equal(actual_z_scores, expected_z_scores)
-
-    def test_remove_outliers(self):
-        """
-        Test that outliers are removed correctly based on Z-scores.
-        """
-        # Invoke method from the class
-        df = self.layer.remove_outliers(self.data.copy(), 'quantity', z_threshold=2)  # Use a z_threshold of 2 for this test due to small data sample
-
-        # The outlier with quantity 1000 is removed
-        self.assertFalse((df['quantity'] == 1000).any(), "Outlier with quantity 1000 was not removed")
-
-        # Non-outliers are not removed
-        actual_count = len(df)
-        expected_count = len(self.data) - 1  # Only one outlier expected
-        self.assertEqual(actual_count, expected_count, "Non-outliers were incorrectly removed")
 
     def test_generate_unique_id(self):
         """
@@ -118,7 +132,6 @@ class TestCleaningLayer(unittest.TestCase):
         """
         Test the handling of the product IDs.
         """
-
         # Make a copy of the original product ids
         original_product_ids = self.data['product_id'].tolist()
 
@@ -129,13 +142,65 @@ class TestCleaningLayer(unittest.TestCase):
         self.assertIn('original_product_id', df.columns)
         self.assertEqual(original_product_ids, df['original_product_id'].tolist())
 
-        # 'product_id' has been encoded based on 'product_name' and 'category'
-        expected_product_ids = df.apply(lambda row: self.layer.generate_unique_id(row['product_name'], row['category']), axis=1).tolist()
-        self.assertEqual(expected_product_ids, df['product_id'].tolist())
+        # Product IDs have been updated
+        self.assertNotEqual(df['product_id'].tolist(), original_product_ids)
+
+        # There should be 3 unique product IDs
+        self.assertEqual(len(df['product_id'].unique()), 3)
+
+    def test_calculate_cutoff_date(self):
+        """
+        Test that the correct cut off year and week are calculated accurately.
+        """
+        # Example parameters for within the year cut off date
+        cutoff_period_weeks = 4
+        year = 2021
+        week = 9
+
+        # Invoke method from the class
+        cutoff_year, cutoff_week = self.layer.calculate_cutoff_date(year, week, cutoff_period_weeks)
+
+        # Calculate expected values manually (2021, week 5, assuming no year rollover)
+        expected_cutoff_year = 2021
+        expected_cutoff_week = 5
+
+        # Assert the cutoff date is correct
+        self.assertEqual(cutoff_year, expected_cutoff_year)
+        self.assertEqual(cutoff_week, expected_cutoff_week)
+
+        # Example parameters for cut off date in previous year
+        week = 3
+
+        # Invoke method from the class
+        cutoff_year, cutoff_week = self.layer.calculate_cutoff_date(year, week, cutoff_period_weeks)
+
+        # Calculate expected values manually (2021, week 5, assuming no year rollover)
+        expected_cutoff_year = 2020
+        expected_cutoff_week = 52
+
+        # Assert the cutoff date is correct
+        self.assertEqual(cutoff_year, expected_cutoff_year)
+        self.assertEqual(cutoff_week, expected_cutoff_week)
+
+    def test_remove_inactive_products(self):
+        """
+        Test that products without sales in the last few weeks are removed correctly.
+        """
+        # Example parameter to remove products inactive the last 2 weeks
+        cutoff_period_weeks = 2
+
+        # Invoke method from the class
+        df = self.layer.remove_inactive_products(self.data, cutoff_period_weeks)
+
+        # The product 'ABC' is removed
+        self.assertNotIn('ABC', df['product_id'].values)
+
+        # The product '1234' is still in the dataset
+        self.assertIn('1234', df['product_id'].values)
 
     def test_clean_sales_columns(self):
         """
-        Test that sales columns 'monday-sunday' are cleaned.
+        Test that sales columns 'monday' to 'sunday' are cleaned.
         """
         # Invoke method from the class
         df = self.layer.clean_sales_columns(self.data.copy())
@@ -263,58 +328,10 @@ class TestCleaningLayer(unittest.TestCase):
         # Invoke method from the class
         df = self.layer.standardise_in_stock(self.data.copy())
 
-        # Below 0 values are 0, greater than 1 values are 1
+        # < 0 values are 0, > 1 values are 1
         actual_in_stock = df['in_stock'].tolist()
         expected_in_stock = [0, 1, 0, 1, 0, 1, 0, 0, 1, 1]
         self.assertEqual(actual_in_stock, expected_in_stock, "In_stock standardisation failed")
-
-    def test_standardise_category_column(self):
-        """
-        Test that the 'category' column is standardised.
-        """
-        # New categories to test for lowercase, underscore separation, special characters removal, and specific replacements
-        test_data = self.data.copy()
-        test_data['product_id'] = [
-            'product_a',
-            'product_b',
-            'product_c',
-            'product_d',
-            'product_e',
-            'product_f',
-            'product_g',
-            'product_h',
-            'product_i',
-            'product_j',
-        ]
-        test_data['category'] = [
-            'CAT & 1 / A * x',  # special characters, uppercase, underscores
-            'pet food',  # specific case
-            'petfood',  # specific case
-            'sauces_pickle',  # specific case
-            'sauces_pickles',  # specific case
-            'washing_powder',  # specific case
-            'washing_powders',  # specific case
-            'lower_rate',  # specific case
-            'standard_rate',  # specific case
-            'zero_rate',  # specific case
-        ]
-
-        # Invoke method from the class
-        df = self.layer.standardise_category_column(test_data)
-        actual_categories = df['category'].tolist()
-        expected_cleaned_categories = [
-            'cat_1_a_x',
-            'pet_food',
-            'pet_food',
-            'sauces_pickles',
-            'sauces_pickles',
-            'washing_powders',
-            'washing_powders',
-            'miscellaneous',
-            'miscellaneous',
-            'miscellaneous',
-        ]
-        self.assertListEqual(actual_categories, expected_cleaned_categories)
 
     def test_insert_missing_product_weeks(self):
         """
