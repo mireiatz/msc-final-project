@@ -24,29 +24,6 @@ class Sale extends Model
         'currency',
     ];
 
-    protected static function boot(): void
-    {
-        parent::boot();
-
-        static::created(function (Sale $sale) {
-
-            $sale->products()->each(function ($product) use ($sale) {
-                $quantity = -1 * $product->pivot->quantity;
-
-                $sale->inventoryTransactions()->create([
-                    'store_id' => $sale->store_id,
-                    'product_id' => $product->id,
-                    'quantity' => $quantity,
-                    'stock_balance' => $product->stock_balance + $quantity,
-                ]);
-            });
-        });
-
-        static::deleting(function ($sale) {
-            $sale->inventoryTransactions()->delete();
-        });
-    }
-
     public function store(): BelongsTo
     {
         return $this->belongsTo(Store::class);
@@ -60,10 +37,5 @@ class Sale extends Model
             ->withPivot('quantity', 'unit_sale', 'total_sale', 'unit_cost', 'total_cost')
             ->as('sale_products')
             ->withTimestamps();
-    }
-
-    public function inventoryTransactions(): MorphMany
-    {
-        return $this->morphMany(InventoryTransaction::class, 'parent');
     }
 }
