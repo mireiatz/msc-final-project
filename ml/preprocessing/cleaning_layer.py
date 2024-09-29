@@ -18,6 +18,15 @@ class CleaningLayer:
             logging.error(f"Missing required columns: {missing_columns}")
             raise KeyError(f"Missing required columns: {missing_columns}")
 
+    def cast_integer_columns(self, df, columns=['week', 'year']):
+        """
+        Type cast columns to integers.
+        """
+        for column in columns:
+            df[column] = df[column].astype(int)
+
+        return df
+
     def standardise_category_column(self, df):
         """
         Standardise the 'category' column.
@@ -79,8 +88,6 @@ class CleaningLayer:
         Calculate the cutoff year and week based on the current year/week and the cutoff period in weeks.
         """
         # Create a datetime object for the first day of the given week
-        year = int(year)
-        week = int(week)
         current_date = f"{year}-W{week}-1"
         current_date = pd.to_datetime(current_date, format="%Y-W%U-%w")
 
@@ -123,17 +130,15 @@ class CleaningLayer:
 
         return df
 
-    def clean_sales_columns(self, df):
+    def clean_sales_columns(self, df, columns=['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']):
         """
         Clean sales columns ('monday' to 'sunday') by ensuring positive integers.
         """
-        sales_columns = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-
         # Convert to numeric, forcing errors to NaN
-        df[sales_columns] = df[sales_columns].apply(pd.to_numeric, errors='coerce')
+        df[columns] = df[columns].apply(pd.to_numeric, errors='coerce')
 
         # Convert to positive integers, filling NaNs with 0
-        df[sales_columns] = df[sales_columns].fillna(0).abs().astype(int)
+        df[columns] = df[columns].fillna(0).abs().astype(int)
 
         logging.info("Sales columns cleaned")
 
@@ -152,21 +157,21 @@ class CleaningLayer:
 
         return df
 
-    def clean_value_column(self, df):
+    def clean_price_column(self, df, column='value'):
         """
-        Clean the 'value' column by ensuring positive decimals.
+        Clean the price indicating column by ensuring positive decimals.
         """
         # Coerce to numeric, forcing errors to NaN
-        df['value'] = pd.to_numeric(df['value'], errors='coerce')
+        df[column] = pd.to_numeric(df[column], errors='coerce')
 
         # Get the absolute value, filling NaNs with 0
-        df['value'] = np.abs(df['value'].fillna(0))
+        df[column] = np.abs(df[column].fillna(0))
 
-        logging.info("'value' column cleaned")
+        logging.info("Price indicating column cleaned")
 
         return df
 
-    def standardise_in_stock(self, df):
+    def standardise_in_stock(self, df, is_daily=False):
         """
         Standardise the 'in_stock' column values to binary format (0 or 1).
         """
@@ -176,11 +181,14 @@ class CleaningLayer:
         # Convert > 0 values to 1 and everything else to 0 (including NaNs)
         df['in_stock'] = np.where(df['in_stock'] > 0, 1, 0)
 
+        if is_daily:
+            df.loc[df['quantity'] > 0, 'in_stock'] = 1
+
         logging.info("'in_stock' column standardised")
 
         return df
 
-    def insert_missing_product_weeks(self, df):
+    def insert_missing_product_weekly(self, df):
         """
         Ensure all products have sales records for every week by inserting no-sales data for missing weeks.
         """
@@ -211,9 +219,9 @@ class CleaningLayer:
         return df
 
 
-    def process(self):
+    def process_weekly_data(self):
         """
-        Apply the full data cleaning process to the DataFrame.
+        Apply the full data cleaning process to a DataFrame with weekly sales.
         """
         logging.info("Starting the data cleaning process...")
 
@@ -221,6 +229,7 @@ class CleaningLayer:
 
         try:
             self.validate_columns(self.data, required_columns)
+            df = self.cast_integer_columns(self.data)
         except KeyError as e:
             logging.error(f"Missing columns in the data: {e}")
             raise KeyError(f"Missing columns in the data: {e}")
@@ -231,8 +240,29 @@ class CleaningLayer:
         df = self.remove_inactive_products(df)
         df = self.clean_sales_columns(df)
         df = self.clean_quantity_column(df)
-        df = self.clean_value_column(df)
+        df = self.clean_price_column(df)
         df = self.standardise_in_stock(df)
-        df = self.insert_missing_product_weeks(df)
+        df = self.insert_missing_product_weekly(df)
 
         return df
+
+    def process_daily_data(self):
+        """
+        Apply the full data cleaning process to a DataFrame with daily sales.
+        """
+        logging.info("Starting the data cleaning process...")
+
+        required_columns = ['product_id', 'product_name', 'category', 'quantity', 'per_item_value', 'in_stock', 'date']
+
+        try:
+            self.validate_columns(self.data, required_columns)
+        except KeyError as e:
+            logging.error(f"Missing columns in the data: {e}")
+            raise KeyError(f"Missing columns in the data: {e}")
+
+        df = self.standardise_category_column(self.data)
+        df = self.handle_product_ids(df)
+        df = self.drop_duplicates(df, ['product_id', 'date'])
+        df = clean_sales_columns(df, ['quantity'])
+        df = clean_price_column(df, 'per_item_value')
+        df = self.standardise_in_stock(df, True)

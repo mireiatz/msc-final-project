@@ -1,8 +1,4 @@
-from preprocessing.preprocessing_pipeline import PreprocessingPipeline
-import pandas as pd
+from ml.logging_config import setup_logging
+import ml.scripts.preprocess_historical_data as preprocess_historical_data
 
-# Run the preprocessing pipeline
-data_directory = './ml/data/training/raw/'
-output_path = './ml/data/training/processed'
-pipeline = PreprocessingPipeline(data_dir=data_directory, output_path=output_path)
-final_data = pipeline.run()
+preprocess_historical_data.run()
