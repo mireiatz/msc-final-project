@@ -15,6 +15,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->foreignUuid('provider_id')->index()->constrained('providers');
             $table->foreignUuid('category_id')->index()->constrained('categories');
+            $table->string('pos_product_id')->nullable();
             $table->string('name')->index();
             $table->string('description')->nullable();
             $table->string('unit');

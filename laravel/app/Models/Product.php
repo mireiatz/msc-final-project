@@ -14,8 +14,9 @@ class Product extends Model
     use UsesUuid, HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'category_id',
         'provider_id',
+        'category_id',
+        'pos_product_id',
         'name',
         'description',
         'unit',

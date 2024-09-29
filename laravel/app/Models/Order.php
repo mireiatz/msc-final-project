@@ -21,29 +21,6 @@ class Order extends Model
         'currency',
     ];
 
-    protected static function boot(): void
-    {
-        parent::boot();
-
-        static::created(function (Order $order) {
-
-            $order->products()->each(function ($product) use ($order) {
-                $quantity = $product->pivot->quantity;
-
-                $order->inventoryTransactions()->create([
-                    'store_id' => $order->store_id,
-                    'product_id' => $product->id,
-                    'quantity' => $quantity,
-                    'stock_balance' => $product->stock_balance + $quantity,
-                ]);
-            });
-        });
-
-        static::deleting(function ($order) {
-            $order->inventoryTransactions()->delete();
-        });
-    }
-
     private function calculateStockBalance(Product $product, int $quantity): int
     {
         return $product->stock_balance + $quantity;
@@ -66,10 +43,5 @@ class Order extends Model
             ->as('order_products')
             ->withPivot('quantity', 'unit_cost', 'total_cost')
             ->withTimestamps();
-    }
-
-    public function inventoryTransactions(): MorphMany
-    {
-        return $this->morphMany(InventoryTransaction::class, 'parent');
     }
 }
