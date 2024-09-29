@@ -7,7 +7,7 @@ from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 
 class FeatureEngineeringLayer:
 
-    def __init__(self, data, mapping_dir='./ml/data/mappings/', historical_data_path='./ml/data/historical/processed/processed_data.csv', days=35):
+    def __init__(self, data, mapping_dir='./ml/data/mappings/', historical_data_path='./ml/data/historical/processed/processed_data.csv', days=365):
         self.data = data
         self.label_encoder = LabelEncoder()
         self.scaler = MinMaxScaler()
@@ -44,7 +44,7 @@ class FeatureEngineeringLayer:
 
         logging.info(f"Mapping saved for {feature}")
 
-    def encode_categorical_features(self, df, feature):
+    def encode_categorical_feature(self, df, feature):
         """
         Apply Label Encoding to convert categorical features like 'product_id' and 'category' into numerical values, reusing existing mappings and assigning new encodings to previously unseen values.
         """
@@ -95,6 +95,7 @@ class FeatureEngineeringLayer:
             year = row['year']
             week = row['week']
             product_id = row['product_id']
+            original_product_id = row['original_product_id']
             product_name = row['product_name']
             category = row['category']
             product_id_encoded = row['product_id_encoded']
@@ -110,6 +111,7 @@ class FeatureEngineeringLayer:
 
                 daily_rows.append({
                     'product_id': product_id,
+                    'original_product_id': original_product_id,
                     'product_name': product_name,
                     'category': category,
                     'product_id_encoded': product_id_encoded,
@@ -138,27 +140,72 @@ class FeatureEngineeringLayer:
 
         return round(sin_value, 2), round(cos_value, 2)
 
-    def create_date_features(self, df):
+    def create_date_feature(self, df):
         """
-        Create date-related features.
+        Create the date feature.
         """
+        if 'date' not in df.columns:
+            # Vectorized date construction using pandas' datetime module
+            df['date'] = pd.to_datetime(df['year'].astype(str) + '-W' + df['week'].astype(str) + '-1', format='%Y-W%W-%w') + pd.to_timedelta(df['weekday'], unit='D')
+
+        df['date'] = pd.to_datetime(df['date'])
+
+        return df
+
+    def create_week_features(self, df):
+        """
+        Create week-related features.
+        """
+        if 'week' not in df.columns:
+            df['week'] = df['date'].dt.isocalendar().week
+
         # Map day names to offset indices (0 = Monday - 6 = Sunday)
         day_map = {'monday': 0, 'tuesday': 1, 'wednesday': 2, 'thursday': 3, 'friday': 4, 'saturday': 5, 'sunday': 6}
 
-        # Convert year, week, and weekday to datetime
-        # Create a column for numeric weekdays
+        if 'weekday' not in df.columns:
+            df['weekday'] = df['date'].dt.day_name()
+
+        # Encode weekdays
         df['weekday'] = df['weekday'].str.lower().map(day_map)
 
-        # Vectorized date construction using pandas' datetime module
-        df['date'] = pd.to_datetime(df['year'].astype(str) + '-W' + df['week'].astype(str) + '-1', format='%Y-W%W-%w') + pd.to_timedelta(df['weekday'], unit='D')
+        # Cyclic encoding for weekday
+        df['weekday_sin'], df['weekday_cos'] = self.cyclic_encoding(df['weekday'], 7)
 
+        return df
+
+    def create_month_features(self, df):
+        """
+        Create the month-related features.
+        """
         # Extract day of the month and month directly from the date
         df['day_of_month'] = df['date'].dt.day
         df['month'] = df['date'].dt.month
 
-        # Cyclic encoding for month and weekday
+        # Cyclic encoding for month
         df['month_sin'], df['month_cos'] = self.cyclic_encoding(df['month'], 12)
-        df['weekday_sin'], df['weekday_cos'] = self.cyclic_encoding(df['weekday'], 7)
+
+        return df
+
+    def create_year_feature(self, df):
+        """
+        Create the year feature.
+        """
+        if 'year' not in df.columns:
+            df['year'] = df['date'].dt.year
+
+        return df
+
+    def create_time_features(self, df):
+        """
+        Create date-related features.
+        """
+        df = self.create_week_features(df)
+
+        df = self.create_date_feature(df)
+
+        df = self.create_month_features(df)
+
+        df = self.create_year_feature(df)
 
         logging.info("Date features created")
 
@@ -188,7 +235,7 @@ class FeatureEngineeringLayer:
 
         return df
 
-    def fetch_historical_data(self, last_date):
+    def fetch_historical_data(self, last_date_historical, days):
         """
         Fetch historical data from the preprocessed historical dataset based on the given date.
         """
@@ -197,10 +244,11 @@ class FeatureEngineeringLayer:
             historical_data = pd.read_csv(self.historical_data_path, parse_dates=['date'])
 
             if historical_data.empty:
+                logging.info("No historical data found, skipping historical merge")
                 return pd.DataFrame()
 
             # Filter historical data based on the 'self.days' threshold
-            start_date = last_date - pd.to_timedelta(self.days, unit='D')
+            start_date = last_date_historical - pd.to_timedelta(days, unit='D')
             df = historical_data[historical_data['date'] >= start_date]
 
             logging.info("Historical data fetched")
@@ -218,7 +266,23 @@ class FeatureEngineeringLayer:
         df['date'] = pd.to_datetime(df['date'], format='%Y-%m-%d', errors='coerce')
 
         # Fetch the data
-        historical_data = self.fetch_historical_data(df['date'].min())
+        first_date_current = df['date'].min()
+        historical_data = self.fetch_historical_data(first_date_current, self.days)
+
+        # Preserve current data where/if historical data overlaps
+        historical_data = historical_data[historical_data['date'] < first_date_current]
+
+        # Detect any gaps
+        last_date_historical = historical_data['date'].max()
+        gap_days = (first_date_current - last_date_historical).days
+
+        # Small gaps are flagged but the merge proceeds
+        if gap_days <= 5:
+            logging.info(f"Proceeding with historical data merge despite {gap_days}-day gap.")
+        else:
+            logging.info(f"Historical data merge aborted due to a significant {gap_days}-day gap. Skipping the merge.")
+
+            return df
 
         # If historical data exists, concatenate with current data
         if not historical_data.empty:
@@ -257,14 +321,14 @@ class FeatureEngineeringLayer:
 
         return df
 
-    def remove_historical_data(self, df):
+    def remove_historical_data(self, df, days):
         """
         Remove historical data rows older than the 'self.days' threshold from the current dataset.
         """
         # Remove historical data if it was fetched
         if self.historical_data_fetched:
             # Calculate the cutoff date based on the minimum date in the current data
-            cutoff_date = df['date'].min() + pd.to_timedelta(self.days, unit='D')
+            cutoff_date = df['date'].min() + pd.to_timedelta(days, unit='D')
 
             # Filter out rows older than the cutoff date
             df = df[df['date'] >= cutoff_date].reset_index(drop=True)
@@ -273,19 +337,34 @@ class FeatureEngineeringLayer:
 
         return df
 
-    def process(self):
+    def process_weekly_data(self):
         """
-        Re-structure the DataFrame and create new features.
+        Re-structure a DataFrame with weekly records and create new features.
         """
         logging.info("Starting feature engineering process...")
 
-        df = self.encode_categorical_features(self.data, 'category')
-        df = self.encode_categorical_features(df, 'product_id')
+        df = self.encode_categorical_feature(self.data, 'category')
+        df = self.encode_categorical_feature(df, 'product_id')
         df = self.pivot_weekly_data(df)
-        df = self.create_date_features(df)
+        df = self.create_time_features(df)
         df = self.adjust_in_stock(df)
         df = self.merge_historical_data(df)
         df = self.create_time_series_features(df, 'quantity')
-        df = self.remove_historical_data(df)
+        df = self.remove_historical_data(df, self.days)
+
+        return df
+
+    def process_daily_data(self):
+        """
+        Re-structure a DataFrame with daily records and create new features.
+        """
+        logging.info("Starting feature engineering process...")
+
+        df = self.encode_categorical_feature(self.data, 'category')
+        df = self.encode_categorical_feature(df, 'product_id')
+        df = self.create_time_features(df)
+        df = self.merge_historical_data(df)
+        df = self.create_time_series_features(df, 'quantity')
+        df = self.remove_historical_data(df, self.days)
 
         return df

@@ -34,7 +34,7 @@ class TestFeatureEngineeringLayer(unittest.TestCase):
 
     @patch.object(FeatureEngineeringLayer, 'load_mapping')
     @patch.object(FeatureEngineeringLayer, 'save_mapping')
-    def test_encode_categorical_features(self, mock_save_mapping, mock_load_mapping):
+    def test_encode_categorical_feature(self, mock_save_mapping, mock_load_mapping):
         """
         Test that categorical features are properly encoded using label encoding.
         """
@@ -48,7 +48,7 @@ class TestFeatureEngineeringLayer(unittest.TestCase):
         mock_load_mapping.return_value = {'pet_food': 1, 'general_grocery': 2}
 
         # Invoke method from the class, for the 'category' feature
-        df = self.layer.encode_categorical_features(test_data, 'category')
+        df = self.layer.encode_categorical_feature(test_data, 'category')
 
         # Label encoding was applied
         self.assertIn('category_encoded', df.columns)  # 'category_encoded' exists
@@ -70,7 +70,7 @@ class TestFeatureEngineeringLayer(unittest.TestCase):
         mock_load_mapping.return_value = {'product_2': 1, 'product_3': 3}
 
         # Invoke method from the class, for the 'product_id' feature
-        df = self.layer.encode_categorical_features(test_data, 'product_id')
+        df = self.layer.encode_categorical_feature(test_data, 'product_id')
 
         # Label encoding was applied
         self.assertIn('product_id_encoded', df.columns)  # 'product_id_encoded' exists
@@ -93,6 +93,7 @@ class TestFeatureEngineeringLayer(unittest.TestCase):
         test_data = pd.DataFrame({
             'product_id': ['1234', '1111'],
             'product_id_encoded': [0, 1],
+            'original_product_id': ['1234', '1111'],
             'product_name': ['Product A', 'Product B'],
             'category': ['cat_1', 'cat_2'],
             'category_encoded': [0, 1],
@@ -136,6 +137,9 @@ class TestFeatureEngineeringLayer(unittest.TestCase):
         self.assertEqual(df['week'].tolist(), expected_data['week'].tolist(), "Mismatch in 'month' values")
 
     def test_cyclic_encoding(self):
+        """
+        Test cyclic encoding of periodic features.
+        """
         # Test cases for cyclic encoding
         test_cases = [
             (0, 7, 0.0, 1.0),  # Weekday example, 0th day of the week (Sunday)
@@ -155,7 +159,85 @@ class TestFeatureEngineeringLayer(unittest.TestCase):
             self.assertEqual(sin_value, expected_sin)
             self.assertEqual(cos_value, expected_cos)
 
-    def test_create_date_features(self):
+
+    def test_create_date_feature(self):
+        """
+        Test the creation of dates.
+        """
+        # Sample data for date creation
+        test_df = pd.DataFrame({
+            'year': [2022, 2023],
+            'week': [1, 10],
+            'weekday': [0, 2]  # Monday, Wednesday
+        })
+
+        # Invoke method from the class
+        result_df = self.layer.create_date_feature(test_df)
+
+        # Assert that dates are correct
+        expected_dates = ['2022-01-03', '2023-03-08']
+        for idx, expected_date in enumerate(expected_dates):
+            self.assertEqual(result_df['date'].iloc[idx].strftime('%Y-%m-%d'), expected_date, f"Date mismatch for row {idx}")
+
+    def test_create_week_features(self):
+        """
+        Test the creation of weekly features.
+        """
+        # Test input data
+        test_data = pd.DataFrame({
+            'date': ['2022-01-03', '2022-01-08', '2022-05-17'],  # Monday, Saturday, Tuesday
+        })
+        test_data['date'] = pd.to_datetime(test_data['date'])  # Ensure date is in datetime format
+
+        # Invoke method from the class
+        df = self.layer.create_week_features(test_data)
+
+        # Assert weekday encoding and week number assignment
+        expected_weekdays = [0, 5, 1]
+        expected_weeks = [1, 1, 20]
+        for idx in range(len(expected_weekdays)):
+            self.assertEqual(df['weekday'].iloc[idx], expected_weekdays[idx], f"Weekday mismatch for row {idx}")
+            self.assertEqual(df['week'].iloc[idx], expected_weeks[idx], f"Week number mismatch for row {idx}")
+
+    def test_create_month_features(self):
+        # Test dates
+        test_data = pd.DataFrame({
+            'date': ['2022-01-03', '2022-05-15', '2022-12-25']
+        })
+        test_data['date'] = pd.to_datetime(test_data['date'])  # Ensure date is in datetime format
+
+        # Invoke method from the class
+        df = self.layer.create_month_features(test_data)
+
+        # Assert month and day values
+        expected_months = [1, 5, 12]
+        expected_days_of_month = [3, 15, 25]
+        expected_month_sin = [0.50, -0.87, 0.0]
+        expected_month_cos = [0.87, 0.5, 1.0]
+
+        for idx in range(len(expected_months)):
+            self.assertEqual(df['month'].iloc[idx], expected_months[idx], f"Month mismatch for row {idx}")
+            self.assertEqual(df['day_of_month'].iloc[idx], expected_days_of_month[idx], f"Day of month mismatch for row {idx}")
+
+    def test_create_year_feature(self):
+        """
+        Test the creation of the year feature.
+        """
+        # Test dates
+        test_data = pd.DataFrame({
+            'date': ['2021-12-13', '2022-01-03', '2023-05-15', '2024-12-25']
+        })
+        test_data['date'] = pd.to_datetime(test_data['date'])  # Ensure date is in datetime format
+
+        # Invoke method from the class
+        df = self.layer.create_year_feature(test_data)
+
+        # Assert year values
+        expected_months = [2021, 2022, 2023, 2024]
+        for idx in range(len(expected_months)):
+            self.assertEqual(df['year'].iloc[idx], expected_months[idx], f"year mismatch for row {idx}")
+
+    def test_create_time_features(self):
         """
         Test the extraction of date-related features, including cyclic encodings.
         """
@@ -202,7 +284,7 @@ class TestFeatureEngineeringLayer(unittest.TestCase):
         })
 
         # Invoke the method from the class
-        df_with_date_features = self.layer.create_date_features(test_df)
+        df_with_date_features = self.layer.create_time_features(test_df)
 
         # Check date features for each test case
         for idx, case in enumerate(test_cases):
@@ -355,8 +437,8 @@ class TestFeatureEngineeringLayer(unittest.TestCase):
         last_date = datetime.strptime('2023-12-31', '%Y-%m-%d')
 
         # Test the fetching of historical data
-        fetched_data = self.layer.fetch_historical_data(last_date)
-        self.assertEqual(len(fetched_data), 35)  # Should fetch 35 days of data
+        fetched_data = self.layer.fetch_historical_data(last_date, 35)  # Should fetch 35 days of data
+        self.assertEqual(len(fetched_data), 35)
         self.assertEqual(fetched_data['date'].max(), pd.Timestamp('2023-12-31'))
 
     @patch('pandas.read_csv')
@@ -378,7 +460,7 @@ class TestFeatureEngineeringLayer(unittest.TestCase):
         combined_data = pd.concat([self.historical_data, self.new_data], ignore_index=True)
 
         # Test the removal of historical data
-        cleaned_data = self.layer.remove_historical_data(combined_data)
+        cleaned_data = self.layer.remove_historical_data(combined_data, 35)
         self.assertEqual(len(cleaned_data), 10)  # Only the 10 days of new data should remain
         self.assertEqual(cleaned_data['date'].min(), pd.Timestamp('2024-01-01'))  # Oldest in new data
         self.assertEqual(cleaned_data['date'].max(), pd.Timestamp('2024-01-10'))  # Latest in new data

@@ -25,7 +25,7 @@ class IngestionLayer:
             # Ensure the file is a non-empty CSV
             if filename.endswith('.csv') and os.path.getsize(file_path) > 0:
                 try:
-                    df = pd.read_csv(file_path, dtype={'product_id': str, 'year': int, 'week': int})
+                    df = pd.read_csv(file_path)
                     combined_data.append(df)
                 except pd.errors.EmptyDataError:
                     logging.error(f"Error: File {filename} is empty or corrupted. Skipping.")

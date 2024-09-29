@@ -43,6 +43,22 @@ class TestCleaningLayer(unittest.TestCase):
             # Fail the test if any exception is raised
             self.fail(f"validate_columns raised {type(e).__name__} unexpectedly")
 
+    def test_cast_integer_columns(self):
+        """
+        Test that default 'year' and 'week' columns are converted to integers from decimals.
+        """
+        # Define decimal weeks adn years
+        test_data =  pd.DataFrame({
+            'year': [2021.0, 2022.0, 2023.0, 2024.0],
+            'week': [1.0, 15.0, 38.0, 52.0]
+        })
+
+        # Invoke method from the class
+        df = self.layer.cast_integer_columns(test_data)
+
+        self.assertListEqual(test_data['year'].tolist(), [2021, 2022, 2023, 2024])
+        self.assertListEqual(test_data['week'].tolist(), [1, 15, 38, 52])
+
     def test_validate_columns_raises_error(self):
         """
         Test that a KeyError is raised when required columns are missing.
@@ -302,12 +318,12 @@ class TestCleaningLayer(unittest.TestCase):
         self.assertEqual(df['quantity'].iloc[8], 0)
         self.assertEqual(df['quantity'].iloc[9], 0)
 
-    def test_clean_value_column(self):
+    def test_clean_price_column(self):
         """
-        Test that the 'value' column is cleaned.
+        Test that the price indicating column is cleaned.
         """
         # Invoke method from the class
-        df = self.layer.clean_value_column(self.data.copy())
+        df = self.layer.clean_price_column(self.data.copy())
 
         # Values are absolutes
         self.assertEqual(df['value'].iloc[0], 12.45)
@@ -333,7 +349,7 @@ class TestCleaningLayer(unittest.TestCase):
         expected_in_stock = [0, 1, 0, 1, 0, 1, 0, 0, 1, 1]
         self.assertEqual(actual_in_stock, expected_in_stock, "In_stock standardisation failed")
 
-    def test_insert_missing_product_weeks(self):
+    def test_insert_missing_product_weekly(self):
         """
         Test that rows are inserted for missing weeks per product.
         """
@@ -368,7 +384,7 @@ class TestCleaningLayer(unittest.TestCase):
         test_data = pd.concat([test_data, new_product_data], ignore_index=True)
 
         # Invoke method from the class
-        df = self.layer.insert_missing_product_weeks(test_data)
+        df = self.layer.insert_missing_product_weekly(test_data)
 
         # Product A remains unchanged
         expected_product_a = test_data[test_data['product_name'] == 'Product A']
