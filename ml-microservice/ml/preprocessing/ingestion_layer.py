@@ -75,8 +75,12 @@ class IngestionLayer:
             return self.combine_files(files)
 
         # If it's a single file, read it directly
-        else:
+        elif os.path.isfile(self.data_path):  # Check if it's a valid file
             return self.read_file(self.data_path)
+
+        else:
+            logging.error(f"The provided path {self.data_path} is neither a file nor a directory.")
+            raise FileNotFoundError(f"The provided path {self.data_path} is neither a file nor a directory.")
 
     def process(self):
         """

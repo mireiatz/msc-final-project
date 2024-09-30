@@ -18,12 +18,13 @@ class CleaningLayer:
             logging.error(f"Missing required columns: {missing_columns}")
             raise KeyError(f"Missing required columns: {missing_columns}")
 
-        # Drop rows with NaN values in the 'year' and 'week' columns
-        df = df.dropna(subset=['year', 'week'])
+        if 'week' in required_columns and 'year' in required_columns:
+            # Drop rows with NaN values in the 'year' and 'week' columns
+            df = df.dropna(subset=['year', 'week'])
 
-        # Cast 'year' and 'week' columns to integers
-        df.loc[:, 'year'] = df['year'].astype(int)
-        df.loc[:, 'week'] = df['week'].astype(int)
+            # Cast 'year' and 'week' columns to integers
+            df.loc[:, 'year'] = df['year'].astype(int)
+            df.loc[:, 'week'] = df['week'].astype(int)
 
         return df
 

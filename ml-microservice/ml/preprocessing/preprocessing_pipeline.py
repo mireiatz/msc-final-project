@@ -3,6 +3,7 @@ from ml.preprocessing.cleaning_layer import CleaningLayer
 from ml.preprocessing.feature_engineering_layer import FeatureEngineeringLayer
 from ml.config import config
 import logging
+import os
 
 class PreprocessingPipeline:
     def __init__(self, data_path=None, output_path=None):
@@ -11,7 +12,6 @@ class PreprocessingPipeline:
 
     def run(self):
         # Step 1: Ingestion
-        print(self.data_path)
         ingested_data = IngestionLayer(self.data_path).process()
 
         # Step 2: Call the specific cleaning and feature engineering processes
@@ -19,6 +19,8 @@ class PreprocessingPipeline:
         structured_data = self.engineer_features(cleaned_data)
 
         # Step 3: Save the preprocessed data
+        os.makedirs(self.output_path, exist_ok=True)
+
         structured_data.to_csv(self.output_path + '/processed_data.csv', index=False)
 
         logging.info("Preprocessing pipeline completed")
