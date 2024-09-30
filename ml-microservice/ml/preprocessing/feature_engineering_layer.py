@@ -162,7 +162,7 @@ class FeatureEngineeringLayer:
         """
         Apply cyclic encoding for a specific column in a DataFrame.
         """
-        df['sin_' + column], df['cos_' + column] = self.cyclic_encoding(df[column], max_value)
+        df[column + '_sin'], df[column + '_cos'] = self.cyclic_encoding(df[column], max_value)
 
         return df
 
@@ -266,7 +266,7 @@ class FeatureEngineeringLayer:
 
         return df
 
-    def fetch_historical_data(self, last_date_historical, days):
+    def fetch_historical_data_records(self, last_date_historical, days):
         """
         Fetch historical data from the preprocessed historical dataset based on the given date.
         """
@@ -290,7 +290,7 @@ class FeatureEngineeringLayer:
             logging.info(f"Historical data file not found for merging at {self.historical_data_path}")
             return pd.DataFrame()
 
-    def merge_historical_data(self, df):
+    def merge_historical_data_records(self, df):
         """
         Merge current DataFrame with preprocessed historical data.
         """
@@ -355,7 +355,7 @@ class FeatureEngineeringLayer:
 
         return df
 
-    def remove_historical_data(self, df, days):
+    def remove_historical_data_records(self, df, days):
         """
         Remove historical data rows older than the 'self.days' threshold from the current dataset.
         """
@@ -371,6 +371,25 @@ class FeatureEngineeringLayer:
 
         return df
 
+    def merge_with_main_data(self, df):
+        """
+        Merge the new data with the main historical file.
+        """
+        # Load the current main historical file
+        try:
+            main_data = pd.read_csv(self.historical_data_path)
+            logging.info(f"Loaded main historical data from {self.historical_data_path}")
+        except FileNotFoundError:
+            logging.info("Main historical file not found, creating a new one.")
+            main_data = pd.DataFrame()
+
+        # Append the new data to the main file
+        df = pd.concat([main_data, df], ignore_index=True)
+
+        logging.info("New data merged with the main historical file")
+
+        return df
+
     def process_historical_weekly_data(self):
         """
         Re-structure a DataFrame with weekly records and create new features.
@@ -382,9 +401,9 @@ class FeatureEngineeringLayer:
         df = self.pivot_weekly_data(df)
         df = self.create_time_features(df)
         df = self.adjust_in_stock(df)
-#         df = self.merge_historical_data(df)
-        df = self.create_time_series_features(df, 'quantity')
-#         df = self.remove_historical_data(df, self.days)
+#         df = self.merge_historical_data_records(df)
+        df = self.create_time_series_features(df, 'quantity', periods=[1, 7, 14, 30])
+#         df = self.remove_historical_data_records(df, self.days)
 
         return df
 
@@ -401,9 +420,8 @@ class FeatureEngineeringLayer:
         df = self.encode_categorical_feature(self.data, 'category')
         df = self.encode_categorical_feature(df, 'product_id')
         df = self.create_time_features(df)
-        df = self.merge_historical_data(df)
-        df = self.create_time_series_features(df, 'quantity')
-        df = self.remove_historical_data(df, self.days)
+        df = self.merge_with_main_data(df)
+        df = self.create_time_series_features(df, 'quantity', periods=[1, 7, 14, 30])
 
         return df
 
@@ -421,8 +439,8 @@ class FeatureEngineeringLayer:
         df = self.encode_categorical_feature(df, 'product_id')
         df = self.apply_cyclic_encoding(df, 'weekday', 7)
         df = self.apply_cyclic_encoding(df, 'month', 12)
-        df = self.merge_historical_data(df)
-        df = self.create_time_series_features(df, 'quantity')
-        df = self.remove_historical_data(df, self.days)
+#         df = self.merge_historical_data_records(df)
+        df = self.create_time_series_features(df, 'quantity', periods=[1, 7, 14, 30])
+#         df = self.remove_historical_data_records(df, self.days)
 
         return df

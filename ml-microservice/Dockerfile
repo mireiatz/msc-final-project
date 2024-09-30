@@ -12,7 +12,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Expose port 5000
-EXPOSE 5000
+EXPOSE 5002
 
-# Run the Python application and stay built
-CMD ["bash", "-c", "python app.py && tail -f /dev/null"]
+# Run the Flask application
+CMD ["python3", "app.py"]

@@ -430,7 +430,7 @@ class TestFeatureEngineeringLayer(unittest.TestCase):
         })
 
     @patch('pandas.read_csv')
-    def test_fetch_historical_data(self, mock_read_csv):
+    def test_fetch_historical_data_records(self, mock_read_csv):
         # Mock the read_csv to return the historical data
         mock_read_csv.return_value = self.historical_data
 
@@ -442,7 +442,7 @@ class TestFeatureEngineeringLayer(unittest.TestCase):
         self.assertEqual(fetched_data['date'].max(), pd.Timestamp('2023-12-31'))
 
     @patch('pandas.read_csv')
-    def test_merge_historical_data(self, mock_read_csv):
+    def test_merge_historical_data_records(self, mock_read_csv):
         # Mock the read_csv to return the historical data
         mock_read_csv.return_value = self.historical_data
 
@@ -452,7 +452,7 @@ class TestFeatureEngineeringLayer(unittest.TestCase):
         self.assertEqual(merged_data['date'].min(), pd.Timestamp('2023-11-27'))  # Oldest in historical
         self.assertEqual(merged_data['date'].max(), pd.Timestamp('2024-01-10'))  # Latest in new data
 
-    def test_remove_historical_data(self):
+    def test_remove_historical_data_records(self):
         # Set the mock to return True
         self.layer.historical_data_fetched = True
 

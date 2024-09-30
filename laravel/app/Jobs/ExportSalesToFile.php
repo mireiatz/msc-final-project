@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\Product;
 use App\Models\Sale;
 use Carbon\Carbon;
 use Exception;
@@ -10,8 +11,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 
 class ExportSalesToFile implements ShouldQueue
 {
@@ -41,19 +42,26 @@ class ExportSalesToFile implements ShouldQueue
     {
         try {
             // Get the content for the CSV file
-            $csvContent = $this->createCsvContent();
+            $csv = $this->createCsvContent();
 
-            // Store the CSV file
-            Storage::disk('historical_data_raw')->put($this->filename, $csvContent);
+            // Send the CSV file to Flask via HTTP request
+            $response = Http::attach(
+                'file',
+                $csv,
+                'sales_data.csv'
+            )->post('http://ml:5002/preprocess-historical-data');
 
-            Log::info('ExportSalesToFile job completed: ' . $this->filename . ' file processed.');
+            if ($response->successful()) {
+                Log::info("CSV successfully sent to ML service.");
+            } else {
+                Log::error("Failed to send CSV to ML service: " . $response->body());
+            }
         } catch (Exception $e) {
-            Log::error('ExportSalesToFile job failed to export sales to CSV: ' . $this->filename . ' | Error: ' . $e->getMessage());
+            Log::error('ExportSalesToFile job failed: ' . $this->filename . ' | Error: ' . $e->getMessage());
             throw new Exception($e->getMessage());
 
         }
     }
-
 
     /**
      * Create the content to be written into the CSV.
@@ -62,7 +70,12 @@ class ExportSalesToFile implements ShouldQueue
      */
     public function createCsvContent(): string
     {
-        // Build query to fetch sales data
+        // Get all products that are active
+        $activeProducts = Product::whereHas('sales', function ($query) {
+            $query->where('date', '>=', Carbon::now()->subMonths(3));
+        })->get();
+
+        // Build query to fetch sales data based on dates
         $query = Sale::query();
 
         if ($this->startDate && $this->endDate) {
@@ -70,11 +83,18 @@ class ExportSalesToFile implements ShouldQueue
         } elseif ($this->startDate) {
             $query->where('date', '>=', $this->startDate);
         } else {
-            $today = Carbon::today()->format('Y-m-d');
-            $query->whereDate('date', '=', $today);
+            $query->whereDate('date', '=', Carbon::today()->format('Y-m-d'));
         }
 
         $salesData = $query->with(['products.category'])->get();
+
+        // Map product sales by product_id and date
+        $salesByProductAndDate = [];
+        foreach ($salesData as $sale) {
+            foreach ($sale->products as $product) {
+                $salesByProductAndDate[$product->product_id][$sale->date->format('Y-m-d')] = $product;
+            }
+        }
 
         $csvContent = '';
 
@@ -89,21 +109,44 @@ class ExportSalesToFile implements ShouldQueue
                 'date',
             ]) . "\n";
 
-        // Loop through sales data and build CSV rows
-        foreach ($salesData as $sale) {
-            foreach ($sale->products as $product) {
+        // Loop through active products and dates, filling in zero sales for missing products
+        $dates = $this->generateDateRange();
+        foreach ($activeProducts as $product) {
+            foreach ($dates as $date) {
+                $saleProduct = $salesByProductAndDate[$product->product_id][$date] ?? null;
+
+                // Fill zero sales if no sales for this product on the current date
                 $csvContent .= implode(',', [
                         $product->pos_product_id,
                         $product->name,
                         $product->category->name,
-                        $product->sale_products->quantity,
-                        $product->sale_products->unit_sale/100,
-                        $product->stock_balance ?? 0,
-                        $sale->date->format('Y-m-d'),
+                        $saleProduct ? $saleProduct->sale_products->quantity : 0,
+                        $saleProduct ? $saleProduct->sale_products->unit_sale / 100 : 0,
+                        $saleProduct ? $saleProduct->stock_balance ?? 0 : 0,
+                        $date,
                     ]) . "\n";
             }
         }
 
         return $csvContent;
+    }
+
+    /**
+     * Helper function to generate date range
+     *
+     * @return array
+     */
+    protected function generateDateRange(): array
+    {
+        $startDate = Carbon::parse($this->startDate ?? Carbon::today());
+        $endDate = Carbon::parse($this->endDate ?? Carbon::today());
+        $dates = [];
+
+        while ($startDate->lte($endDate)) {
+            $dates[] = $startDate->format('Y-m-d');
+            $startDate->addDay();
+        }
+
+        return $dates;
     }
 }
