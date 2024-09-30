@@ -52,7 +52,7 @@ class IngestionLayer:
         """
         Load all valid CSV files from a directory or read a single file if it's not a directory.
         """
-        logging.info(f"Checking full path of directory: {os.path.abspath(self.data_path)}")
+        logging.info(f"Checking full path of directory: {self.data_path}")
 
         # If the path is a directory, process files in the directory
         if os.path.isdir(self.data_path):

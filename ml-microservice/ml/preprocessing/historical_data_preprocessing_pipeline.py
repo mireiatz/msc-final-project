@@ -5,7 +5,7 @@ from ml.preprocessing.feature_engineering_layer import FeatureEngineeringLayer
 
 class HistoricalDataPreprocessingPipeline(PreprocessingPipeline):
 
-    def __init__(self, data_path, output_path, data_type):
+    def __init__(self, data_path, output_path, data_type='daily'):
         super().__init__(data_path, output_path)
         self.data_type = data_type
 

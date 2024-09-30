@@ -19,4 +19,5 @@ def run(data, model_path, features, target):
     )
     metrics = evaluator.run(data[target], predictions)
 
-    logging.info(f"Evaluation metrics for {model_path}:", metrics)
+    logging.info(f"Evaluation completed for model {model_path}")
+    logging.info(metrics)
