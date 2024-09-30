@@ -14,5 +14,5 @@ COPY . .
 # Expose port 5000
 EXPOSE 5000
 
-Run the Python application
-CMD ["python", "app.py"]
+# Run the Python application and stay built
+CMD ["bash", "-c", "python app.py && tail -f /dev/null"]
