@@ -56,6 +56,35 @@ return [
             'throw' => false,
         ],
 
+        'shared' => [
+            'driver' => 'local',
+            'root' => storage_path('app/shared'),
+            'throw' => false,
+        ],
+
+        'historical_data_raw' => [
+            'driver' => 'local',
+            'root' => storage_path('app/shared/historical_data/raw'),
+            'throw' => false,
+        ],
+
+        'historical_data_processed' => [
+            'driver' => 'local',
+            'root' => storage_path('app/shared/historical_data/processed'),
+            'throw' => false,
+        ],
+
+        'prediction_data_raw' => [
+            'driver' => 'local',
+            'root' => storage_path('app/shared/prediction_data/raw'),
+            'throw' => false,
+        ],
+
+        'prediction_data_processed' => [
+            'driver' => 'local',
+            'root' => storage_path('app/shared/prediction_data/processed'),
+            'throw' => false,
+        ],
     ],
 
     /*

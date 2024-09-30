@@ -88,7 +88,9 @@ class SeedProductsFromFile implements ShouldQueue
      */
     protected function getCategoryId(string $name): string
     {
-        return Category::firstOrCreate(['name' => $name])->id;
+        $category = Category::firstOrCreate(['name' => $name]);
+
+        return $category->id;
     }
 
     /**

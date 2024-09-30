@@ -24,6 +24,10 @@ class Sale extends Model
         'currency',
     ];
 
+    protected $casts = [
+        'date' => 'datetime',
+    ];
+
     public function store(): BelongsTo
     {
         return $this->belongsTo(Store::class);
@@ -35,7 +39,6 @@ class Sale extends Model
             ->using(SaleProduct::class)
             ->as('sale_products')
             ->withPivot('quantity', 'unit_sale', 'total_sale', 'unit_cost', 'total_cost')
-            ->as('sale_products')
             ->withTimestamps();
     }
 }

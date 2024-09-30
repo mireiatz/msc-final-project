@@ -20,7 +20,7 @@ class SeedDbFromFile extends Command
      *
      * @var string
      */
-    protected $description = 'Seed the database with {type} records from CSV file(s) in: {dir}';
+    protected $description = 'Seed the database with {type} records from CSV file(s) in {dir}';
 
     /**
      * Execute the console command.
