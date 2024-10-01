@@ -2,12 +2,11 @@ from flask import Flask, request, jsonify
 import os
 import shutil
 from ml.preprocessing.historical_data_preprocessing_pipeline import HistoricalDataPreprocessingPipeline
+from logging_config import setup_logging
+
+setup_logging()
 
 app = Flask(__name__)
-
-# Define the directories for file storage
-PROCESSED_DATA_DIR = './ml/data/historical/processed'
-
 
 @app.route('/preprocess-historical-data', methods=['POST'])
 def preprocess_historical_data():
@@ -28,11 +27,9 @@ def preprocess_historical_data():
 
     try:
         # Run the preprocessing pipeline
-        pipeline = HistoricalDataPreprocessingPipeline(
-            data_path=file_path,
-            output_path=PROCESSED_DATA_DIR,
-        )
-        pipeline.run()
+        HistoricalDataPreprocessingPipeline(
+            data_path=file_path
+        ).run()
 
         return jsonify({"status": "Success, data processed"}), 200
 
@@ -40,8 +37,5 @@ def preprocess_historical_data():
         return jsonify({"error": f"Error processing data: {str(e)}"}), 500
 
 if __name__ == "__main__":
-    # Create directories if they don't exist
-    os.makedirs(PROCESSED_DATA_DIR, exist_ok=True)
-
     # Run the Flask application
     app.run(host="0.0.0.0", port=5002)
