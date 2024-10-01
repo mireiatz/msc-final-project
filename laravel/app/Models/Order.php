@@ -6,7 +6,6 @@ use App\Traits\UsesUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Order extends Model
@@ -19,6 +18,10 @@ class Order extends Model
         'date',
         'cost',
         'currency',
+    ];
+
+    protected $casts = [
+        'date' => 'datetime',
     ];
 
     private function calculateStockBalance(Product $product, int $quantity): int

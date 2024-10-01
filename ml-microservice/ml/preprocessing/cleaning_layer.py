@@ -1,7 +1,7 @@
+import logging
 import pandas as pd
 import numpy as np
 import hashlib
-import logging
 from datetime import datetime, timedelta
 
 class CleaningLayer:
@@ -18,12 +18,13 @@ class CleaningLayer:
             logging.error(f"Missing required columns: {missing_columns}")
             raise KeyError(f"Missing required columns: {missing_columns}")
 
-    def cast_integer_columns(self, df, columns=['week', 'year']):
-        """
-        Type cast columns to integers.
-        """
-        for column in columns:
-            df[column] = df[column].astype(int)
+        if 'week' in required_columns and 'year' in required_columns:
+            # Drop rows with NaN values in the 'year' and 'week' columns
+            df = df.dropna(subset=['year', 'week'])
+
+            # Cast 'year' and 'week' columns to integers
+            df.loc[:, 'year'] = df['year'].astype(int)
+            df.loc[:, 'week'] = df['week'].astype(int)
 
         return df
 
@@ -32,12 +33,12 @@ class CleaningLayer:
         Standardise the 'category' column.
         """
         # Clean the labels
-        df['category'] = df['category'].str.lower()  # Convert to lowercase
-        df['category'] = df['category'].str.replace(r'[^\w\s]', ' ', regex=True)  # Remove special characters
-        df['category'] = df['category'].str.replace(r'\s+', '_', regex=True)  # Replace spaces with underscores
+        df.loc[:, 'category'] = df['category'].str.lower()  # Convert to lowercase
+        df.loc[:, 'category'] = df['category'].str.replace(r'[^\w\s]', ' ', regex=True)  # Remove special characters
+        df.loc[:, 'category'] = df['category'].str.replace(r'\s+', '_', regex=True)  # Replace spaces with underscores
 
         # Apply specific replacements for consistency
-        df['category'] = df['category'].replace({
+        df.loc[:, 'category'] = df['category'].replace({
             'sauces_pickle': 'sauces_pickles',
             'washing_powder': 'washing_powders',
             'petfood': 'pet_food',
@@ -108,7 +109,7 @@ class CleaningLayer:
         max_year, max_week = df[['year', 'week']].max()
 
         # Calculate the cutoff date
-        cutoff_year, cutoff_week = self.calculate_cutoff_date(max_year, max_week, cutoff_period_weeks)
+        cutoff_year, cutoff_week = self.calculate_cutoff_date(int(max_year), int(max_week), cutoff_period_weeks)
 
         # Identify products that had activity after the cutoff
         last_appearance = df.groupby('product_id').agg({'year': 'max', 'week': 'max'})
@@ -134,6 +135,10 @@ class CleaningLayer:
         """
         Clean sales columns ('monday' to 'sunday') by ensuring positive integers.
         """
+        # Ensure 'columns' is a list even if a single column is passed
+        if isinstance(columns, str):
+            columns = [columns]
+
         # Convert to numeric, forcing errors to NaN
         df[columns] = df[columns].apply(pd.to_numeric, errors='coerce')
 
@@ -219,7 +224,7 @@ class CleaningLayer:
         return df
 
 
-    def process_weekly_data(self):
+    def process_historical_weekly_data(self):
         """
         Apply the full data cleaning process to a DataFrame with weekly sales.
         """
@@ -228,13 +233,12 @@ class CleaningLayer:
         required_columns = ['product_id', 'product_name', 'category', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday', 'value', 'in_stock', 'year', 'week']
 
         try:
-            self.validate_columns(self.data, required_columns)
-            df = self.cast_integer_columns(self.data)
+            df = self.validate_columns(self.data, required_columns)
         except KeyError as e:
             logging.error(f"Missing columns in the data: {e}")
             raise KeyError(f"Missing columns in the data: {e}")
 
-        df = self.standardise_category_column(self.data)
+        df = self.standardise_category_column(df)
         df = self.handle_product_ids(df)
         df = self.drop_duplicates(df)
         df = self.remove_inactive_products(df)
@@ -246,23 +250,52 @@ class CleaningLayer:
 
         return df
 
-    def process_daily_data(self):
+    def process_historical_daily_data(self):
         """
         Apply the full data cleaning process to a DataFrame with daily sales.
         """
         logging.info("Starting the data cleaning process...")
 
+        if self.data is None:
+            logging.error("Empty DataFrame")
+            raise ValueError("The DataFrame is empty")
+
         required_columns = ['product_id', 'product_name', 'category', 'quantity', 'per_item_value', 'in_stock', 'date']
 
         try:
-            self.validate_columns(self.data, required_columns)
+           df = self.validate_columns(self.data, required_columns)
         except KeyError as e:
             logging.error(f"Missing columns in the data: {e}")
             raise KeyError(f"Missing columns in the data: {e}")
 
-        df = self.standardise_category_column(self.data)
+        df = self.standardise_category_column(df)
         df = self.handle_product_ids(df)
         df = self.drop_duplicates(df, ['product_id', 'date'])
-        df = clean_sales_columns(df, ['quantity'])
-        df = clean_price_column(df, 'per_item_value')
+        df = self.clean_sales_columns(df, ['quantity'])
+        df = self.clean_price_column(df, 'per_item_value')
         df = self.standardise_in_stock(df, True)
+
+        return df
+
+    def process_prediction_data(self):
+        """
+        Apply a lighter data cleaning process to a DataFrame for prediction.
+        """
+        logging.info("Starting the data cleaning process...")
+
+        if self.data is None:
+            logging.error("Empty DataFrame")
+            raise ValueError("The DataFrame is empty")
+
+        required_columns = ['product_id', 'product_name', 'category', 'per_item_value', 'in_stock', 'date']
+
+        try:
+            df = self.validate_columns(self.data, required_columns)
+        except KeyError as e:
+            logging.error(f"Missing columns in the data: {e}")
+            raise KeyError(f"Missing columns in the data: {e}")
+
+        df = self.standardise_category_column(df)
+        df = self.handle_product_ids(df)
+
+        return df

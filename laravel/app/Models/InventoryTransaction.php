@@ -23,6 +23,10 @@ class InventoryTransaction extends Model
         'stock_balance',
     ];
 
+    protected $casts = [
+        'date' => 'datetime',
+    ];
+
     public function parent(): MorphTo
     {
         return $this->morphTo();

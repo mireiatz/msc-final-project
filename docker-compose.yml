@@ -25,20 +25,24 @@ services:
       - "8000:80"
     volumes:
       - ./laravel:/var/www
+      - shared:/var/www/storage/app/shared # Mount the shared volume
     depends_on:
       - db
 
   ml:
     container_name: ml
     build:
-      context: ./ml
+      context: ./ml-microservice
       dockerfile: Dockerfile
     networks:
       - project-network
     ports:
-      - "5001:5000"
+      - "5002:5002"
     volumes:
-      - ./ml:/usr/src/app
+      - ./ml-microservice:/usr/src/app
+      - shared:/usr/src/app/shared # Mount the shared volume
+    env_file:
+      - ./ml-microservice/.env
 
   db:
     container_name: db
@@ -54,10 +58,11 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - db_data:/var/lib/mysql
+      - db_data:/var/lib/mysql # Persist database data
 
 volumes:
   db_data:
+  shared: # Shared volume definition for data
 
 networks:
   project-network:

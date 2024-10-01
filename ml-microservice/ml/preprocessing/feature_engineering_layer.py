@@ -1,7 +1,7 @@
+import logging
 import os
 import pandas as pd
 import numpy as np
-import logging
 from datetime import datetime, timedelta
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 
@@ -23,13 +23,19 @@ class FeatureEngineeringLayer:
         # Save to a file with the name of the feature
         mapping_path = os.path.join(self.mapping_dir, f'{feature}_map.csv')
 
-        # Read and return the mapping of the feature
+        # Check if the file exists
         if os.path.exists(mapping_path):
-            return pd.read_csv(mapping_path).set_index(feature).to_dict()[f'{feature}_encoded']
-
-        logging.info(f"Mapping loaded for {feature}")
-
-        return {}
+            try:
+                # Try loading the CSV into a DataFrame and converting it to a dictionary
+                mapping = pd.read_csv(mapping_path).set_index(feature).to_dict()[f'{feature}_encoded']
+                logging.info(f"Mapping loaded for {feature}")
+                return mapping
+            except Exception as e:
+                logging.error(f"Error loading mapping for {feature}: {e}")
+                return {}
+        else:
+            logging.warning(f"Mapping file not found for {feature}: {mapping_path}")
+            return {}
 
     def save_mapping(self, feature, mapping):
         """
@@ -50,6 +56,9 @@ class FeatureEngineeringLayer:
         """
         # Load existing mapping if it exists
         mapping = self.load_mapping(feature)
+
+        if not mapping:
+            logging.warning(f"No existing mapping found for {feature}, starting fresh.")
 
         # Map existing values
         df[f'{feature}_encoded'] = df[feature].map(mapping)
@@ -140,11 +149,32 @@ class FeatureEngineeringLayer:
 
         return round(sin_value, 2), round(cos_value, 2)
 
+    def create_periodic_features(self, df):
+        """
+        Create the year feature.
+        """
+        if 'year' not in df.columns:
+            df['year'] = df['date'].dt.year
+
+        return df
+
+    def apply_cyclic_encoding(self, df, column, max_value):
+        """
+        Apply cyclic encoding for a specific column in a DataFrame.
+        """
+        df[column + '_sin'], df[column + '_cos'] = self.cyclic_encoding(df[column], max_value)
+
+        return df
+
     def create_date_feature(self, df):
         """
         Create the date feature.
         """
         if 'date' not in df.columns:
+            # Ensure 'year' and 'week' are integers
+            df['year'] = df['year'].astype(int)
+            df['week'] = df['week'].astype(int)
+
             # Vectorized date construction using pandas' datetime module
             df['date'] = pd.to_datetime(df['year'].astype(str) + '-W' + df['week'].astype(str) + '-1', format='%Y-W%W-%w') + pd.to_timedelta(df['weekday'], unit='D')
 
@@ -157,6 +187,7 @@ class FeatureEngineeringLayer:
         Create week-related features.
         """
         if 'week' not in df.columns:
+            df['date'] = pd.to_datetime(df['date'], errors='coerce')
             df['week'] = df['date'].dt.isocalendar().week
 
         # Map day names to offset indices (0 = Monday - 6 = Sunday)
@@ -169,7 +200,7 @@ class FeatureEngineeringLayer:
         df['weekday'] = df['weekday'].str.lower().map(day_map)
 
         # Cyclic encoding for weekday
-        df['weekday_sin'], df['weekday_cos'] = self.cyclic_encoding(df['weekday'], 7)
+        df = self.apply_cyclic_encoding(df, 'weekday', 7)
 
         return df
 
@@ -182,7 +213,7 @@ class FeatureEngineeringLayer:
         df['month'] = df['date'].dt.month
 
         # Cyclic encoding for month
-        df['month_sin'], df['month_cos'] = self.cyclic_encoding(df['month'], 12)
+        df = self.apply_cyclic_encoding(df, 'month', 12)
 
         return df
 
@@ -235,7 +266,7 @@ class FeatureEngineeringLayer:
 
         return df
 
-    def fetch_historical_data(self, last_date_historical, days):
+    def fetch_historical_data_records(self, last_date_historical, days):
         """
         Fetch historical data from the preprocessed historical dataset based on the given date.
         """
@@ -259,7 +290,7 @@ class FeatureEngineeringLayer:
             logging.info(f"Historical data file not found for merging at {self.historical_data_path}")
             return pd.DataFrame()
 
-    def merge_historical_data(self, df):
+    def merge_historical_data_records(self, df):
         """
         Merge current DataFrame with preprocessed historical data.
         """
@@ -317,11 +348,14 @@ class FeatureEngineeringLayer:
         # Fill missing values with 0
         df.fillna(0, inplace=True)
 
+        # Clean up the decimal spaces
+        df = df.round(4)
+
         logging.info("Time series features created")
 
         return df
 
-    def remove_historical_data(self, df, days):
+    def remove_historical_data_records(self, df, days):
         """
         Remove historical data rows older than the 'self.days' threshold from the current dataset.
         """
@@ -337,7 +371,26 @@ class FeatureEngineeringLayer:
 
         return df
 
-    def process_weekly_data(self):
+    def merge_with_main_data(self, df):
+        """
+        Merge the new data with the main historical file.
+        """
+        # Load the current main historical file
+        try:
+            main_data = pd.read_csv(self.historical_data_path)
+            logging.info(f"Loaded main historical data from {self.historical_data_path}")
+        except FileNotFoundError:
+            logging.info("Main historical file not found, creating a new one.")
+            main_data = pd.DataFrame()
+
+        # Append the new data to the main file
+        df = pd.concat([main_data, df], ignore_index=True)
+
+        logging.info("New data merged with the main historical file")
+
+        return df
+
+    def process_historical_weekly_data(self):
         """
         Re-structure a DataFrame with weekly records and create new features.
         """
@@ -348,23 +401,46 @@ class FeatureEngineeringLayer:
         df = self.pivot_weekly_data(df)
         df = self.create_time_features(df)
         df = self.adjust_in_stock(df)
-        df = self.merge_historical_data(df)
-        df = self.create_time_series_features(df, 'quantity')
-        df = self.remove_historical_data(df, self.days)
+#         df = self.merge_historical_data_records(df)
+        df = self.create_time_series_features(df, 'quantity', periods=[1, 7, 14, 30])
+#         df = self.remove_historical_data_records(df, self.days)
 
         return df
 
-    def process_daily_data(self):
+    def process_historical_daily_data(self):
         """
         Re-structure a DataFrame with daily records and create new features.
         """
         logging.info("Starting feature engineering process...")
 
+        if self.data is None:
+            logging.error("Empty DataFrame")
+            raise ValueError("The DataFrame is empty")
+
         df = self.encode_categorical_feature(self.data, 'category')
         df = self.encode_categorical_feature(df, 'product_id')
         df = self.create_time_features(df)
-        df = self.merge_historical_data(df)
-        df = self.create_time_series_features(df, 'quantity')
-        df = self.remove_historical_data(df, self.days)
+        df = self.merge_with_main_data(df)
+        df = self.create_time_series_features(df, 'quantity', periods=[1, 7, 14, 30])
+
+        return df
+
+    def process_prediction_data(self):
+        """
+        Re-structure a DataFrame with data for prediction and create new features.
+        """
+        logging.info("Starting feature engineering process...")
+
+        if self.data is None:
+            logging.error("Empty DataFrame")
+            raise ValueError("The DataFrame is empty")
+
+        df = self.encode_categorical_feature(self.data, 'category')
+        df = self.encode_categorical_feature(df, 'product_id')
+        df = self.apply_cyclic_encoding(df, 'weekday', 7)
+        df = self.apply_cyclic_encoding(df, 'month', 12)
+#         df = self.merge_historical_data_records(df)
+        df = self.create_time_series_features(df, 'quantity', periods=[1, 7, 14, 30])
+#         df = self.remove_historical_data_records(df, self.days)
 
         return df

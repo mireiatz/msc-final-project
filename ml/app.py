@@ -1,4 +1,0 @@
-from ml.logging_config import setup_logging
-import ml.scripts.preprocess_historical_data as preprocess_historical_data
-
-preprocess_historical_data.run()
