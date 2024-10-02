@@ -1,27 +1,23 @@
-import logging
 import os
+import logging
 import pandas as pd
 import numpy as np
+from sklearn.preprocessing import LabelEncoder
 from datetime import datetime, timedelta
-from sklearn.preprocessing import LabelEncoder, MinMaxScaler
+from ml.config import config
 
-class FeatureEngineeringLayer:
+class GeneralFeatureEngineeringLayer:
 
-    def __init__(self, data, mapping_dir='./ml/data/mappings/', historical_data_path='./ml/data/historical/processed/processed_data.csv', days=365):
+    def __init__(self, data):
         self.data = data
         self.label_encoder = LabelEncoder()
-        self.scaler = MinMaxScaler()
-        self.mapping_dir = mapping_dir
-        self.historical_data_path = historical_data_path
-        self.historical_data_fetched = False
-        self.days = days
 
     def load_mapping(self, feature):
         """
         Load the mapping for a specific feature from a CSV file, if it exists.
         """
         # Save to a file with the name of the feature
-        mapping_path = os.path.join(self.mapping_dir, f'{feature}_map.csv')
+        mapping_path = os.path.join(config.MAPPINGS, f'{feature}_map.csv')
 
         # Check if the file exists
         if os.path.exists(mapping_path):
@@ -97,44 +93,49 @@ class FeatureEngineeringLayer:
         # Define the columns representing the weekdays
         day_columns = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
 
-        # Iterate through the weeks
-        daily_rows = []
-        for _, row in df.iterrows():
-            # Extract shared values from the row
-            year = row['year']
-            week = row['week']
-            product_id = row['product_id']
-            original_product_id = row['original_product_id']
-            product_name = row['product_name']
-            category = row['category']
-            product_id_encoded = row['product_id_encoded']
-            category_encoded = row['category_encoded']
-            in_stock = row['in_stock']
+        try:
+            # Iterate through the weeks
+            daily_rows = []
+            for _, row in df.iterrows():
+                # Extract shared values from the row
+                year = row['year']
+                week = row['week']
+                product_id = row['product_id']
+                original_product_id = row['original_product_id']
+                product_name = row['product_name']
+                category = row['category']
+                product_id_encoded = row['product_id_encoded']
+                category_encoded = row['category_encoded']
+                in_stock = row['in_stock']
 
-            # Calculate per item value for the entire week
-            per_item_value = round(row['value'] / row['quantity'], 2) if row['quantity'] > 0 else 0
+                # Calculate per item value for the entire week
+                per_item_value = round(row['value'] / row['quantity'], 2) if row['quantity'] > 0 else 0
 
-            # Iterate over each day of the week and create a daily record
-            for day in day_columns:
-                daily_quantity = row[day]
+                # Iterate over each day of the week and create a daily record
+                for day in day_columns:
+                    daily_quantity = row[day]
 
-                daily_rows.append({
-                    'product_id': product_id,
-                    'original_product_id': original_product_id,
-                    'product_name': product_name,
-                    'category': category,
-                    'product_id_encoded': product_id_encoded,
-                    'category_encoded': category_encoded,
-                    'quantity': daily_quantity,
-                    'per_item_value': per_item_value,
-                    'in_stock': in_stock,
-                    'year': year,
-                    'week': week,
-                    'weekday': day
-                })
+                    daily_rows.append({
+                        'product_id': product_id,
+                        'original_product_id': original_product_id,
+                        'product_name': product_name,
+                        'category': category,
+                        'product_id_encoded': product_id_encoded,
+                        'category_encoded': category_encoded,
+                        'quantity': daily_quantity,
+                        'per_item_value': per_item_value,
+                        'in_stock': in_stock,
+                        'year': year,
+                        'week': week,
+                        'weekday': day
+                    })
 
-        # Convert the list of daily records into a DataFrame
-        df = pd.DataFrame(daily_rows)
+            # Convert the list of daily records into a DataFrame
+            df = pd.DataFrame(daily_rows)
+
+        except Exception as e:
+            logging.error(f"An error occurred while pivoting weekly data: {e}")
+            return df
 
         logging.info("Weekly records pivoted to daily")
 
@@ -266,130 +267,6 @@ class FeatureEngineeringLayer:
 
         return df
 
-    def fetch_historical_data_records(self, last_date_historical, days):
-        """
-        Fetch historical data from the preprocessed historical dataset based on the given date.
-        """
-        try:
-            # Load the preprocessed historical data
-            historical_data = pd.read_csv(self.historical_data_path, parse_dates=['date'])
-
-            if historical_data.empty:
-                logging.info("No historical data found, skipping historical merge")
-                return pd.DataFrame()
-
-            # Filter historical data based on the 'self.days' threshold
-            start_date = last_date_historical - pd.to_timedelta(days, unit='D')
-            df = historical_data[historical_data['date'] >= start_date]
-
-            logging.info("Historical data fetched")
-
-            return df
-
-        except FileNotFoundError:
-            logging.info(f"Historical data file not found for merging at {self.historical_data_path}")
-            return pd.DataFrame()
-
-    def merge_historical_data_records(self, df):
-        """
-        Merge current DataFrame with preprocessed historical data.
-        """
-        df['date'] = pd.to_datetime(df['date'], format='%Y-%m-%d', errors='coerce')
-
-        # Fetch the data
-        first_date_current = df['date'].min()
-        historical_data = self.fetch_historical_data(first_date_current, self.days)
-
-        # Preserve current data where/if historical data overlaps
-        historical_data = historical_data[historical_data['date'] < first_date_current]
-
-        # Detect any gaps
-        last_date_historical = historical_data['date'].max()
-        gap_days = (first_date_current - last_date_historical).days
-
-        # Small gaps are flagged but the merge proceeds
-        if gap_days <= 5:
-            logging.info(f"Proceeding with historical data merge despite {gap_days}-day gap.")
-        else:
-            logging.info(f"Historical data merge aborted due to a significant {gap_days}-day gap. Skipping the merge.")
-
-            return df
-
-        # If historical data exists, concatenate with current data
-        if not historical_data.empty:
-            df = pd.concat([historical_data, df], ignore_index=True)
-            self.historical_data_fetched = True
-
-            logging.info("Historical data merged")
-
-        return df
-
-    def create_time_series_features(self, df, column, periods=[1, 7, 14, 30, 90, 365]):
-        """
-        Create lag and rolling average columns for a given feature, e.g., 'quantity' across specified days.
-        """
-        # Ensure 'date' is in datetime format, sort it and group it
-        if not pd.api.types.is_datetime64_any_dtype(df['date']):
-            df['date'] = pd.to_datetime(df['date'], format='%Y-%m-%d')
-        df = df.sort_values(by=['product_id', 'date'])
-        grouped = df.groupby('product_id')
-
-        # Loop through defined periods of time
-        for period in periods:
-            # Create lags
-            lag_col_name = f'{column}_lag_{period}'
-            df[lag_col_name] = grouped[column].shift(period)
-
-            # Create rolling averages, except for 1 day period
-            if period != 1:
-                rolling_col_name = f'{column}_rolling_avg_{period}'
-                df[rolling_col_name] = grouped[column].transform(lambda x: x.rolling(period, min_periods=1).mean())
-
-        # Fill missing values with 0
-        df.fillna(0, inplace=True)
-
-        # Clean up the decimal spaces
-        df = df.round(4)
-
-        logging.info("Time series features created")
-
-        return df
-
-    def remove_historical_data_records(self, df, days):
-        """
-        Remove historical data rows older than the 'self.days' threshold from the current dataset.
-        """
-        # Remove historical data if it was fetched
-        if self.historical_data_fetched:
-            # Calculate the cutoff date based on the minimum date in the current data
-            cutoff_date = df['date'].min() + pd.to_timedelta(days, unit='D')
-
-            # Filter out rows older than the cutoff date
-            df = df[df['date'] >= cutoff_date].reset_index(drop=True)
-
-            logging.info("Historical data removed")
-
-        return df
-
-    def merge_with_main_data(self, df):
-        """
-        Merge the new data with the main historical file.
-        """
-        # Load the current main historical file
-        try:
-            main_data = pd.read_csv(self.historical_data_path)
-            logging.info(f"Loaded main historical data from {self.historical_data_path}")
-        except FileNotFoundError:
-            logging.info("Main historical file not found, creating a new one.")
-            main_data = pd.DataFrame()
-
-        # Append the new data to the main file
-        df = pd.concat([main_data, df], ignore_index=True)
-
-        logging.info("New data merged with the main historical file")
-
-        return df
-
     def process_historical_weekly_data(self):
         """
         Re-structure a DataFrame with weekly records and create new features.
@@ -401,9 +278,6 @@ class FeatureEngineeringLayer:
         df = self.pivot_weekly_data(df)
         df = self.create_time_features(df)
         df = self.adjust_in_stock(df)
-#         df = self.merge_historical_data_records(df)
-        df = self.create_time_series_features(df, 'quantity', periods=[1, 7, 14, 30])
-#         df = self.remove_historical_data_records(df, self.days)
 
         return df
 
@@ -413,15 +287,9 @@ class FeatureEngineeringLayer:
         """
         logging.info("Starting feature engineering process...")
 
-        if self.data is None:
-            logging.error("Empty DataFrame")
-            raise ValueError("The DataFrame is empty")
-
         df = self.encode_categorical_feature(self.data, 'category')
         df = self.encode_categorical_feature(df, 'product_id')
         df = self.create_time_features(df)
-        df = self.merge_with_main_data(df)
-        df = self.create_time_series_features(df, 'quantity', periods=[1, 7, 14, 30])
 
         return df
 
@@ -431,16 +299,9 @@ class FeatureEngineeringLayer:
         """
         logging.info("Starting feature engineering process...")
 
-        if self.data is None:
-            logging.error("Empty DataFrame")
-            raise ValueError("The DataFrame is empty")
-
         df = self.encode_categorical_feature(self.data, 'category')
         df = self.encode_categorical_feature(df, 'product_id')
         df = self.apply_cyclic_encoding(df, 'weekday', 7)
         df = self.apply_cyclic_encoding(df, 'month', 12)
-#         df = self.merge_historical_data_records(df)
-        df = self.create_time_series_features(df, 'quantity', periods=[1, 7, 14, 30])
-#         df = self.remove_historical_data_records(df, self.days)
 
         return df

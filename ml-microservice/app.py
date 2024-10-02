@@ -62,6 +62,20 @@ def export_sales_data():
     except Exception as e:
         return jsonify({"error": f"Error processing data: {str(e)}"}), 500
 
+@app.route('/predict-demand', methods=['POST'])
+def predict_demand():
+    """
+    Flask route to make predictions.
+    """
+    try:
+
+        return jsonify({"status": "Success, data processed"}), 200
+
+    except Exception as e:
+        logging.error(f"Error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
 if __name__ == "__main__":
     setup_logging()
 

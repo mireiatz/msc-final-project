@@ -2,7 +2,7 @@ import logging
 import os
 import pandas as pd
 
-class IngestionLayer:
+class FileIngestionLayer:
 
     def __init__(self, data_path):
         self.data_path = data_path
