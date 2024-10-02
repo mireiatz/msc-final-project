@@ -17,7 +17,7 @@ class PreprocessingPipeline:
 
         # Step 2: Call the specific cleaning and feature engineering processes
         cleaned_data = self.clean_data(ingested_data)
-        structured_data = self.engineer_features(cleaned_data)
+        structured_data = self.engineer_data(cleaned_data)
 
         # Step 3: Save the preprocessed data after making a backup
         self.save_data(structured_data)

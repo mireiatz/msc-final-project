@@ -25,7 +25,6 @@ services:
       - "8000:80"
     volumes:
       - ./laravel:/var/www
-      - shared:/var/www/storage/app/shared # Mount the shared volume
     depends_on:
       - db
 
@@ -40,9 +39,6 @@ services:
       - "5002:5002"
     volumes:
       - ./ml-microservice:/usr/src/app
-      - shared:/usr/src/app/shared # Mount the shared volume
-    env_file:
-      - ./ml-microservice/.env
 
   db:
     container_name: db
@@ -62,7 +58,6 @@ services:
 
 volumes:
   db_data:
-  shared: # Shared volume definition for data
 
 networks:
   project-network:
