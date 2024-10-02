@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Product;
 use App\Models\Sale;
+use App\Services\ML\MLServiceClientInterface;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -11,24 +12,25 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class ExportSalesToFile implements ShouldQueue
+class ExportSalesDataToMLService implements ShouldQueue
 {
 
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected string $filename;
+    protected string $dataType;
+    protected string $dataFormat;
     protected ?string $startDate;
     protected ?string $endDate;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(string $filePath, ?string $startDate, ?string $endDate)
+    public function __construct(string $dataType, string $dataFormat, ?string $startDate, ?string $endDate)
     {
-        $this->filename = $filePath;
+        $this->dataType = $dataType;
+        $this->dataFormat = $dataFormat;
         $this->startDate = $startDate;
         $this->endDate = $endDate;
     }
@@ -38,28 +40,28 @@ class ExportSalesToFile implements ShouldQueue
      *
      * @throws Exception
      */
-    public function handle(): void
+    public function handle(MLServiceClientInterface $mlServiceClient): void
     {
         try {
             // Get the content for the CSV file
             $csv = $this->createCsvContent();
 
-            // Send the CSV file to Flask via HTTP request
-            $response = Http::attach(
-                'file',
-                $csv,
-                'sales_data.csv'
-            )->post('http://ml:5002/preprocess-historical-data');
+            // Use the ML service client to export sales data
+            $payload = [
+                'file' => 'sales_data.csv',
+                'content' => $csv,
+                'metadata' => [
+                    'type' => $this->dataType,
+                    'format' => $this->dataFormat,
+                ]
+            ];
 
-            if ($response->successful()) {
-                Log::info("CSV successfully sent to ML service.");
-            } else {
-                Log::error("Failed to send CSV to ML service: " . $response->body());
-            }
+            $response = $mlServiceClient->exportSalesData($payload);
+
+            Log::info('ExportSalesDataToMLService job completed | Response: ', $response);
         } catch (Exception $e) {
-            Log::error('ExportSalesToFile job failed: ' . $this->filename . ' | Error: ' . $e->getMessage());
-            throw new Exception($e->getMessage());
-
+            Log::error('ExportSalesDataToMLService job failed | Error: ' . $e->getMessage());
+            throw $e;
         }
     }
 
@@ -83,12 +85,13 @@ class ExportSalesToFile implements ShouldQueue
         } elseif ($this->startDate) {
             $query->where('date', '>=', $this->startDate);
         } else {
+            // If dates haven't been defined, assume it's today's sync
             $query->whereDate('date', '=', Carbon::today()->format('Y-m-d'));
         }
 
         $salesData = $query->with(['products.category'])->get();
 
-        // Map product sales by product_id and date
+        // Map product sales by product ID and date
         $salesByProductAndDate = [];
         foreach ($salesData as $sale) {
             foreach ($sale->products as $product) {
@@ -110,7 +113,7 @@ class ExportSalesToFile implements ShouldQueue
             ]) . "\n";
 
         // Loop through active products and dates, filling in zero sales for missing products
-        $dates = $this->generateDateRange();
+        $dates = generateDateRange($this->startDate, $this->endDate);
         foreach ($activeProducts as $product) {
             foreach ($dates as $date) {
                 $saleProduct = $salesByProductAndDate[$product->product_id][$date] ?? null;
@@ -129,24 +132,5 @@ class ExportSalesToFile implements ShouldQueue
         }
 
         return $csvContent;
-    }
-
-    /**
-     * Helper function to generate date range
-     *
-     * @return array
-     */
-    protected function generateDateRange(): array
-    {
-        $startDate = Carbon::parse($this->startDate ?? Carbon::today());
-        $endDate = Carbon::parse($this->endDate ?? Carbon::today());
-        $dates = [];
-
-        while ($startDate->lte($endDate)) {
-            $dates[] = $startDate->format('Y-m-d');
-            $startDate->addDay();
-        }
-
-        return $dates;
     }
 }
