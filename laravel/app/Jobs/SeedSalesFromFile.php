@@ -13,6 +13,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -39,9 +40,13 @@ class SeedSalesFromFile implements ShouldQueue
      * Execute the job.
      *
      * @throws Exception
+     * @throws Throwable
      */
     public function handle(): void
     {
+        // Ensure atomicity of order and sales transactions to maintain data consistency
+        DB::beginTransaction();
+
         try {
             // Get records from the file
             $rows = parseCsvFile($this->file);
@@ -63,10 +68,15 @@ class SeedSalesFromFile implements ShouldQueue
                 $this->simulateSales($dailyProducts, $date);
             }
 
-            Log::info('SeedSalesFromFile job completed: ' . $this->file . ' file processed.');
+            DB::commit(); // Commit the transaction after all operations succeed
+
+            Log::info('SeedSalesFromFile job completed: ' . $this->file . ' file processed successfully');
         } catch (Throwable $e) {
-            Log::error('Error in SeedSalesFromFile job: ' . $e->getMessage());
-            throw new Exception($e->getMessage());
+            // Rollback the transaction if an error occurs
+            DB::rollBack();
+
+            Log::error('SeedSalesFromFile job failed | Error: ' . $e->getMessage());
+            throw $e;
         }
     }
 

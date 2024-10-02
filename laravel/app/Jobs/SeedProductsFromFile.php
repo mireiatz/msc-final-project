@@ -32,6 +32,7 @@ class SeedProductsFromFile implements ShouldQueue
     /**
      * Execute the job.
      * @throws Exception
+     * @throws Throwable
      */
     public function handle(): void
     {
@@ -41,7 +42,7 @@ class SeedProductsFromFile implements ShouldQueue
         foreach ($rows as $row) {
             try {
                 if($row['quantity'] <= 0){
-                    Log::warning("Invalid quantity for product: {$row['product_name']} in category {$row['category']}. Quantity is 0.");
+                    Log::warning("SeedProductsFromFile job: Invalid quantity for product: {$row['product_name']} in category {$row['category']}. Quantity is 0.");
                     continue;
                 }
                 $keyword = $this->mapCategory($row['category']);
@@ -73,11 +74,11 @@ class SeedProductsFromFile implements ShouldQueue
                         'currency' => 'gbp',
                     ]);
             } catch (Throwable $e) {
-                Log::error('SeedProductsFromFile job failed to create product for row: ' . json_encode($row) . ' | Error: ' . $e->getMessage());
-                throw new Exception($e->getMessage());
+                Log::error('SeedProductsFromFile job: Failed to create product for row: ' . json_encode($row) . ' | Error: ' . $e->getMessage());
+                throw $e;
             }
         }
-        Log::info('SeedProductsFromFile job completed: ' . $this->file . ' file processed.');
+        Log::info('SeedProductsFromFile job completed: ' . $this->file . ' processed successfully');
     }
 
     /**
@@ -107,7 +108,7 @@ class SeedProductsFromFile implements ShouldQueue
 
         // Return the appropriate keyword
         switch (true) {
-            case str_contains($category, 'snack'):
+            case str_contains($category, 'snack') || str_contains($category, 'ice_cream'):
                 return 'snack';
             case str_contains($category, 'breakfast') || str_contains($category, 'cereal'):
                 return 'breakfast';
