@@ -3,11 +3,13 @@
 namespace App\Models;
 
 use App\Traits\UsesUuid;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
 
 class Product extends Model
 {
@@ -29,7 +31,7 @@ class Product extends Model
     ];
 
     protected $appends = [
-        'stock_balance'
+        'stock_balance',
     ];
 
     public function category(): BelongsTo
@@ -68,6 +70,9 @@ class Product extends Model
 
     public function getStockBalanceAttribute(): int
     {
+        // Temporary approach for accuracy purposes due to massive data uploads with matching dates/times
+        // To be replaced when realistic sales patterns (with varying timestamps) begin
+        // Replacement query: $this->inventoryTransactions()->latest('date')->value('stock_balance');
         return $this->inventoryTransactions()->sum('quantity');
     }
 }

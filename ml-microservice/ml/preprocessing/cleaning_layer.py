@@ -223,7 +223,6 @@ class CleaningLayer:
 
         return df
 
-
     def process_historical_weekly_data(self):
         """
         Apply the full data cleaning process to a DataFrame with weekly sales.

@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'ml' => [
+        'api_key' => env('ML_SERVICE_API_KEY'),
+        'base_uri' => env('ML_SERVICE_BASE_URI'),
+    ]
 ];

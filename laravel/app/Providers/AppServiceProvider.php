@@ -10,6 +10,8 @@ use App\Services\Analytics\OverviewMetricsInterface;
 use App\Services\Analytics\OverviewMetricsService;
 use App\Services\Analytics\StockMetricsInterface;
 use App\Services\Analytics\StockMetricsService;
+use App\Services\ML\MLServiceClient;
+use App\Services\ML\MLServiceClientInterface;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -23,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(StockMetricsInterface::class, StockMetricsService::class);
         $this->app->bind(SalesMetricsInterface::class, SalesMetricsService::class);
         $this->app->bind(ProductsMetricsInterface::class, ProductsMetricsService::class);
+        $this->app->bind(MLServiceClientInterface::class, MLServiceClient::class);
     }
 
     /**
