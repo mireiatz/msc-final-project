@@ -15,6 +15,7 @@ class PredictionDataIngestionLayer:
 
         # Prepare the dictionaries
         prediction_data = {
+            'source_product_id': [],
             'product_name': [],
             'category': [],
             'per_item_value': [],
@@ -23,6 +24,7 @@ class PredictionDataIngestionLayer:
         }
 
         historical_data = {
+            'source_product_id': [],
             'product_name': [],
             'category': [],
             'per_item_value': [],
@@ -43,6 +45,7 @@ class PredictionDataIngestionLayer:
 
             # Collect historical sales data for each product
             for sale in historical_sales:
+                historical_data['source_product_id'].append(product_info['source_product_id'])
                 historical_data['product_name'].append(product_info['product_name'])
                 historical_data['category'].append(product_info['category'])
                 historical_data['per_item_value'].append(product_info['per_item_value'])
@@ -52,6 +55,7 @@ class PredictionDataIngestionLayer:
 
             # Collect prediction data for each product using the prediction dates
             for date in prediction_dates:
+                prediction_data['source_product_id'].append(product_info['source_product_id'])
                 prediction_data['product_name'].append(product_info['product_name'])
                 prediction_data['category'].append(product_info['category'])
                 prediction_data['per_item_value'].append(product_info['per_item_value'])

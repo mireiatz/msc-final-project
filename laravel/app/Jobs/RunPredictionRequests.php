@@ -83,6 +83,7 @@ class RunPredictionRequests implements ShouldQueue
         foreach ($activeProducts as $product) {
             $payload['products'][] = [
                 'details' => [
+                    'source_product_id' => $product->id,
                     'product_name' => $product->name,
                     'category' => $product->category->name,
                     'per_item_value' => $product->sale / 100,
