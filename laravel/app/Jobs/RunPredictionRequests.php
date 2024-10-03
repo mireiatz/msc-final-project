@@ -39,12 +39,16 @@ class RunPredictionRequests implements ShouldQueue
         $payload = $this->collectPredictionData();
 
         try {
-            // Chunk data
+            // Chunk products data
             $chunks = array_chunk($payload['products'], 1000);
 
-            // Dispatch jobs per chunk
+            // Dispatch jobs per chunk including the prediction dates
             foreach ($chunks as $chunk) {
-                dispatch(new RequestPredictions($chunk));
+                $chunkedPayload = [
+                    'prediction_dates' => $payload['prediction_dates'],
+                    'products' => $chunk,
+                ];
+                dispatch(new RequestPredictions($chunkedPayload));
             }
 
             Log::info('RunPredictionRequests job completed: dispatched ' . count($chunks) . ' chunk(s) to the ML service');
@@ -71,15 +75,17 @@ class RunPredictionRequests implements ShouldQueue
         $dates = generateDateRange($today, $today->copy()->addDays($this->daysToPredict));
 
         // Build payload with info per product
-        $payload = ['products' => []];
-        $payload['prediction_dates'] = $dates;
+        $payload = [
+            'prediction_dates' => $dates,
+            'products' => []
+        ];
 
         foreach ($activeProducts as $product) {
             $payload['products'][] = [
                 'details' => [
                     'product_name' => $product->name,
                     'category' => $product->category->name,
-                    'per_item_value' => $product->sale,
+                    'per_item_value' => $product->sale / 100,
                     'in_stock' => $product->stock_balance,
                 ],
                 'historical_sales' => $this->getSalesHistory($product),

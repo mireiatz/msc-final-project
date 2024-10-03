@@ -6,7 +6,7 @@ from sklearn.preprocessing import LabelEncoder
 from datetime import datetime, timedelta
 from ml.config import config
 
-class GeneralFeatureEngineeringLayer:
+class FeatureEngineeringLayer:
 
     def __init__(self, data):
         self.data = data
@@ -150,15 +150,6 @@ class GeneralFeatureEngineeringLayer:
 
         return round(sin_value, 2), round(cos_value, 2)
 
-    def create_periodic_features(self, df):
-        """
-        Create the year feature.
-        """
-        if 'year' not in df.columns:
-            df['year'] = df['date'].dt.year
-
-        return df
-
     def apply_cyclic_encoding(self, df, column, max_value):
         """
         Apply cyclic encoding for a specific column in a DataFrame.
@@ -301,7 +292,7 @@ class GeneralFeatureEngineeringLayer:
 
         df = self.encode_categorical_feature(self.data, 'category')
         df = self.encode_categorical_feature(df, 'product_id')
-        df = self.apply_cyclic_encoding(df, 'weekday', 7)
-        df = self.apply_cyclic_encoding(df, 'month', 12)
+        df = self.create_week_features(df)
+        df = self.create_month_features(df)
 
         return df

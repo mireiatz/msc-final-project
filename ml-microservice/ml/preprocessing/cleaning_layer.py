@@ -286,7 +286,7 @@ class CleaningLayer:
             logging.error("Empty DataFrame")
             raise ValueError("The DataFrame is empty")
 
-        required_columns = ['product_id', 'product_name', 'category', 'per_item_value', 'in_stock', 'date']
+        required_columns = ['product_name', 'category', 'per_item_value', 'in_stock', 'date']
 
         try:
             df = self.validate_columns(self.data, required_columns)

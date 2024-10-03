@@ -8,17 +8,6 @@ class TimeSeriesEngineeringLayer:
     def __init__(self, data):
         self.data = data
 
-    def merge_historical_data(self, df, historical_df):
-        """
-        Merge historical data records with he prediction data.
-        """
-        df = pd.concat([historical_df, main_df], ignore_index=True)
-
-        # should i order by date/product here or it's already done in the time series creation?
-        logging.info("Historical data merged with prediction data")
-
-        return df
-
     def create_time_series_features(self, df, column, periods=[1, 7, 14, 30, 90, 365]):
         """
         Create lag and rolling average columns for a given feature, e.g., 'quantity' across specified days.
@@ -34,14 +23,12 @@ class TimeSeriesEngineeringLayer:
             # Create lags
             lag_col_name = f'{column}_lag_{period}'
             df[lag_col_name] = grouped[column].shift(period)
+            df[lag_col_name] = pd.to_numeric(df[lag_col_name], errors='coerce')
 
             # Create rolling averages, except for 1 day period
             if period != 1:
                 rolling_col_name = f'{column}_rolling_avg_{period}'
                 df[rolling_col_name] = grouped[column].transform(lambda x: x.rolling(period, min_periods=1).mean())
-
-        # Fill missing values with 0
-        df.fillna(0, inplace=True)
 
         # Clean up the decimal spaces
         df = df.round(4)
@@ -50,17 +37,17 @@ class TimeSeriesEngineeringLayer:
 
         return df
 
-    def remove_historical_data_records(self, df, days):
+    def remove_historical_data_records(self, df):
         """
         Remove historical data from the dataframe.
         """
         # Keep only data with no 'quantity', i.e. data for prediction
-        prediction_only_df = processed_df[processed_df['quantity'].isna()].copy()
+        df = df[df['quantity'].isna()].copy()
 
         # Drop the 'quantity' column
-        prediction_only_df.drop(columns=['quantity'], inplace=True)
+        df.drop(columns=['quantity'], inplace=True)
 
-        logging.info("Historical data removed")
+        logging.info(f"Historical data removed")
 
         return df
 
@@ -68,7 +55,7 @@ class TimeSeriesEngineeringLayer:
         """
         Re-structure a DataFrame with weekly records and create new features.
         """
-        logging.info("Starting feature engineering process...")
+        logging.info("Starting time series engineering process...")
 
         df = self.create_time_series_features(self.data, 'quantity', periods=[1, 7, 14, 30, 90, 365])
 
@@ -78,9 +65,9 @@ class TimeSeriesEngineeringLayer:
         """
         Re-structure a DataFrame with data for prediction and create new features.
         """
-        logging.info("Starting feature engineering process...")
+        logging.info("Starting time series engineering process...")
 
-        df = self.create_time_series_features(df, 'quantity', periods=[1, 7, 30])
+        df = self.create_time_series_features(self.data, 'quantity', periods=[1, 7, 30])
         df = self.remove_historical_data_records(df)
 
         return df
