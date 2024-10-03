@@ -2,13 +2,11 @@ import { Component, OnDestroy } from "@angular/core";
 import { finalize, Subject, take } from "rxjs";
 import { ApiService } from "../../../../shared/services/api/services/api.service";
 import { HttpErrorResponse } from "@angular/common/http";
-import { ProductDemand } from "../../../../shared/services/api/models/product-demand";
 import { Option } from "../../../../shared/interfaces";
 import { ModalService } from "../../../../shared/services/modal/modal.service";
-import { CategoryDemandForecast } from "../../../../shared/services/api/models/category-demand-forecast";
-import {
-  ProductDemandForecastModalComponent
-} from "../modals/product-demand-forecast-modal/product-demand-forecast-modal.component";
+import { ProductDemandForecastModalComponent } from "../modals/product-demand-forecast-modal/product-demand-forecast-modal.component";
+import { ItemDemand } from "../../../../shared/services/api/models/item-demand";
+import { CategoryDemand } from "../../../../shared/services/api/models/category-demand";
 
 @Component({
   selector: 'page-category-demand-forecast',
@@ -22,7 +20,7 @@ export class CategoryDemandForecastPage implements OnDestroy {
   public isLoading: boolean = true;
   public errors: string[] = [];
 
-  public categoryDemandForecast :CategoryDemandForecast | null = null;
+  public categoryDemand: CategoryDemand | null = null;
   public categoryId: string | undefined = '';
   public forecastData: any[] = [];
   public categories: Option[] = [];
@@ -83,7 +81,7 @@ export class CategoryDemandForecastPage implements OnDestroy {
     ).subscribe({
         next: response => {
           if(!response.data) return;
-          this.categoryDemandForecast = response.data;
+          this.categoryDemand = response.data;
           this.mapForecastData(response.data.products);
         },
         error: (error: HttpErrorResponse) => {
@@ -95,12 +93,12 @@ export class CategoryDemandForecastPage implements OnDestroy {
     );
   }
 
-  public mapForecastData(demands: ProductDemand[]) {
+  public mapForecastData(demands: ItemDemand[]) {
     this.forecastData = demands.map(product => {
       return {
-        name: product.product_name,
+        name: product.name,
         series: product.predictions.map(prediction => ({
-          product_id: product.product_id,
+          product_id: product.id,
           name: prediction.date,
           value: +prediction.value
         }))
@@ -109,13 +107,13 @@ export class CategoryDemandForecastPage implements OnDestroy {
   }
 
   public onProductSelection(data: any) {
-    if (!this.categoryDemandForecast) return;
+    if (!this.categoryDemand) return;
 
-    const selectedProduct = this.categoryDemandForecast.products.filter(product => product.product_id === data.product_id);
+    const selectedProduct = this.categoryDemand.products.filter(product => product.id === data.product_id);
 
     this.modalService.open(ProductDemandForecastModalComponent, {
-      title: `Demand Forecast for ${selectedProduct[0].product_name}`,
-      product_name: selectedProduct[0].product_name,
+      title: `Demand Forecast for ${selectedProduct[0].name}`,
+      product_name: selectedProduct[0].name,
       predictions: selectedProduct[0].predictions
     });
   }

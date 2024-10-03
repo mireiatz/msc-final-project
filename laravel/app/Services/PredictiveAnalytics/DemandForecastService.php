@@ -29,7 +29,8 @@ class DemandForecastService implements DemandForecastInterface
             // Check if the category exists in the results array
             if (!isset($aggregatedResults[$prediction->category_id])) {
                 $aggregatedResults[$prediction->category_id] = [
-                    'category' => $prediction->category_name,
+                    'id' => $prediction->category_id,
+                    'name' => $prediction->category_name,
                     'predictions' => [] // Initialise predictions array
                 ];
             }
@@ -88,8 +89,8 @@ class DemandForecastService implements DemandForecastInterface
             // Initialise the product entry if it doesn't exist
             if (!isset($formattedResults['products'][$prediction->product_id])) {
                 $formattedResults['products'][$prediction->product_id] = [
-                    'product_id' => $prediction->product_id,
-                    'product_name' => $prediction->product_name,
+                    'id' => $prediction->product_id,
+                    'name' => $prediction->product_name,
                     'predictions' => [] // Initialise the predictions array
                 ];
             }
@@ -105,6 +106,73 @@ class DemandForecastService implements DemandForecastInterface
         $formattedResults['products'] = array_values($formattedResults['products']);
 
         return $formattedResults;
+    }
+
+    public function getMonthAggregatedDemandForecast(): array
+    {
+        $next30DaysForecast = DB::table('predictions')
+            ->join('products', 'predictions.product_id', '=', 'products.id')
+            ->join('categories', 'products.category_id', '=', 'categories.id')
+            ->select(
+                'categories.name as category_name',
+                'categories.id as category_id',
+                DB::raw('SUM(predictions.value) as total_demand')
+            )
+            ->where('predictions.date', '>=', now())
+            ->where('predictions.date', '<=', now()->addDays(30))
+            ->groupBy('categories.id', 'categories.name')
+            ->get();
+
+
+        return $next30DaysForecast->map(function($category) {
+            return [
+                'id' => $category->category_id,
+                'name' => $category->category_name,
+                'value' => $category->total_demand
+            ];
+        })->toArray();
+    }
+
+    public function getWeeklyAggregatedDemandForecast(): array
+    {
+        $nextMonday = now()->next('Monday');
+
+        // Get weekly aggregated demand forecasts
+        $weeklyForecast = DB::table('predictions')
+            ->join('products', 'predictions.product_id', '=', 'products.id')
+            ->join('categories', 'products.category_id', '=', 'categories.id')
+            ->select(
+                'categories.name as category_name',
+                'categories.id as category_id',
+                DB::raw('FLOOR(DATEDIFF(predictions.date, ?) / 7) as week_number', [$nextMonday]),
+                DB::raw('SUM(predictions.value) as total_demand')
+            )
+            ->where('predictions.date', '>=', $nextMonday)
+            ->where('predictions.date', '<=', $nextMonday->copy()->addDays(34)) // 34 days to cover 4 weeks
+            ->groupBy('categories.id', 'categories.name', 'week_number')
+            ->orderBy('categories.name', 'week_number')
+            ->get();
+
+        // Format the data
+        $groupedResults = [];
+
+        foreach ($weeklyForecast as $forecast) {
+            if (!isset($groupedResults[$forecast->category_name])) {
+                $groupedResults[$forecast->category_name] = [
+                    'category_name' => $forecast->category_name,
+                    'category_id' => $forecast->category_id,
+                    'weeks' => []
+                ];
+            }
+
+            $groupedResults[$forecast->category_name]['weeks'][] = [
+                'name' => 'Week ' . ($forecast->week_number + 1), // Each week
+                'value' => $forecast->total_demand
+            ];
+        }
+
+        // Return as indexed array
+        return array_values($groupedResults);
     }
 
 }

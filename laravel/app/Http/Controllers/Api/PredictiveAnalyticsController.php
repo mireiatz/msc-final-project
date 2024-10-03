@@ -34,8 +34,11 @@ class PredictiveAnalyticsController extends Controller
         return Json::success($demandForecast);
     }
 
-    public function getProductDemandForecast()
+    public function getMonthAggregatedDemandForecast(): JsonResponse
     {
+        $demandForecast = $this->demandForecastInterface->getMonthAggregatedDemandForecast();
+
+        return Json::success($demandForecast);
     }
 }
 

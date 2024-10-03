@@ -2,15 +2,15 @@ import { Component, OnDestroy } from "@angular/core";
 import { finalize, Subject, take } from "rxjs";
 import { ApiService } from "../../../../shared/services/api/services/api.service";
 import { HttpErrorResponse } from "@angular/common/http";
-import { ItemDemand } from "../../../../shared/services/api/models/item-demand";
+import { AggregatedDemand } from "../../../../shared/services/api/models/aggregated-demand";
 
 @Component({
-  selector: 'page-overview-demand-forecast',
-  templateUrl: './overview-demand-forecast.page.html',
-  styleUrls: ['./overview-demand-forecast.page.scss'],
+  selector: 'page-month-demand-forecast',
+  templateUrl: './month-demand-forecast.page.html',
+  styleUrls: ['./month-demand-forecast.page.scss'],
 })
 
-export class OverviewDemandForecastPage implements OnDestroy {
+export class MonthDemandForecastPage implements OnDestroy {
 
   public onDestroy: Subject<void> = new Subject();
   public isLoading: boolean = true;
@@ -32,7 +32,7 @@ export class OverviewDemandForecastPage implements OnDestroy {
   public getDemandForecast() {
     this.isLoading = true;
 
-    this.apiService.getOverviewDemandForecast().pipe(
+    this.apiService.getMonthAggregatedDemandForecast().pipe(
       take(1),
       finalize(() => this.isLoading = false),
     ).subscribe({
@@ -50,15 +50,11 @@ export class OverviewDemandForecastPage implements OnDestroy {
     );
   }
 
-  public mapForecastData(data: ItemDemand[]){
-    this.forecastData = data.map(overviewData => {
+  public mapForecastData(data: AggregatedDemand[]){
+    this.forecastData = data.map(category => {
       return {
-        id: overviewData.id,
-        name: overviewData.name,
-        series: overviewData.predictions.map(prediction => ({
-          name: prediction.date,
-          value: +prediction.value
-        }))
+        name: category.name,
+        value: category.value
       };
     });
   }

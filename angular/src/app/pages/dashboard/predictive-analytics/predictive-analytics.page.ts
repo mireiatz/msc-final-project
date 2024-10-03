@@ -17,9 +17,14 @@ export class PredictiveAnalyticsPage implements OnDestroy {
       key: 'overview',
     },
     {
-      label: 'Category based',
-      route: 'category-based',
-      key: 'category-based',
+      label: 'Product-level',
+      route: 'product-level',
+      key: 'product-level',
+    },
+    {
+      label: 'Month',
+      route: 'month',
+      key: 'month',
     },
   ];
   public activeTab: string = '';
