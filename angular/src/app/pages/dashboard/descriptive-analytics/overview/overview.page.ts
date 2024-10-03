@@ -48,8 +48,8 @@ export class OverviewPage implements OnDestroy {
     ).subscribe({
         next: response => {
           this.metrics = response.data;
-          this.prepareStockChartData();
-          this.prepareSalesChartData();
+          this.mapStockChartData();
+          this.mapSalesChartData();
         },
         error: (error: HttpErrorResponse) => {
           for (let errorList in error.error.errors) {
@@ -66,7 +66,7 @@ export class OverviewPage implements OnDestroy {
     this.getOverviewMetrics();
   }
 
-  public prepareStockChartData() {
+  public mapStockChartData() {
     if(!this.metrics) return;
 
     const inStockPercentage = (this.metrics.stock.products_in_stock_count / this.metrics.stock.product_count) * 100;
@@ -84,7 +84,7 @@ export class OverviewPage implements OnDestroy {
     ];
   }
 
-  public prepareSalesChartData() {
+  public mapSalesChartData() {
     if(!this.metrics) return;
 
     this.salesRevenueChartData = [

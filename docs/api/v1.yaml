@@ -134,18 +134,45 @@ paths:
       operationId: getProductMetrics
       requestBody:
         $ref: '#/components/requestBodies/DateRangeRequest'
-  '/predictive-analytics/demand-forecast/category/{categoryId}':
+  /predictive-analytics/demand-forecast:
     post:
-      summary: getDemandForecast
+      summary: getOverviewDemandForecast
       tags: []
-      responses: {}
-      operationId: getDemandForecast
+      responses:
+        '200':
+          description: OK
+      operationId: getOverviewDemandForecast
+    parameters: []
+    get:
+      summary: ''
+      operationId: getOverviewDemandForecast
+      responses:
+        '200':
+          $ref: '#/components/responses/OverviewDemandForecastResponse'
+  '/predictive-analytics/demand-forecast/category/{categoryId}':
     parameters:
       - schema:
           type: string
         name: categoryId
         in: path
         required: true
+    post:
+      summary: getCategoryDemandForecast
+      tags: []
+      responses: {}
+      operationId: post-predictive-analytics-demand-forecast-category-categoryId
+  '/predictive-analytics/products/{product}':
+    parameters:
+      - schema:
+          type: string
+        name: product
+        in: path
+        required: true
+    post:
+      summary: getProductDemandForecast
+      tags: []
+      responses: {}
+      operationId: getProductDemandForecast
 components:
   schemas:
     Category:
@@ -939,6 +966,45 @@ components:
         - quantity_sold
         - sales_revenue
         - stock_balance
+    Prediction:
+      title: Prediction
+      x-stoplight:
+        id: flmbzlorzaaf4
+      type: object
+      properties:
+        date:
+          type: string
+          x-stoplight:
+            id: qe4pp1ifr0mzn
+          format: date
+        value:
+          type: integer
+          x-stoplight:
+            id: n6m3sfqvddsrq
+      required:
+        - date
+        - value
+    CategoryDemandForecast:
+      title: CategoryDemandForecast
+      x-stoplight:
+        id: xrgnpwp7wiycm
+      type: object
+      properties:
+        category:
+          type: string
+          x-stoplight:
+            id: b6i9erk3a94fm
+        predictions:
+          type: array
+          x-stoplight:
+            id: ho0x8tyar84sm
+          items:
+            $ref: '#/components/schemas/Prediction'
+            x-stoplight:
+              id: 6trbrpcmmql4e
+      required:
+        - category
+        - predictions
   responses:
     CategoriesResponse:
       description: Example response
@@ -1228,6 +1294,52 @@ components:
                 type: object
                 x-stoplight:
                   id: s9c32wnezulyt
+            required:
+              - data
+              - success
+    PredictionsResponse:
+      description: Example response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                x-stoplight:
+                  id: 6oywipvulff8y
+                items: {}
+              success:
+                type: boolean
+                x-stoplight:
+                  id: m84zn4pde1ill
+              errors:
+                type: object
+                x-stoplight:
+                  id: 73xtolafrqbia
+    OverviewDemandForecastResponse:
+      description: Example response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                x-stoplight:
+                  id: 90imf4yj7ghyi
+                items:
+                  $ref: '#/components/schemas/CategoryDemandForecast'
+                  x-stoplight:
+                    id: oy7icrp4r8mpj
+              success:
+                type: boolean
+                x-stoplight:
+                  id: 16jmzakjwd58i
+              errors:
+                type: object
+                x-stoplight:
+                  id: kjkxd80mm4wcy
             required:
               - data
               - success

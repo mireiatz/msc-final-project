@@ -10,3 +10,4 @@ Route::prefix('orders')->group(__DIR__ . '/api/v1/orders.php');
 Route::prefix('stores')->group(__DIR__ . '/api/v1/stores.php');
 Route::prefix('inventory-transactions')->group(__DIR__ . '/api/v1/inventory-transactions.php');
 Route::prefix('descriptive-analytics')->group(__DIR__ . '/api/v1/descriptive-analytics.php');
+Route::prefix('predictive-analytics')->group(__DIR__ . '/api/v1/predictive-analytics.php');

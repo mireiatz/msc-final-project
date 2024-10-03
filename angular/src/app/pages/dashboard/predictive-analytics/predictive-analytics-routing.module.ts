@@ -1,6 +1,6 @@
 import { RouterModule, Routes } from "@angular/router";
 import { NgModule } from "@angular/core";
-import { DemandForecastPage } from "./demand-forecast/demand-forecast.page";
+import { OverviewDemandForecastPage } from "./overview-demand-forecast/overview-demand-forecast.page";
 import { PredictiveAnalyticsPage } from "./predictive-analytics.page";
 
 const routes: Routes = [
@@ -15,7 +15,7 @@ const routes: Routes = [
       },
       {
         path: 'overview',
-        component: DemandForecastPage,
+        component: OverviewDemandForecastPage,
       },
     ],
   },

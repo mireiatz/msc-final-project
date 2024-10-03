@@ -14,8 +14,9 @@ class StoreFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => $this->faker->word(),
-            'location' => $this->faker->city(),
+            'id' => config('store.default.id'),
+            'name' => 'Local Market',
+            'location' => 'Newcastle',
         ];
     }
 }

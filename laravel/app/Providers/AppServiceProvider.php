@@ -12,6 +12,8 @@ use App\Services\DescriptiveAnalytics\StockMetricsInterface;
 use App\Services\DescriptiveAnalytics\StockMetricsService;
 use App\Services\ML\MLServiceClient;
 use App\Services\ML\MLServiceClientInterface;
+use App\Services\PredictiveAnalytics\DemandForecastInterface;
+use App\Services\PredictiveAnalytics\DemandForecastService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -21,10 +23,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Descriptive Analytics
         $this->app->bind(OverviewMetricsInterface::class, OverviewMetricsService::class);
         $this->app->bind(StockMetricsInterface::class, StockMetricsService::class);
         $this->app->bind(SalesMetricsInterface::class, SalesMetricsService::class);
         $this->app->bind(ProductsMetricsInterface::class, ProductsMetricsService::class);
+
+        // Predictive Analytics
+        $this->app->bind(DemandForecastInterface::class, DemandForecastService::class);
+
+        // ML
         $this->app->bind(MLServiceClientInterface::class, MLServiceClient::class);
     }
 

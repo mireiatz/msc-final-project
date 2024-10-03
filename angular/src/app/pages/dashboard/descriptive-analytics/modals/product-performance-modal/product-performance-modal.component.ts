@@ -40,9 +40,9 @@ export class ProductPerformanceModalComponent {
       }
     }).subscribe({
       next: response => {
-        this.quantitySoldData = this.formatChartData(response.data.quantity_sold, 'Quantity');
-        this.salesRevenueData = this.formatChartData(response.data.sales_revenue, 'Revenue');
-        this.stockBalanceData = this.formatChartData(response.data.stock_balance, 'Stock');
+        this.quantitySoldData = this.mapChartData(response.data.quantity_sold, 'Quantity');
+        this.salesRevenueData = this.mapChartData(response.data.sales_revenue, 'Revenue');
+        this.stockBalanceData = this.mapChartData(response.data.stock_balance, 'Stock');
       },
       error: (error: HttpErrorResponse) => {
         for (let errorList in error.error.errors) {
@@ -52,7 +52,7 @@ export class ProductPerformanceModalComponent {
     });
   }
 
-  formatChartData(data: { date: string; amount: number }[], name: string): any[] {
+  mapChartData(data: { date: string; amount: number }[], name: string): any[] {
     return [{
       name: name,
       series: data.map(item => ({
@@ -61,5 +61,4 @@ export class ProductPerformanceModalComponent {
       }))
     }];
   }
-
 }
