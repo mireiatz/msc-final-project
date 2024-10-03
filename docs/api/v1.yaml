@@ -76,7 +76,7 @@ paths:
         '200':
           $ref: '#/components/responses/StoresResponse'
       operationId: getStores
-  /analytics/overview:
+  /descriptive-analytics/overview:
     parameters: []
     post:
       summary: ''
@@ -86,14 +86,14 @@ paths:
           $ref: '#/components/responses/OverviewMetricsResponse'
       requestBody:
         $ref: '#/components/requestBodies/GetOverviewMetricsRequest'
-  /analytics/stock:
+  /descriptive-analytics/stock:
     get:
       summary: ''
       operationId: getStockMetrics
       responses:
         '200':
           $ref: '#/components/responses/StockMetricsResponse'
-  /analytics/sales:
+  /descriptive-analytics/sales:
     post:
       summary: getSalesMetrics
       tags: []
@@ -103,7 +103,7 @@ paths:
       operationId: getSalesMetrics
       requestBody:
         $ref: '#/components/requestBodies/GetSalesMetricsRequest'
-  /analytics/products:
+  /descriptive-analytics/products:
     post:
       summary: getProductsMetrics
       tags: []
@@ -118,7 +118,7 @@ paths:
             type: integer
           in: query
           name: page
-  '/analytics/products/{productId}':
+  '/descriptive-analytics/products/{productId}':
     parameters:
       - schema:
           type: string
@@ -134,6 +134,18 @@ paths:
       operationId: getProductMetrics
       requestBody:
         $ref: '#/components/requestBodies/GetProductMetricsRequest'
+  '/predictive-analytics/demand-forecast/category/{categoryId}':
+    post:
+      summary: getDemandForecast
+      tags: []
+      responses: {}
+      operationId: getDemandForecast
+    parameters:
+      - schema:
+          type: string
+        name: categoryId
+        in: path
+        required: true
 components:
   schemas:
     Category:

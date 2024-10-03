@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\Api\Analytics;
+namespace App\Http\Requests\Api\DescriptiveAnalytics;
 
 use App\Http\Requests\ApiBaseRequest;
 
-class GetProductsMetricsRequest extends ApiBaseRequest
+class GetSalesMetricsRequest extends ApiBaseRequest
 {
     /**
      * Determine if the user is authorized to make this request.

@@ -15,7 +15,7 @@ class Kernel extends ConsoleKernel
     {
         Log::info('Schedule run triggered');
 
-        $schedule->command('ml:forecast-demand')->everyMinute();
+        $schedule->command('ml:forecast-demand')->dailyAt('02:00');
     }
 
     /**

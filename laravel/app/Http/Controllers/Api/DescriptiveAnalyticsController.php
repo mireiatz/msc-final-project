@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\Analytics\GetOverviewMetricsRequest;
-use App\Http\Requests\Api\Analytics\GetProductMetricsRequest;
-use App\Http\Requests\Api\Analytics\GetProductsMetricsRequest;
-use App\Http\Requests\Api\Analytics\GetSalesMetricsRequest;
+use App\Http\Requests\Api\DescriptiveAnalytics\GetOverviewMetricsRequest;
+use App\Http\Requests\Api\DescriptiveAnalytics\GetProductMetricsRequest;
+use App\Http\Requests\Api\DescriptiveAnalytics\GetProductsMetricsRequest;
+use App\Http\Requests\Api\DescriptiveAnalytics\GetSalesMetricsRequest;
 use App\Http\Responses\JsonResponse as Json;
 use App\Models\Product;
 use App\Services\DescriptiveAnalytics\OverviewMetricsInterface;
@@ -15,15 +15,14 @@ use App\Services\DescriptiveAnalytics\SalesMetricsInterface;
 use App\Services\DescriptiveAnalytics\StockMetricsInterface;
 use Illuminate\Http\JsonResponse;
 
-class AnalyticsController extends Controller
+class DescriptiveAnalyticsController extends Controller
 {
     public function __construct(
         private readonly OverviewMetricsInterface $overviewMetricsInterface,
         private readonly StockMetricsInterface    $stockMetricsInterface,
         private readonly SalesMetricsInterface    $salesMetricsInterface,
         private readonly ProductsMetricsInterface $productsMetricsInterface,
-    )
-    {}
+    ) {}
 
     /**
      * Get overview metrics for the specified date range.
