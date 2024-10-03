@@ -15,7 +15,7 @@ class ExportSalesDataToMLService extends Command
      *
      * @var string
      */
-    protected $signature = 'db:export-sales-data-to-ml-service {dataType} {startDate?} {endDate?}';
+    protected $signature = 'ml:export-sales-data-to-ml-service {dataType} {startDate?} {endDate?}';
 
     /**
      * The console command description.

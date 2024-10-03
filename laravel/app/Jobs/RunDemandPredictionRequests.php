@@ -13,7 +13,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class RunPredictionRequests implements ShouldQueue
+class RunDemandPredictionRequests implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -48,7 +48,7 @@ class RunPredictionRequests implements ShouldQueue
                     'prediction_dates' => $payload['prediction_dates'],
                     'products' => $chunk,
                 ];
-                dispatch(new RequestPredictions($chunkedPayload));
+                dispatch(new RequestAndStoreDemandPredictions($chunkedPayload));
             }
 
             Log::info('RunPredictionRequests job completed: dispatched ' . count($chunks) . ' chunk(s) to the ML service');

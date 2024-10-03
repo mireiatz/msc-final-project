@@ -42,16 +42,16 @@ class DemandPredictor:
         """
         # Create a DataFrame
         predictions_df = pd.DataFrame({
-            'id': source_product_ids,
+            'product_id': source_product_ids,
             'date': dates,
-            'prediction_value': predictions
+            'value': predictions
         })
 
         # Format the date
         predictions_df['date'] = pd.to_datetime(predictions_df['date'], unit='ms').dt.strftime('%Y-%m-%d')
 
         # Round to nearest integer and convert negatives to 0
-        predictions_df['prediction_value'] = predictions_df['prediction_value'].round(0).clip(lower=0).astype(int)
+        predictions_df['value'] = predictions_df['value'].round(0).clip(lower=0).astype(int)
 
         logging.info(f"Predictions transformed")
 

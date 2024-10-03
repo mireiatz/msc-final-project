@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\Prediction;
 use App\Services\ML\MLServiceClientInterface;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -11,7 +12,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
-class RequestPredictions implements ShouldQueue
+class RequestAndStoreDemandPredictions implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -33,10 +34,21 @@ class RequestPredictions implements ShouldQueue
     public function handle(MLServiceClientInterface $mlServiceClient): void
     {
         try {
-            // Use the ML service client to predict demand
+            // Request predictions from the ML service
             $response = $mlServiceClient->predictDemand($this->data);
+            $predictions = json_decode($response['predictions'], true);
 
-            Log::info('RequestPredictions job completed | Response: ', $response);
+            // Chunk the predictions
+            $chunks = array_chunk($predictions, 5000);
+            foreach ($chunks as $chunk) {
+                // Upsert records (precaution for the unique constraint for product_id - date)
+                Prediction::upsert(
+                    $chunk,
+                    ['product_id', 'date'], // Unique columns
+                    ['value'] // Update on conflict
+                );
+            }
+            Log::info('RequestPredictions job completed | Response: ');
         } catch (Exception $e) {
             Log::error('RequestPredictions job failed | Error sending prediction request: ' . $e->getMessage());
             throw $e;

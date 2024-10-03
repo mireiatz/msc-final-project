@@ -68,6 +68,11 @@ class Product extends Model
         return $this->hasMany(InventoryTransaction::class);
     }
 
+    public function predictions(): HasMany
+    {
+        return $this->hasMany(Prediction::class);
+    }
+
     public function getStockBalanceAttribute(): int
     {
         // Temporary approach for accuracy purposes due to massive data uploads with matching dates/times
