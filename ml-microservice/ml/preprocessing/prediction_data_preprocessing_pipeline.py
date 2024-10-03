@@ -1,13 +1,17 @@
+from ml.preprocessing.preprocessing_pipeline import PreprocessingPipeline
 from ml.preprocessing.prediction_data_ingestion_layer import PredictionDataIngestionLayer
 from ml.preprocessing.cleaning_layer import CleaningLayer
-from ml.preprocessing.general_feature_engineering_layer import GeneralFeatureEngineeringLayer
+from ml.preprocessing.feature_engineering_layer import FeatureEngineeringLayer
 from ml.preprocessing.time_series_engineering_layer import TimeSeriesEngineeringLayer
+from ml.config import config
+import logging
 
 class PredictionDataPreprocessingPipeline(PreprocessingPipeline):
 
     def __init__(self, data, output_path=None):
         super().__init__(output_path=output_path)
         self.data = data
+        self.required_features = config.MAIN_FEATURES
 
     def ingest_data(self):
         return PredictionDataIngestionLayer(data=self.data).process()
@@ -15,11 +19,16 @@ class PredictionDataPreprocessingPipeline(PreprocessingPipeline):
     def clean_data(self, ingested_data):
         return CleaningLayer(ingested_data).process_prediction_data()
 
-    def engineer_data(self, cleaned_data):
-        # First, run the general feature engineering
-        general_feature_engineering = GeneralFeatureEngineeringLayer(cleaned_data)
-        engineered_data = general_feature_engineering.process_general_features()
+    def engineer_features(self, cleaned_data):
+        return FeatureEngineeringLayer(cleaned_data).process_prediction_data()
 
-        # Then, apply the time series feature engineering
-        time_series_engineering = TimeSeriesEngineeringLayer(engineered_data, self.sales_history)
-        return time_series_engineering.process_prediction_data()
+    def engineer_time_series(self, engineered_data):
+        return TimeSeriesEngineeringLayer(engineered_data).process_prediction_data()
+
+    def handle_data(self, preprocessed_data):
+        logging.info("Handling prediction data...")
+
+        # Drop any columns that are not in the required features list
+        prediction_data = preprocessed_data[self.required_features]
+
+        return prediction_data
