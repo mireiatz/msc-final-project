@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\Api\Angular\AnalyticsController;
+use App\Http\Controllers\Api\AnalyticsController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('/overview')->group(function () {

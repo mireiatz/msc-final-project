@@ -9,7 +9,7 @@ info:
   description: API spec
   summary: Documentation for the Angular part of the API.
 servers:
-  - url: 'http://localhost:8000/api/v1/angular'
+  - url: 'http://localhost:8000/api/v1'
     description: local
 paths:
   /categories:

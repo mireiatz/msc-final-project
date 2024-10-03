@@ -1,25 +1,20 @@
 <?php
 
-namespace App\Http\Controllers\Api\Angular;
+namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Category;
-use Illuminate\Http\JsonResponse;
+use App\Models\Product;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 
-class CategoryController extends Controller
+class ProductController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(): JsonResponse
+    public function index(): Collection
     {
-        $categories = Category::all();
-
-        return response()->json([
-            'data' => $categories->toArray(),
-            'success' => true
-        ]);
+        return Product::all();
     }
 
     /**
