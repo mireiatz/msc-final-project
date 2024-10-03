@@ -3,10 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\DescriptiveAnalytics\GetOverviewMetricsRequest;
-use App\Http\Requests\Api\DescriptiveAnalytics\GetProductMetricsRequest;
-use App\Http\Requests\Api\DescriptiveAnalytics\GetProductsMetricsRequest;
-use App\Http\Requests\Api\DescriptiveAnalytics\GetSalesMetricsRequest;
+use App\Http\Requests\Api\DateRangeRequest;
 use App\Http\Responses\JsonResponse as Json;
 use App\Models\Product;
 use App\Services\DescriptiveAnalytics\OverviewMetricsInterface;
@@ -27,10 +24,10 @@ class DescriptiveAnalyticsController extends Controller
     /**
      * Get overview metrics for the specified date range.
      *
-     * @param GetOverviewMetricsRequest $request
+     * @param DateRangeRequest $request
      * @return JsonResponse
      */
-    public function getOverviewMetrics(GetOverviewMetricsRequest $request): JsonResponse
+    public function getOverviewMetrics(DateRangeRequest $request): JsonResponse
     {
         $data = $request->validated();
         $metrics = $this->overviewMetricsInterface->getMetrics($data['start_date'], $data['end_date']);
@@ -53,10 +50,10 @@ class DescriptiveAnalyticsController extends Controller
     /**
      * Get sales metrics for the specified date range.
      *
-     * @param GetSalesMetricsRequest $request
+     * @param DateRangeRequest $request
      * @return JsonResponse
      */
-    public function getSalesMetrics(GetSalesMetricsRequest $request): JsonResponse
+    public function getSalesMetrics(DateRangeRequest $request): JsonResponse
     {
         $data = $request->validated();
         $metrics = $this->salesMetricsInterface->getDetailedMetrics($data['start_date'], $data['end_date']);
@@ -67,10 +64,10 @@ class DescriptiveAnalyticsController extends Controller
     /**
      * Get products metrics for the specified date range.
      *
-     * @param GetProductsMetricsRequest $request
+     * @param DateRangeRequest $request
      * @return JsonResponse
      */
-    public function getProductsMetrics(GetProductsMetricsRequest $request): JsonResponse
+    public function getProductsMetrics(DateRangeRequest $request): JsonResponse
     {
         $data = $request->validated();
 
@@ -82,11 +79,11 @@ class DescriptiveAnalyticsController extends Controller
     /**
      * Get metrics for a specific product for the specified date range.
      *
-     * @param GetProductMetricsRequest $request
+     * @param DateRangeRequest $request
      * @param Product $product
      * @return JsonResponse
      */
-    public function getProductMetrics(GetProductMetricsRequest $request, Product $product): JsonResponse
+    public function getProductMetrics(DateRangeRequest $request, Product $product): JsonResponse
     {
         $data = $request->validated();
 

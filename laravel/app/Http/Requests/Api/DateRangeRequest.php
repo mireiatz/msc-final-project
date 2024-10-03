@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\Api\DescriptiveAnalytics;
+namespace App\Http\Requests\Api;
 
 use App\Http\Requests\ApiBaseRequest;
 
-class GetOverviewMetricsRequest extends ApiBaseRequest
+class DateRangeRequest extends ApiBaseRequest
 {
     /**
      * Determine if the user is authorized to make this request.

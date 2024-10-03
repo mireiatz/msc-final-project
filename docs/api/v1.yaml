@@ -85,7 +85,7 @@ paths:
         '200':
           $ref: '#/components/responses/OverviewMetricsResponse'
       requestBody:
-        $ref: '#/components/requestBodies/GetOverviewMetricsRequest'
+        $ref: '#/components/requestBodies/DateRangeRequest'
   /descriptive-analytics/stock:
     get:
       summary: ''
@@ -102,7 +102,7 @@ paths:
           $ref: '#/components/responses/SalesMetricsResponse'
       operationId: getSalesMetrics
       requestBody:
-        $ref: '#/components/requestBodies/GetSalesMetricsRequest'
+        $ref: '#/components/requestBodies/DateRangeRequest'
   /descriptive-analytics/products:
     post:
       summary: getProductsMetrics
@@ -112,7 +112,7 @@ paths:
           $ref: '#/components/responses/ProductsMetricsResponse'
       operationId: getProductsMetrics
       requestBody:
-        $ref: '#/components/requestBodies/GetProductsMetricsRequest'
+        $ref: '#/components/requestBodies/DateRangeRequest'
       parameters:
         - schema:
             type: integer
@@ -133,7 +133,7 @@ paths:
           $ref: '#/components/responses/ProductMetricsResponse'
       operationId: getProductMetrics
       requestBody:
-        $ref: '#/components/requestBodies/GetProductMetricsRequest'
+        $ref: '#/components/requestBodies/DateRangeRequest'
   '/predictive-analytics/demand-forecast/category/{categoryId}':
     post:
       summary: getDemandForecast
@@ -1232,7 +1232,7 @@ components:
               - data
               - success
   requestBodies:
-    GetOverviewMetricsRequest:
+    DateRangeRequest:
       content:
         application/json:
           schema:
@@ -1250,60 +1250,3 @@ components:
                 format: date-time
             required:
               - start_date
-    GetSalesMetricsRequest:
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              start_date:
-                type: string
-                x-stoplight:
-                  id: n7j806vhw0qdz
-                format: date-time
-              end_date:
-                type: string
-                x-stoplight:
-                  id: itvmo6bz5r3nc
-                format: date-time
-            required:
-              - start_date
-              - end_date
-    GetProductsMetricsRequest:
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              start_date:
-                type: string
-                x-stoplight:
-                  id: 4tyjwixj0dwwt
-                format: date-time
-              end_date:
-                type: string
-                x-stoplight:
-                  id: eu1gwg9i3590c
-                format: date-time
-            required:
-              - start_date
-              - end_date
-    GetProductMetricsRequest:
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              start_date:
-                type: string
-                x-stoplight:
-                  id: hpwtec8na1ozr
-                format: date-time
-              end_date:
-                type: string
-                x-stoplight:
-                  id: chpea7phmnsj8
-                format: date-time
-            required:
-              - start_date
-              - end_date
