@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Services\PredictiveAnalytics\DemandForecastInterface;
 use Illuminate\Http\JsonResponse;
 use App\Http\Responses\JsonResponse as Json;
@@ -26,8 +27,11 @@ class PredictiveAnalyticsController extends Controller
         return Json::success($demandForecast);
     }
 
-    public function getCategoryDemandForecast()
+    public function getCategoryDemandForecast(Category $category): JsonResponse
     {
+        $demandForecast = $this->demandForecastInterface->getCategoryDemandForecast($category);
+
+        return Json::success($demandForecast);
     }
 
     public function getProductDemandForecast()

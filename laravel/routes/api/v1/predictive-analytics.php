@@ -11,7 +11,7 @@ Route::prefix('/demand-forecast')->group(function () {
 
         Route::prefix('/{category}')->group(function () {
 
-            Route::post('/', [PredictiveAnalyticsController::class, 'getCategoryDemandForecast'])->name('getCategoryDemandForecast');
+            Route::get('/', [PredictiveAnalyticsController::class, 'getCategoryDemandForecast'])->name('getCategoryDemandForecast');
         });
     });
 

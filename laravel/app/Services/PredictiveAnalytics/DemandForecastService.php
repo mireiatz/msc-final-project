@@ -51,4 +51,60 @@ class DemandForecastService implements DemandForecastInterface
         // Return as an indexed array
         return array_values($aggregatedResults);
     }
+
+    public function getCategoryDemandForecast($category): array
+    {
+        $today = Carbon::today();
+
+        // Fetch predictions for a specific category
+        $predictions = DB::table('predictions')
+            ->join('products', 'predictions.product_id', '=', 'products.id')
+            ->join('categories', 'products.category_id', '=', 'categories.id')
+            ->select(
+                'categories.name as category_name',
+                'products.id as product_id',
+                'products.name as product_name',
+                'predictions.date',
+                DB::raw('SUM(predictions.value) as total_value') // Aggregate prediction values
+            )
+            ->where('categories.id', $category->id)
+            ->where('predictions.date', '>=', $today) // Only include future or today's predictions
+            ->groupBy('products.id', 'predictions.date')
+            ->orderBy('predictions.date')
+            ->get();
+
+        // Format the results
+        $formattedResults = [
+            'category' => '',
+            'products' => []
+        ];
+
+        foreach ($predictions as $prediction) {
+            // If category name is empty, assign the current category name
+            if (empty($formattedResults['category'])) {
+                $formattedResults['category'] = $prediction->category_name;
+            }
+
+            // Initialise the product entry if it doesn't exist
+            if (!isset($formattedResults['products'][$prediction->product_id])) {
+                $formattedResults['products'][$prediction->product_id] = [
+                    'product_id' => $prediction->product_id,
+                    'product_name' => $prediction->product_name,
+                    'predictions' => [] // Initialise the predictions array
+                ];
+            }
+
+            // Add the prediction with date and value to the product's predictions array
+            $formattedResults['products'][$prediction->product_id]['predictions'][] = [
+                'date' => $prediction->date,
+                'value' => $prediction->total_value
+            ];
+        }
+
+        // Return as a sequential array
+        $formattedResults['products'] = array_values($formattedResults['products']);
+
+        return $formattedResults;
+    }
+
 }

@@ -149,18 +149,19 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/OverviewDemandForecastResponse'
-  '/predictive-analytics/demand-forecast/category/{categoryId}':
+  '/predictive-analytics/demand-forecast/categories/{categoryId}':
     parameters:
       - schema:
           type: string
         name: categoryId
         in: path
         required: true
-    post:
+    get:
       summary: getCategoryDemandForecast
-      tags: []
-      responses: {}
-      operationId: post-predictive-analytics-demand-forecast-category-categoryId
+      operationId: getCategoryDemandForecast
+      responses:
+        '200':
+          $ref: '#/components/responses/CategoryDemandForecastResponse'
   '/predictive-analytics/products/{product}':
     parameters:
       - schema:
@@ -984,8 +985,8 @@ components:
       required:
         - date
         - value
-    CategoryDemandForecast:
-      title: CategoryDemandForecast
+    OverviewDemandForecast:
+      title: OverviewDemandForecast
       x-stoplight:
         id: xrgnpwp7wiycm
       type: object
@@ -1004,6 +1005,54 @@ components:
               id: 6trbrpcmmql4e
       required:
         - category
+        - predictions
+    CategoryDemandForecast:
+      title: CategoryDemandForecast
+      x-stoplight:
+        id: 3qov5t1ov4r3f
+      type: object
+      properties:
+        category:
+          type: string
+          x-stoplight:
+            id: fsizknxhk94z5
+        products:
+          type: array
+          x-stoplight:
+            id: 70av00upkfzvf
+          items:
+            $ref: '#/components/schemas/ProductDemand'
+            x-stoplight:
+              id: 298huomm2umxo
+      required:
+        - category
+        - products
+    ProductDemand:
+      title: ProductDemand
+      x-stoplight:
+        id: 4ttjq8v3l7kl7
+      type: object
+      properties:
+        product_name:
+          type: string
+          x-stoplight:
+            id: 0jriznefth38f
+        product_id:
+          type: string
+          x-stoplight:
+            id: 5u3r2fgrde7rc
+          format: uuid
+        predictions:
+          type: array
+          x-stoplight:
+            id: ejn7bd48k307i
+          items:
+            $ref: '#/components/schemas/Prediction'
+            x-stoplight:
+              id: cimzlhdbyxzqg
+      required:
+        - product_name
+        - product_id
         - predictions
   responses:
     CategoriesResponse:
@@ -1329,7 +1378,7 @@ components:
                 x-stoplight:
                   id: 90imf4yj7ghyi
                 items:
-                  $ref: '#/components/schemas/CategoryDemandForecast'
+                  $ref: '#/components/schemas/OverviewDemandForecast'
                   x-stoplight:
                     id: oy7icrp4r8mpj
               success:
@@ -1340,6 +1389,28 @@ components:
                 type: object
                 x-stoplight:
                   id: kjkxd80mm4wcy
+            required:
+              - data
+              - success
+    CategoryDemandForecastResponse:
+      description: Example response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/components/schemas/CategoryDemandForecast'
+                x-stoplight:
+                  id: kcan6rkvyrtms
+              success:
+                type: boolean
+                x-stoplight:
+                  id: c3hctjw6ynota
+              errors:
+                type: object
+                x-stoplight:
+                  id: 693lxbjc0x3kz
             required:
               - data
               - success

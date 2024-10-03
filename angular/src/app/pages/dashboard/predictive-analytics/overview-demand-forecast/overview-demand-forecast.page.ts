@@ -2,7 +2,7 @@ import { Component, OnDestroy } from "@angular/core";
 import { finalize, Subject, take } from "rxjs";
 import { ApiService } from "../../../../shared/services/api/services/api.service";
 import { HttpErrorResponse } from "@angular/common/http";
-import { CategoryDemandForecast } from "../../../../shared/services/api/models/category-demand-forecast";
+import { OverviewDemandForecast } from "../../../../shared/services/api/models/overview-demand-forecast";
 
 @Component({
   selector: 'page-overview-demand-forecast',
@@ -50,11 +50,11 @@ export class OverviewDemandForecastPage implements OnDestroy {
     );
   }
 
-  public mapForecastData(data: CategoryDemandForecast[]){
-    this.forecastData = data.map(categoryData => {
+  public mapForecastData(data: OverviewDemandForecast[]){
+    this.forecastData = data.map(overviewData => {
       return {
-        name: categoryData.category,
-        series: categoryData.predictions.map(prediction => ({
+        name: overviewData.category,
+        series: overviewData.predictions.map(prediction => ({
           name: prediction.date,
           value: +prediction.value
         }))

@@ -1,0 +1,14 @@
+<div class="dropdown">
+  <button class="dropdown-btn" (click)="toggleDropdown()">
+    {{ getSelectedOption()?.name || placeholder }}
+  </button>
+
+  <div class="dropdown-list" *ngIf="isDropdownOpen">
+    <div
+      class="dropdown-item"
+      *ngFor="let option of options"
+      (click)="selectOption(option)">
+      {{ option.name }}
+    </div>
+  </div>
+</div>
