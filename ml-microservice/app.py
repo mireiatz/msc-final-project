@@ -1,12 +1,12 @@
+from ml.preprocessing.prediction_data_preprocessing_pipeline import PredictionDataPreprocessingPipeline
+from ml.modeling.predictor import Predictor
 from flask import Flask, request, jsonify
-import os
-from ml.preprocessing.historical_data_preprocessing_pipeline import HistoricalDataPreprocessingPipeline
 from logging_config import setup_logging, logging
-import json
 from app_config import app_config
+import subprocess
+import json
 import os
 import sys
-import subprocess
 
 app = Flask(__name__)
 
@@ -65,7 +65,8 @@ def export_sales_data():
             data_type = metadata.get('format')
 
             if data_type in ['weekly', 'daily']:
-                # Run the preprocessing pipeline in the background
+
+                # Run the historical data preprocessing pipeline script in the background
                 run_in_background('preprocess_historical_data.py', '--data_path', file_path, '--data_type', data_type)
 
                 return jsonify({"status": f"Preprocessing started for {data_type} data"}), 200
@@ -86,8 +87,22 @@ def predict_demand():
     Flask route to make predictions.
     """
     try:
+        # Get the data
+        data = request.json
 
-        return jsonify({"status": "Success, data processed"}), 200
+        # Preprocess the data
+        preprocessed_data = PredictionDataPreprocessingPipeline(
+            data=data,
+        ).run()
+
+        # Run the predictor
+        predictions = Predictor().run(preprocessed_data)
+
+        # Send predictions back
+        return jsonify({
+            "status": "Success, data processed",
+            "predictions": predictions.tolist()
+        }), 200
 
     except Exception as e:
         logging.error(f"Error: {e}")
