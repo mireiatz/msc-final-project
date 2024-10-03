@@ -4,6 +4,11 @@ import { ApiService } from "../../../../shared/services/api/services/api.service
 import { HttpErrorResponse } from "@angular/common/http";
 import { ProductDemand } from "../../../../shared/services/api/models/product-demand";
 import { Option } from "../../../../shared/interfaces";
+import { ModalService } from "../../../../shared/services/modal/modal.service";
+import { CategoryDemandForecast } from "../../../../shared/services/api/models/category-demand-forecast";
+import {
+  ProductDemandForecastModalComponent
+} from "../modals/product-demand-forecast-modal/product-demand-forecast-modal.component";
 
 @Component({
   selector: 'page-category-demand-forecast',
@@ -17,12 +22,14 @@ export class CategoryDemandForecastPage implements OnDestroy {
   public isLoading: boolean = true;
   public errors: string[] = [];
 
+  public categoryDemandForecast :CategoryDemandForecast | null = null;
   public categoryId: string | undefined = '';
   public forecastData: any[] = [];
   public categories: Option[] = [];
 
   constructor(
     protected apiService: ApiService,
+    protected modalService: ModalService,
   ) {
     this.fetchCategories();
   }
@@ -76,7 +83,7 @@ export class CategoryDemandForecastPage implements OnDestroy {
     ).subscribe({
         next: response => {
           if(!response.data) return;
-
+          this.categoryDemandForecast = response.data;
           this.mapForecastData(response.data.products);
         },
         error: (error: HttpErrorResponse) => {
@@ -93,10 +100,23 @@ export class CategoryDemandForecastPage implements OnDestroy {
       return {
         name: product.product_name,
         series: product.predictions.map(prediction => ({
+          product_id: product.product_id,
           name: prediction.date,
           value: +prediction.value
         }))
       };
+    });
+  }
+
+  public onProductSelection(data: any) {
+    if (!this.categoryDemandForecast) return;
+
+    const selectedProduct = this.categoryDemandForecast.products.filter(product => product.product_id === data.product_id);
+
+    this.modalService.open(ProductDemandForecastModalComponent, {
+      title: `Demand Forecast for ${selectedProduct[0].product_name}`,
+      product_name: selectedProduct[0].product_name,
+      predictions: selectedProduct[0].predictions
     });
   }
 }

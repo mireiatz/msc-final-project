@@ -1,0 +1,29 @@
+<app-modal>
+  <ng-container header>
+    <h3>{{ title }}</h3>
+  </ng-container>
+
+  <ng-container content>
+    <div class="row">
+      <div class="col-12">
+        <ngx-charts-line-chart
+          [view]="[1200, 700]"
+          [results]="productForecastData"
+          [legend]="true"
+          [xAxis]="true"
+          [yAxis]="true"
+          [showXAxisLabel]="true"
+          [showYAxisLabel]="true"
+          [xAxisLabel]="'Date'"
+          [yAxisLabel]="'Predictions'"
+          [autoScale]="true"
+          [showGridLines]="true">
+        </ngx-charts-line-chart>
+      </div>
+    </div>
+  </ng-container>
+
+  <ng-container footer>
+    <a (click)="close()" class="btn btn-primary">Close</a>
+  </ng-container>
+</app-modal>

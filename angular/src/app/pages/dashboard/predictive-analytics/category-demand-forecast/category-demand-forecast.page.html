@@ -24,7 +24,8 @@
       [xAxisLabel]="'Date'"
       [yAxisLabel]="'Predictions'"
       [autoScale]="true"
-      [showGridLines]="true">
+      [showGridLines]="true"
+      (select)="onProductSelection($event)">
     </ngx-charts-line-chart>
   </div>
 </div>

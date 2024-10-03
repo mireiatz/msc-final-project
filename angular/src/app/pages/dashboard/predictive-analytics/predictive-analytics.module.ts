@@ -5,10 +5,16 @@ import { PredictiveAnalyticsRoutingModule } from "./predictive-analytics-routing
 import { PredictiveAnalyticsPage } from "./predictive-analytics.page";
 import { SharedModule } from "../../../shared/shared.module";
 import { OverviewDemandForecastPage } from "./overview-demand-forecast/overview-demand-forecast.page";
-import { LineChartModule } from "@swimlane/ngx-charts";
+import { LineChartModule, NgxChartsModule } from "@swimlane/ngx-charts";
 import { CategoryDemandForecastPage } from "./category-demand-forecast/category-demand-forecast.page";
-import { NgSelectComponent } from "@ng-select/ng-select";
-import { FormsModule } from "@angular/forms";
+
+import {
+  ProductDemandForecastModalComponent
+} from "./modals/product-demand-forecast-modal/product-demand-forecast-modal.component";
+
+const MODALS = [
+  ProductDemandForecastModalComponent,
+]
 
 const PAGES = [
   PredictiveAnalyticsPage,
@@ -19,6 +25,7 @@ const PAGES = [
 @NgModule({
   declarations: [
     ...PAGES,
+    ...MODALS,
   ],
   imports: [
     PredictiveAnalyticsRoutingModule,
@@ -26,8 +33,7 @@ const PAGES = [
     RouterModule,
     SharedModule,
     LineChartModule,
-    FormsModule,
-    NgSelectComponent,
+    NgxChartsModule,
   ]
 })
 export class PredictiveAnalyticsModule {}
