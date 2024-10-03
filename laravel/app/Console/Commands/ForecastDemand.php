@@ -8,21 +8,21 @@ use App\Jobs\RunDemandPredictionRequests as RunDemandPredictionRequestsJob;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 
-class RunDemandPredictionRequests extends Command
+class ForecastDemand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'ml:run-prediction-requests {daysToPredict?} {historicalDays?}';
+    protected $signature = 'ml:forecast-demand {daysToPredict?} {historicalDays?}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Process requests for predictions based on amount of days to predict and how many sales dates details are needed for historical data preparation';
+    protected $description = 'Process requests for predictions based on the amount of days to predict and how many sales dates must make up the historical data';
 
     /**
      * Execute the console command.
@@ -46,7 +46,7 @@ class RunDemandPredictionRequests extends Command
             RunDemandPredictionRequestsJob::dispatch($daysToPredict, $historicalDays);
             $this->info("RunPredictionRequestsJob dispatched successfully");
         } catch (Exception $e) {
-            Log::error('Command: RunPredictionRequests | Failed to dispatch RunPredictionRequestsJob | Error: ' . $e->getMessage());
+            Log::error('Command: ForecastDemand | Failed to dispatch RunPredictionRequestsJob | Error: ' . $e->getMessage());
             throw $e;
         }
     }

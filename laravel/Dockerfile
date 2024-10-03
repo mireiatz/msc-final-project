@@ -7,7 +7,8 @@ RUN apt-get update && apt-get install -y \
     unzip \
     git \
     curl \
-    && docker-php-ext-install pdo pdo_mysql zip
+    cron && \
+    docker-php-ext-install pdo pdo_mysql zip
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
@@ -27,8 +28,20 @@ RUN chown -R www-data:www-data /var/www
 # Update Apache's document root to use the Laravel 'public' folder
 RUN sed -i 's#/var/www/html#/var/www/public#' /etc/apache2/sites-available/000-default.conf
 
+# Add cron job to run Laravel scheduler every minute for testing
+RUN echo "* * * * * www-data php /var/www/artisan schedule:run >> /dev/null 2>&1" > /etc/cron.d/laravel_scheduler
+
+# Give execution rights to the cron job
+RUN chmod 0644 /etc/cron.d/laravel_scheduler
+
+# Apply the cron job
+RUN crontab /etc/cron.d/laravel_scheduler
+
+# Create the cron log file
+RUN touch /var/log/cron.log
+
 # Expose port 80
 EXPOSE 80
 
-# Start Apache
-CMD ["apache2-foreground"]
+# Start both cron and Apache together
+CMD ["sh", "-c", "cron && apache2-foreground"]

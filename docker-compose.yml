@@ -48,8 +48,6 @@ services:
     platform: linux/amd64
     networks:
       - project-network
-    env_file:
-      - .env
     environment:
       MYSQL_ROOT_PASSWORD: ${DOCKER_MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${DOCKER_MYSQL_DATABASE}
