@@ -2,14 +2,14 @@
 
 namespace App\Providers;
 
-use App\Services\Analytics\ProductsMetricsInterface;
-use App\Services\Analytics\ProductsMetricsService;
-use App\Services\Analytics\SalesMetricsInterface;
-use App\Services\Analytics\SalesMetricsService;
-use App\Services\Analytics\OverviewMetricsInterface;
-use App\Services\Analytics\OverviewMetricsService;
-use App\Services\Analytics\StockMetricsInterface;
-use App\Services\Analytics\StockMetricsService;
+use App\Services\DescriptiveAnalytics\ProductsMetricsInterface;
+use App\Services\DescriptiveAnalytics\ProductsMetricsService;
+use App\Services\DescriptiveAnalytics\SalesMetricsInterface;
+use App\Services\DescriptiveAnalytics\SalesMetricsService;
+use App\Services\DescriptiveAnalytics\OverviewMetricsInterface;
+use App\Services\DescriptiveAnalytics\OverviewMetricsService;
+use App\Services\DescriptiveAnalytics\StockMetricsInterface;
+use App\Services\DescriptiveAnalytics\StockMetricsService;
 use App\Services\ML\MLServiceClient;
 use App\Services\ML\MLServiceClientInterface;
 use Illuminate\Support\ServiceProvider;

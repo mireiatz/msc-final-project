@@ -1,15 +1,23 @@
 import { RouterModule, Routes } from "@angular/router";
 import { NgModule } from "@angular/core";
+import { DemandForecastPage } from "./demand-forecast/demand-forecast.page";
+import { PredictiveAnalyticsPage } from "./predictive-analytics.page";
 
 const routes: Routes = [
   {
     path: '',
-    redirectTo: 'demand-forecast',
-    pathMatch: 'full'
-  },
-  {
-    path: 'demand-forecast',
-    loadChildren: () => import('./demand-forecast/demand-forecast.module').then(s => s.DemandForecastModule),
+    component: PredictiveAnalyticsPage,
+    children: [
+      {
+        path: '',
+        redirectTo: 'overview',
+        pathMatch: 'full'
+      },
+      {
+        path: 'overview',
+        component: DemandForecastPage,
+      },
+    ],
   },
 ];
 

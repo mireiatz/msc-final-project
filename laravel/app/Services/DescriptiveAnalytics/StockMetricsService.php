@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Analytics;
+namespace App\Services\DescriptiveAnalytics;
 
 use App\Models\Product;
 use Illuminate\Support\Collection;

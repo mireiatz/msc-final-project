@@ -1,5 +1,5 @@
 <?php
-namespace App\Services\Analytics;
+namespace App\Services\DescriptiveAnalytics;
 
 interface OverviewMetricsInterface
 {

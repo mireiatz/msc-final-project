@@ -5,7 +5,7 @@ namespace Tests\Unit\Services\Analytics;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Sale;
-use App\Services\Analytics\SalesMetricsService;
+use App\Services\DescriptiveAnalytics\SalesMetricsService;
 use App\Traits\SaleCreation;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\DatabaseTransactions;

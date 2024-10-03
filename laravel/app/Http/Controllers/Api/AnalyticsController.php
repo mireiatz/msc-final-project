@@ -9,10 +9,10 @@ use App\Http\Requests\Api\Analytics\GetProductsMetricsRequest;
 use App\Http\Requests\Api\Analytics\GetSalesMetricsRequest;
 use App\Http\Responses\JsonResponse as Json;
 use App\Models\Product;
-use App\Services\Analytics\OverviewMetricsInterface;
-use App\Services\Analytics\ProductsMetricsInterface;
-use App\Services\Analytics\SalesMetricsInterface;
-use App\Services\Analytics\StockMetricsInterface;
+use App\Services\DescriptiveAnalytics\OverviewMetricsInterface;
+use App\Services\DescriptiveAnalytics\ProductsMetricsInterface;
+use App\Services\DescriptiveAnalytics\SalesMetricsInterface;
+use App\Services\DescriptiveAnalytics\StockMetricsInterface;
 use Illuminate\Http\JsonResponse;
 
 class AnalyticsController extends Controller

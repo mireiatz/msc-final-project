@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Analytics;
+namespace App\Services\DescriptiveAnalytics;
 
 
 readonly class OverviewMetricsService implements OverviewMetricsInterface

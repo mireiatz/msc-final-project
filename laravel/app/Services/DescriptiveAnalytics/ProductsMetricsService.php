@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Analytics;
+namespace App\Services\DescriptiveAnalytics;
 
 use App\Models\Product;
 use DateInterval;
@@ -18,7 +18,7 @@ class ProductsMetricsService implements ProductsMetricsInterface
      * @param string $endDate
      * @return array
      */
-    public function getOverviewMetrics(string $startDate, $endDate): array
+    public function getOverviewMetrics(string $startDate, string $endDate): array
     {
         $products = $this->getProductSalesData($startDate, $endDate);
 
