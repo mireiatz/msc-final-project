@@ -7,5 +7,12 @@ use App\Models\Provider;
 
 interface ReorderInterface
 {
-    public function getReorderSuggestions(Provider $provider, Category $category);
+    /**
+     * Get reorder suggestions for a provider and category.
+     *
+     * @param Provider $provider
+     * @param Category $category
+     * @return array
+     */
+    public function getReorderSuggestions(Provider $provider, Category $category): array;
 }

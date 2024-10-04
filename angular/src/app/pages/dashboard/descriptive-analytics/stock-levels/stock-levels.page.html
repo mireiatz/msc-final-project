@@ -1,21 +1,28 @@
 <div class="main-page">
+  <div class="dropdown-container">
+    <app-dropdown
+      [placeholder]="'Select category'"
+      [options]="categoryOptions"
+      [selectedOptionId]="categoryId"
+      (selectionChange)="onCategorySelection($event)">
+    </app-dropdown>
+  </div>
+
   <div class="data-display">
     <app-loader
       [isLoading]="isLoading"
     ></app-loader>
 
-    <div *ngIf="stockData">
-      <div *ngFor="let category of stockData">
-        <h2>{{ category.name }}</h2>
-        <ngx-charts-bar-horizontal
-          [results]="category.series"
-          [xAxis]="true"
-          [yAxis]="true"
-          [legend]="false"
-          [customColors]="customColours"
-          [roundEdges]="false">
-        </ngx-charts-bar-horizontal>
-      </div>
+    <div *ngIf="stockData && metrics">
+      <ngx-charts-bar-horizontal
+        [results]="stockData"
+        [view]="[1300, 600]"
+        [xAxis]="true"
+        [yAxis]="true"
+        [legend]="false"
+        [customColors]="customColours"
+        [roundEdges]="false">
+      </ngx-charts-bar-horizontal>
     </div>
   </div>
 </div>

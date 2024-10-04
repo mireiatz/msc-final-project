@@ -7,19 +7,20 @@ Route::prefix('/overview')->group(function () {
     Route::post('/', [DescriptiveAnalyticsController::class, 'getOverviewMetrics'])->name('getOverviewMetrics');
 });
 
-Route::prefix('/stock')->group(function () {
-    Route::get('/', [DescriptiveAnalyticsController::class, 'getStockMetrics'])->name('getStockMetrics');
+Route::prefix('/sales')->group(function () {
+    Route::post('/', [DescriptiveAnalyticsController::class, 'getSalesMetrics'])->name('getSalesMetrics');
 });
 
 Route::prefix('/products')->group(function () {
-    Route::post('/', [DescriptiveAnalyticsController::class, 'getProductsMetrics'])->name('getProductsMetrics');
 
     Route::prefix('/{product}')->group(function () {
         Route::post('/', [DescriptiveAnalyticsController::class, 'getProductMetrics'])->name('getProductMetrics');
     });
 });
 
-Route::prefix('/sales')->group(function () {
-    Route::post('/', [DescriptiveAnalyticsController::class, 'getSalesMetrics'])->name('getSalesMetrics');
-});
+Route::prefix('/categories/{category}')->group(function () {
 
+    Route::get('/stock', [DescriptiveAnalyticsController::class, 'getCategoryStockMetrics'])->name('getCategoryStockMetrics');
+
+    Route::post('/products', [DescriptiveAnalyticsController::class, 'getCategoryProductsMetrics'])->name('getCategoryProductsMetrics');
+});

@@ -3,6 +3,7 @@ import { finalize, Subject, take } from "rxjs";
 import { HttpErrorResponse } from "@angular/common/http";
 import { ApiService } from "../../../../shared/services/api/services/api.service";
 import { StockDetailedMetrics } from "../../../../shared/services/api/models/stock-detailed-metrics";
+import { Option } from "../../../../shared/interfaces";
 
 type ProductStatus = 'understocked' | 'overstocked' | 'within_range';
 
@@ -16,30 +17,62 @@ export class StockLevelsPage implements OnDestroy {
 
   public onDestroy: Subject<void> = new Subject();
   public isLoading: boolean = true;
-  public metrics: StockDetailedMetrics[] | undefined = undefined;
+
+  public categoryId: string | undefined = '';
+  public categoryOptions: Option[] = [];
+  public metrics: StockDetailedMetrics | undefined = undefined;
   public errors: string[] = [];
   public stockData: Array<{
     name: string,
-    series: Array<{
-      name: string,
-      value: number,
-      status: ProductStatus
-    }>
+    value: number,
+    status: ProductStatus
   }> = [];
   public customColours: { name: string; value: string }[] = [];
 
   constructor(
     protected apiService: ApiService
   ) {
-    this.getStockMetrics();
+    this.fetchCategories();
   }
 
   public ngOnDestroy(): void {
     this.onDestroy.next();
   }
 
+  public fetchCategories() {
+    this.apiService.getCategories().pipe(
+      take(1),
+      finalize(() => this.isLoading = false),
+    ).subscribe({
+        next: response => {
+          if(!response.data) return;
+
+          this.categoryOptions = response.data.map(category => ({
+            id: category.id,
+            name: category.name
+          }));
+
+          if(this.categoryOptions) {
+            this.onCategorySelection(this.categoryOptions[0].id)
+            this.getStockMetrics();
+          }
+        },
+        error: (error: HttpErrorResponse) => {
+          for (let errorList in error.error.errors) {
+            this.errors.push(error.error.errors[errorList].toString())
+          }
+        }
+      }
+    );
+  }
+
   public getStockMetrics() {
-    this.apiService.getStockMetrics().pipe(
+    if(!this.categoryId) return;
+
+    this.isLoading = true;
+    this.apiService.getCategoryStockMetrics({
+      categoryId: this.categoryId
+    }).pipe(
       take(1),
       finalize(() => this.isLoading = false),
     ).subscribe({
@@ -56,21 +89,24 @@ export class StockLevelsPage implements OnDestroy {
     );
   }
 
+  public onCategorySelection(selectedCategory: any) {
+    this.categoryId = selectedCategory;
+    this.getStockMetrics();
+  }
+
   public mapStockData(): void {
     if(!this.metrics) return;
 
-    this.stockData = this.metrics.map((data) => ({
-      name: data.category.name,
-      series: data.products
-        .filter(product => product.current > 0)
-        .map(product => ({
-          name: product.name,
-          value: product.current,
-          status: product.status as ProductStatus,
-        }))
-    })).filter(category => category.series.length > 0);
+    // Map products of the selected category to the chart data
+    this.stockData = this.metrics.products
+      .filter(product => product.current > 0)  // Only include products with stock
+      .map(product => ({
+        name: product.name,
+        value: product.current,  // Stock balance
+        status: product.status as ProductStatus,  // Stock status
+      }));
 
-    this.setColourScheme()
+    this.setColourScheme();
   }
 
   private setColourScheme(): void {
@@ -80,11 +116,9 @@ export class StockLevelsPage implements OnDestroy {
       within_range: '#2ECC40',
     };
 
-    this.customColours = this.stockData.flatMap(category =>
-      category.series.map(product => ({
-        name: product.name,
-        value: colors[product.status],
-      }))
-    );
+    this.customColours = this.stockData.map(product => ({
+      name: product.name,
+      value: colors[product.status],
+    }));
   }
 }

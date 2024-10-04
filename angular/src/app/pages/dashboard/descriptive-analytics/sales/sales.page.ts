@@ -17,8 +17,6 @@ export class SalesPage implements OnDestroy {
   public startDate: string = '';
   public endDate: string = '';
   public salesData: Array<{ date: string; items: number; total_sale: number; }> = [];
-  public productQuantityData: any[] = []
-  public productRevenueData: any[] = []
   public categoryQuantityData: any[] = []
   public categoryRevenueData: any[] = []
 
@@ -46,8 +44,6 @@ export class SalesPage implements OnDestroy {
           if(!response.data) return;
 
           this.salesData = this.mapSalesData(response.data.all_sales);
-          this.productQuantityData = this.mapSalesPerElementData(response.data.sales_per_product, 'quantity', 'product_name');
-          this.productRevenueData = this.mapSalesPerElementData(response.data.sales_per_product, 'total_sale', 'product_name');
           this.categoryQuantityData = this.mapSalesPerElementData(response.data.sales_per_category, 'quantity', 'category_name');
           this.categoryRevenueData = this.mapSalesPerElementData(response.data.sales_per_category, 'total_sale', 'category_name');
         },

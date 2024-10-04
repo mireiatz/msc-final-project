@@ -86,13 +86,20 @@ paths:
           $ref: '#/components/responses/OverviewMetricsResponse'
       requestBody:
         $ref: '#/components/requestBodies/DateRangeRequest'
-  /descriptive-analytics/stock:
+  '/descriptive-analytics/categories/{categoryId}/stock':
     get:
-      summary: ''
-      operationId: getStockMetrics
+      summary: getCategoryStockMetrics
+      operationId: getCategoryStockMetrics
       responses:
         '200':
           $ref: '#/components/responses/StockMetricsResponse'
+      description: ''
+    parameters:
+      - schema:
+          type: string
+        name: categoryId
+        in: path
+        required: true
   /descriptive-analytics/sales:
     post:
       summary: getSalesMetrics
@@ -103,7 +110,7 @@ paths:
       operationId: getSalesMetrics
       requestBody:
         $ref: '#/components/requestBodies/DateRangeRequest'
-  /descriptive-analytics/products:
+  '/descriptive-analytics/categories/{categoryId}/products':
     post:
       summary: getProductsMetrics
       tags: []
@@ -118,6 +125,12 @@ paths:
             type: integer
           in: query
           name: page
+    parameters:
+      - schema:
+          type: string
+        name: categoryId
+        in: path
+        required: true
   '/descriptive-analytics/products/{productId}':
     parameters:
       - schema:
@@ -678,43 +691,6 @@ components:
               - date
               - items
               - total_sale
-        sales_per_product:
-          type: array
-          x-stoplight:
-            id: ef2tpgn5h7pf7
-          items:
-            x-stoplight:
-              id: 423m7s3d3dfsz
-            type: object
-            properties:
-              date:
-                type: string
-                x-stoplight:
-                  id: la868z00y8pir
-                format: date-time
-              product_id:
-                type: string
-                x-stoplight:
-                  id: 624elt755wtgx
-                format: uuid
-              product_name:
-                type: string
-                x-stoplight:
-                  id: dsp7hxsqnhd9q
-              quantity:
-                type: integer
-                x-stoplight:
-                  id: pf320cx0al5xn
-              total_sale:
-                type: number
-                x-stoplight:
-                  id: c8az9qsw7kyml
-            required:
-              - date
-              - product_id
-              - product_name
-              - quantity
-              - total_sale
         sales_per_category:
           type: array
           x-stoplight:
@@ -754,7 +730,6 @@ components:
               - total_sale
       required:
         - all_sales
-        - sales_per_product
         - sales_per_category
     StockOverviewMetrics:
       title: StockOverviewMetrics
@@ -1376,13 +1351,9 @@ components:
             type: object
             properties:
               data:
+                $ref: '#/components/schemas/StockDetailedMetrics'
                 x-stoplight:
                   id: tvm67rarohx1a
-                type: array
-                items:
-                  $ref: '#/components/schemas/StockDetailedMetrics'
-                  x-stoplight:
-                    id: vw2kxr6sqa3du
               success:
                 type: boolean
                 x-stoplight:

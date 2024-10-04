@@ -83,7 +83,6 @@ class ReorderService implements ReorderInterface
             ->get();
     }
 
-
     /**
      * Calculate safety stock based on the difference between max and average daily demand.
      *

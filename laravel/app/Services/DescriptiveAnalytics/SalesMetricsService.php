@@ -16,24 +16,18 @@ class SalesMetricsService implements SalesMetricsInterface
      */
     public function getOverviewMetrics(string $startDate, string $endDate): array
     {
+        // Fetch sales within the date range
         $sales = $this->getSales($startDate, $endDate);
 
-        $salesCount = $this->countSales($sales);
-        $highestSale = $this->getHighestSale($sales);
-        $lowestSale = $this->getLowestSale($sales);
-        $totalItemsSold = $this->calculateTotalItemsSold($sales);
-        $totalSalesValue = $this->calculateTotalSalesValue($sales);
-        $maxItemsSoldInSale = $this->getMaxItemsSoldInSale($sales);
-        $minItemsSoldInSale = $this->getMinItemsSoldInSale($sales);
-
+        // Calculate various sales metrics
         return [
-            'sales_count' => $salesCount,
-            'highest_sale' => $highestSale,
-            'lowest_sale' => $lowestSale,
-            'total_items_sold' => $totalItemsSold,
-            'total_sales_value' => $totalSalesValue,
-            'max_items_sold_in_sale' => $maxItemsSoldInSale,
-            'min_items_sold_in_sale' => $minItemsSoldInSale,
+            'sales_count' => $sales->count(),
+            'highest_sale' => $this->getHighestSale($sales),
+            'lowest_sale' => $this->getLowestSale($sales),
+            'total_items_sold' => $this->calculateTotalItemsSold($sales),
+            'total_sales_value' => $this->calculateTotalSalesValue($sales),
+            'max_items_sold_in_sale' => $this->getMaxItemsSoldInSale($sales),
+            'min_items_sold_in_sale' => $this->getMinItemsSoldInSale($sales),
         ];
     }
 
@@ -46,20 +40,9 @@ class SalesMetricsService implements SalesMetricsInterface
      */
     public function getSales(string $startDate, string $endDate): Collection
     {
-        return Sale::whereBetween('sales.date', [$startDate, $endDate])
+        return Sale::whereBetween('date', [$startDate, $endDate])
             ->with('products')
             ->get();
-    }
-
-    /**
-     * Count the total number of sales for the provided sales data.
-     *
-     * @param Collection $sales
-     * @return int
-     */
-    public function countSales(Collection $sales): int
-    {
-        return $sales->count();
     }
 
     /**
@@ -92,9 +75,8 @@ class SalesMetricsService implements SalesMetricsInterface
      */
     public function calculateTotalItemsSold(Collection $sales): int
     {
-        return $sales->sum(function ($sale) {
-            return $sale->products()->sum('quantity');
-        });
+        return $sales->sum(fn($sale) => $sale->products->sum('sale_products.quantity'));
+
     }
 
     /**
@@ -109,33 +91,29 @@ class SalesMetricsService implements SalesMetricsInterface
     }
 
     /**
-     * Get the maximum number of items sold in a single sale for the provided sales data.
+     * Get the maximum number of items sold in a single sale.
      *
      * @param Collection $sales
      * @return int
      */
     public function getMaxItemsSoldInSale(Collection $sales): int
     {
-        return $sales->map(function ($sale) {
-            return $sale->products()->sum('quantity');
-        })->max() ?? 0;
+        return $sales->map(fn($sale) => $sale->products->sum('sale_products.quantity'))->max() ?? 0;
     }
 
     /**
-     * Get the minimum number of items sold in a single sale for the provided sales data.
+     * Get the minimum number of items sold in a single sale.
      *
      * @param Collection $sales
      * @return int
      */
     public function getMinItemsSoldInSale(Collection $sales): int
     {
-        return $sales->map(function ($sale) {
-            return $sale->products()->sum('quantity');
-        })->min() ?? 0;
+        return $sales->map(fn($sale) => $sale->products->sum('sale_products.quantity'))->min() ?? 0;
     }
 
     /**
-     * Get detailed sales metrics for the specified date range.
+     * Get detailed sales metrics grouped by category for the specified date range.
      *
      * @param string $startDate
      * @param string $endDate
@@ -143,16 +121,13 @@ class SalesMetricsService implements SalesMetricsInterface
      */
     public function getDetailedMetrics(string $startDate, string $endDate): array
     {
+        // Fetch sales grouped by category for the date range
         $sales = $this->getSalesGroupedByDate($startDate, $endDate);
 
-        $allSales = $this->mapAllSales($sales);
-        $salesPerCategory = $this->mapSalesPerCategory($sales);
-        $salesPerProduct = $this->mapSalesPerProduct($sales);
-
+        // Map sales per category and overall sales data
         return [
-            'all_sales' => $allSales,
-            'sales_per_category' => $salesPerCategory,
-            'sales_per_product' => $salesPerProduct,
+            'all_sales' => $this->mapAllSales($sales),
+            'sales_per_category' => $this->mapSalesPerCategory($sales),
         ];
     }
 
@@ -168,9 +143,7 @@ class SalesMetricsService implements SalesMetricsInterface
         return Sale::whereBetween('date', [$startDate, $endDate])
             ->with('products.category')
             ->get()
-            ->groupBy(function ($sale) {
-                return Carbon::parse($sale->date)->format('Y-m-d');
-            });
+            ->groupBy(fn($sale) => Carbon::parse($sale->date)->format('Y-m-d'));
     }
 
     /**
@@ -181,62 +154,30 @@ class SalesMetricsService implements SalesMetricsInterface
      */
     public function mapAllSales(Collection $sales): array
     {
-        return $sales->map(function ($sales) {
-                return [
-                    'date' => Carbon::parse($sales->first()->date)->format('Y-m-d'),
-                    'total_sale' => $sales->sum('sale') / 100,
-                    'items' => $sales->sum(function ($sale) {
-                        return $sale->products()->sum('quantity');
-                    }),
-                ];
-            })->values()->toArray();
-    }
-
-
-    /**
-     * Map sales data per product to an array format, grouped by product and date.
-     *
-     * @param Collection $sales
-     * @return array
-     */
-    public function mapSalesPerProduct(Collection $sales): array
-    {
-        return $sales->flatMap(function ($salesOnDay) {
-            return $salesOnDay->flatMap(function ($sale) {
-                return $sale->products->map(function ($product) use ($sale) {
-                    return [
-                        'date' => Carbon::parse($sale->date)->format('Y-m-d'),
-                        'product_id' => $product->id,
-                        'product_name' => $product->name,
-                        'quantity' => $product->sale_products->quantity,
-                        'total_sale' => $product->sale_products->total_sale,
-                    ];
-                });
-            });
-        })->groupBy('product_id')->flatMap(function ($productSales) {
-            return $productSales->groupBy('date')->map(function ($salesOnDate) {
-                return [
-                    'date' => $salesOnDate->first()['date'],
-                    'product_id' => $salesOnDate->first()['product_id'],
-                    'product_name' => $salesOnDate->first()['product_name'],
-                    'quantity' => $salesOnDate->sum('quantity'),
-                    'total_sale' => $salesOnDate->sum('total_sale') / 100,
-                ];
-            })->values()->toArray();
+        // Map for total quantities and revenue
+        return $sales->map(function ($salesOnDate) {
+            return [
+                'date' => Carbon::parse($salesOnDate->first()->date)->format('Y-m-d'),
+                'total_sale' => $salesOnDate->sum('sale') / 100,
+                'items' => $salesOnDate->sum(fn($sale) => $sale->products->sum('sale_products.quantity')),
+            ];
         })->values()->toArray();
     }
 
     /**
-     * Map sales data per category to an array format, grouped by category and date.
+     * Map sales data per category grouped by date.
      *
      * @param Collection $sales
      * @return array
      */
     public function mapSalesPerCategory(Collection $sales): array
     {
-        return $sales->flatMap(function ($salesOnDay) {
-            return $salesOnDay->flatMap(function ($sale) {
+        // Flatten the sales data to map sales to each product for each date
+        return $sales->flatMap(function ($salesOnDate) {
+            // For each sale on the date, iterate over the products
+            return $salesOnDate->flatMap(function ($sale) {
                 return $sale->products->map(function ($product) use ($sale) {
+                    // Map the sale data for each product
                     return [
                         'date' => Carbon::parse($sale->date)->format('Y-m-d'),
                         'category_id' => $product->category_id,
@@ -246,8 +187,11 @@ class SalesMetricsService implements SalesMetricsInterface
                     ];
                 });
             });
+        // Group the flattened data by category
         })->groupBy('category_id')->flatMap(function ($categorySales) {
+            // Flatten the grouped categories and further group by date
             return $categorySales->groupBy('date')->map(function ($salesOnDate) {
+                // Use the first for common details and aggregate the total quantity and total sales for the category
                 return [
                     'date' => $salesOnDate->first()['date'],
                     'category_id' => $salesOnDate->first()['category_id'],
