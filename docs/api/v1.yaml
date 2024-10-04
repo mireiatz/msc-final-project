@@ -178,6 +178,30 @@ paths:
         '200':
           $ref: '#/components/responses/WeeklyDemandResponse'
       operationId: getWeeklyAggregatedDemandForecast
+  '/prescriptive-analytics/reorder/{providerId}/{categoryId}':
+    parameters:
+      - schema:
+          type: string
+        name: providerId
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: categoryId
+        in: path
+        required: true
+    get:
+      summary: getReorderSuggestions
+      tags: []
+      responses:
+        '200':
+          $ref: '#/components/responses/ReorderSuggestionsResponse'
+      operationId: getReorderSuggestions
+      parameters:
+        - schema:
+            type: integer
+          in: query
+          name: page
 components:
   schemas:
     Category:
@@ -1089,6 +1113,64 @@ components:
         - id
         - name
         - weeks
+    ReorderSuggestion:
+      title: ReorderSuggestion
+      x-stoplight:
+        id: 5fw4cce0bvfwj
+      type: object
+      properties:
+        product_id:
+          type: string
+          x-stoplight:
+            id: f1xxufm113qw7
+          format: uuid
+        product_name:
+          type: string
+          x-stoplight:
+            id: ra4n5zt3gufvx
+        unit:
+          type: string
+          x-stoplight:
+            id: 2mr5m3k1ncevd
+        amount_per_unit:
+          type: integer
+          x-stoplight:
+            id: gpt85ebra3umx
+        stock_balance:
+          type: integer
+          x-stoplight:
+            id: 3ffr3olsu4ueb
+        predicted_demand:
+          type: integer
+          x-stoplight:
+            id: 56ws44q20o8ln
+        safety_stock:
+          type: integer
+          x-stoplight:
+            id: mov370m98vd84
+        reorder_amount:
+          type: integer
+          x-stoplight:
+            id: 84zwyqj03drck
+        cost_per_unit:
+          type: number
+          x-stoplight:
+            id: 0vjcq5q8wbt21
+        total_cost:
+          type: number
+          x-stoplight:
+            id: jd4xpqr5wpmq0
+      required:
+        - product_id
+        - product_name
+        - unit
+        - amount_per_unit
+        - stock_balance
+        - predicted_demand
+        - safety_stock
+        - reorder_amount
+        - cost_per_unit
+        - total_cost
   responses:
     CategoriesResponse:
       description: Example response
@@ -1495,6 +1577,44 @@ components:
                 type: object
                 x-stoplight:
                   id: nf6uesu7v0211
+            required:
+              - data
+              - success
+    ReorderSuggestionsResponse:
+      description: Example response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: object
+                x-stoplight:
+                  id: bj6dfi02iseh5
+                required:
+                  - items
+                  - pagination
+                properties:
+                  items:
+                    x-stoplight:
+                      id: wg12ni1ar9w2h
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ReorderSuggestion'
+                      x-stoplight:
+                        id: o7hj2d4ks4p4o
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+                    x-stoplight:
+                      id: fainc8kggqzlm
+              success:
+                type: boolean
+                x-stoplight:
+                  id: eavg3zi8ywlp3
+              errors:
+                type: object
+                x-stoplight:
+                  id: sn4ei3xo8ayyo
             required:
               - data
               - success

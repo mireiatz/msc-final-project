@@ -5,16 +5,21 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Provider;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Responses\JsonResponse as Json;
 
 class ProviderController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(): Collection
+    public function index(): JsonResponse
     {
-        return Provider::all();
+
+        $providers = Provider::all();
+
+        return Json::success($providers);
     }
 
     /**
@@ -47,5 +52,13 @@ class ProviderController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    /**
+     * Display a listing of the resource.
+     */
+    public function categories(Provider $provider): Collection
+    {
+        return $provider->categories;
     }
 }

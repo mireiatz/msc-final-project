@@ -1,3 +1,25 @@
-<div>
-  Reordering
+<div class="main-page">
+  <div class="dropdown-container">
+    <app-dropdown
+      [placeholder]="'Select provider'"
+      [options]="providers"
+      [selectedOptionId]="providerId"
+      (selectionChange)="onProviderSelection($event)">
+    </app-dropdown>
+    <app-dropdown
+      [placeholder]="'Select category'"
+      [options]="categories"
+      [selectedOptionId]="categoryId"
+      (selectionChange)="onCategorySelection($event)">
+    </app-dropdown>
+  </div>
+  <app-table
+    [columns]="columns"
+    [data]="reorderSuggestions">
+  </app-table>
+
+  <app-pagination-footer
+    [pagination]="pagination"
+    (pageChange)="onPageChange($event)">
+  </app-pagination-footer>
 </div>

@@ -1,5 +1,6 @@
 import { RouterModule, Routes } from "@angular/router";
 import { NgModule } from "@angular/core";
+import { ReorderingPage } from "./reordering/reordering.page";
 
 const routes: Routes = [
   {
@@ -9,7 +10,7 @@ const routes: Routes = [
   },
   {
     path: 'reordering',
-    loadChildren: () => import('./reordering/reordering.module').then(s => s.ReorderingModule),
+    component: ReorderingPage,
   },
 ];
 

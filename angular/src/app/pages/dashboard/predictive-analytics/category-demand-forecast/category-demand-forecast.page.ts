@@ -21,8 +21,8 @@ export class CategoryDemandForecastPage implements OnDestroy {
   public errors: string[] = [];
 
   public categoryDemand: CategoryDemand | null = null;
-  public categoryId: string | undefined = '';
   public forecastData: any[] = [];
+  public categoryId: string | undefined = '';
   public categories: Option[] = [];
 
   constructor(

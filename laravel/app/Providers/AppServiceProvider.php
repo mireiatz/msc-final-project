@@ -14,6 +14,8 @@ use App\Services\ML\MLServiceClient;
 use App\Services\ML\MLServiceClientInterface;
 use App\Services\PredictiveAnalytics\DemandForecastInterface;
 use App\Services\PredictiveAnalytics\DemandForecastService;
+use App\Services\PrescriptiveAnalytics\ReorderInterface;
+use App\Services\PrescriptiveAnalytics\ReorderService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -31,6 +33,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Predictive Analytics
         $this->app->bind(DemandForecastInterface::class, DemandForecastService::class);
+
+        // Prescriptive Analytics
+        $this->app->bind(ReorderInterface::class, ReorderService::class);
 
         // ML
         $this->app->bind(MLServiceClientInterface::class, MLServiceClient::class);
