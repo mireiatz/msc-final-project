@@ -12,6 +12,7 @@ import {
   ProductDemandForecastModalComponent
 } from "./modals/product-demand-forecast-modal/product-demand-forecast-modal.component";
 import { MonthDemandForecastPage } from "./month-demand-forecast/month-demand-forecast.page";
+import { WeeklyDemandForecastPage } from "./weekly-demand-forecast/weekly-demand-forecast.page";
 
 const MODALS = [
   ProductDemandForecastModalComponent,
@@ -22,6 +23,7 @@ const PAGES = [
   OverviewDemandForecastPage,
   CategoryDemandForecastPage,
   MonthDemandForecastPage,
+  WeeklyDemandForecastPage,
 ];
 
 @NgModule({

@@ -137,42 +137,41 @@ class DemandForecastService implements DemandForecastInterface
     {
         $nextMonday = now()->next('Monday');
 
-        // Get weekly aggregated demand forecasts
+        // Get weekly forecast
         $weeklyForecast = DB::table('predictions')
             ->join('products', 'predictions.product_id', '=', 'products.id')
             ->join('categories', 'products.category_id', '=', 'categories.id')
             ->select(
                 'categories.name as category_name',
                 'categories.id as category_id',
-                DB::raw('FLOOR(DATEDIFF(predictions.date, ?) / 7) as week_number', [$nextMonday]),
+                DB::raw('FLOOR(DATEDIFF(predictions.date, "' . $nextMonday . '") / 7) as week_number'),
                 DB::raw('SUM(predictions.value) as total_demand')
             )
             ->where('predictions.date', '>=', $nextMonday)
-            ->where('predictions.date', '<=', $nextMonday->copy()->addDays(34)) // 34 days to cover 4 weeks
+            ->where('predictions.date', '<=', $nextMonday->copy()->addDays(34)) // To cover 4 weeks
             ->groupBy('categories.id', 'categories.name', 'week_number')
-            ->orderBy('categories.name', 'week_number')
+            ->orderBy('categories.name')
+            ->orderBy('week_number')
             ->get();
 
-        // Format the data
+        // Structure the data
         $groupedResults = [];
-
         foreach ($weeklyForecast as $forecast) {
             if (!isset($groupedResults[$forecast->category_name])) {
                 $groupedResults[$forecast->category_name] = [
-                    'category_name' => $forecast->category_name,
-                    'category_id' => $forecast->category_id,
+                    'id' => $forecast->category_id,
+                    'name' => $forecast->category_name,
                     'weeks' => []
                 ];
             }
 
             $groupedResults[$forecast->category_name]['weeks'][] = [
-                'name' => 'Week ' . ($forecast->week_number + 1), // Each week
+                'name' => 'Week ' . ($forecast->week_number + 1), // Week 1, Week 2, etc.
                 'value' => $forecast->total_demand
             ];
         }
 
-        // Return as indexed array
+        // Return standard array
         return array_values($groupedResults);
     }
-
 }

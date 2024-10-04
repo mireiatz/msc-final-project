@@ -22,6 +22,11 @@ export class PredictiveAnalyticsPage implements OnDestroy {
       key: 'product-level',
     },
     {
+      label: 'Weekly',
+      route: 'weekly',
+      key: 'weekly',
+    },
+    {
       label: 'Month',
       route: 'month',
       key: 'month',

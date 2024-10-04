@@ -170,6 +170,14 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/MonthDemandForecastResponse'
+  /predictive-analytics/demand-forecast/weekly:
+    get:
+      summary: getWeeklyAggregatedDemandForecast
+      tags: []
+      responses:
+        '200':
+          $ref: '#/components/responses/WeeklyDemandResponse'
+      operationId: getWeeklyAggregatedDemandForecast
 components:
   schemas:
     Category:
@@ -1007,6 +1015,28 @@ components:
       required:
         - id
         - products
+    AggregatedDemand:
+      title: AggregatedDemand
+      x-stoplight:
+        id: 0lk2a4vp1z2xw
+      type: object
+      properties:
+        id:
+          type: string
+          x-stoplight:
+            id: db03cso2jo26e
+          format: uuid
+        name:
+          type: string
+          x-stoplight:
+            id: u0blprtuz2xg1
+        value:
+          type: integer
+          x-stoplight:
+            id: 21f6g3pzfnexq
+      required:
+        - name
+        - value
     ItemDemand:
       title: ItemDemand
       x-stoplight:
@@ -1034,25 +1064,31 @@ components:
         - id
         - name
         - predictions
-    AggregatedDemand:
-      title: AggregatedDemand
+    WeeklyDemand:
+      title: WeeklyDemand
       x-stoplight:
-        id: 0lk2a4vp1z2xw
+        id: 2tbatblcafatg
       type: object
       properties:
         id:
           type: string
-          x-stoplight:
-            id: db03cso2jo26e
           format: uuid
         name:
           type: string
           x-stoplight:
-            id: u0blprtuz2xg1
-        value:
-          type: integer
+            id: 30wx23y8h3svp
+        weeks:
+          type: array
           x-stoplight:
-            id: 21f6g3pzfnexq
+            id: bzdbabo4tppkv
+          items:
+            $ref: '#/components/schemas/AggregatedDemand'
+            x-stoplight:
+              id: 0i6gckjaqikc3
+      required:
+        - id
+        - name
+        - weeks
   responses:
     CategoriesResponse:
       description: Example response
@@ -1436,6 +1472,32 @@ components:
                 type: object
                 x-stoplight:
                   id: dpk2dg3fw3epb
+    WeeklyDemandResponse:
+      description: Example response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                x-stoplight:
+                  id: zxiuog0n1asfp
+                items:
+                  $ref: '#/components/schemas/WeeklyDemand'
+                  x-stoplight:
+                    id: lesum0f0m08bh
+              success:
+                type: boolean
+                x-stoplight:
+                  id: gboimd4iofxum
+              errors:
+                type: object
+                x-stoplight:
+                  id: nf6uesu7v0211
+            required:
+              - data
+              - success
   requestBodies:
     DateRangeRequest:
       content:

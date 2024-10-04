@@ -1,0 +1,21 @@
+<div class="main-page">
+  <div class="data-display">
+    <app-loader
+      [isLoading]="isLoading"
+    ></app-loader>
+
+    <ngx-charts-line-chart
+      [view]="[1200, 600]"
+      [results]="forecastData"
+      [legend]="true"
+      [xAxis]="true"
+      [yAxis]="true"
+      [showXAxisLabel]="true"
+      [showYAxisLabel]="true"
+      [xAxisLabel]="'Weeks'"
+      [yAxisLabel]="'Total Demand'"
+      [autoScale]="true"
+      [showGridLines]="true">
+    </ngx-charts-line-chart>
+  </div>
+</div>

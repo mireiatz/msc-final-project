@@ -24,8 +24,8 @@ class RunDemandPredictionRequests implements ShouldQueue
      * Create a new job instance.
      */
     public function __construct(?int $daysToPredict = null, ?int $historicalDays = null) {
-        $this->daysToPredict = $daysToPredict ?? 30;
-        $this->historicalDays = $historicalDays ?? 30;
+        $this->daysToPredict = $daysToPredict ?? 35;
+        $this->historicalDays = $historicalDays ?? 35;
     }
 
     /**

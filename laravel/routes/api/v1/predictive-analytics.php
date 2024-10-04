@@ -9,6 +9,8 @@ Route::prefix('/demand-forecast')->group(function () {
 
     Route::get('/month', [PredictiveAnalyticsController::class, 'getMonthAggregatedDemandForecast'])->name('getMonthAggregatedDemandForecast');
 
+    Route::get('/weekly', [PredictiveAnalyticsController::class, 'getWeeklyAggregatedDemandForecast'])->name('getWeeklyAggregatedDemandForecast');
+
     Route::prefix('/categories')->group(function () {
 
         Route::prefix('/{category}')->group(function () {

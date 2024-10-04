@@ -4,6 +4,7 @@ import { OverviewDemandForecastPage } from "./overview-demand-forecast/overview-
 import { PredictiveAnalyticsPage } from "./predictive-analytics.page";
 import { CategoryDemandForecastPage } from "./category-demand-forecast/category-demand-forecast.page";
 import { MonthDemandForecastPage } from "./month-demand-forecast/month-demand-forecast.page";
+import { WeeklyDemandForecastPage } from "./weekly-demand-forecast/weekly-demand-forecast.page";
 
 const routes: Routes = [
   {
@@ -22,6 +23,10 @@ const routes: Routes = [
       {
         path: 'category-based',
         component: CategoryDemandForecastPage,
+      },
+      {
+        path: 'weekly',
+        component: WeeklyDemandForecastPage,
       },
       {
         path: 'month',
