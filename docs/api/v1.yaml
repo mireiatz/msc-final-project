@@ -149,7 +149,7 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/CategoryLevelDemandForecastResponse'
-  '/predictive-analytics/demand-forecast/product-level/categories/{categoryId}':
+  '/predictive-analytics/demand-forecast/categories/{categoryId}/product-level':
     parameters:
       - schema:
           type: string
@@ -170,7 +170,7 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/MonthDemandForecastResponse'
-  /predictive-analytics/demand-forecast/weekly:
+  '/predictive-analytics/demand-forecast/categories/{categoryId}/weekly':
     get:
       summary: getWeeklyAggregatedDemandForecast
       tags: []
@@ -178,6 +178,13 @@ paths:
         '200':
           $ref: '#/components/responses/WeeklyDemandResponse'
       operationId: getWeeklyAggregatedDemandForecast
+      description: ''
+    parameters:
+      - schema:
+          type: string
+        name: categoryId
+        in: path
+        required: true
   '/prescriptive-analytics/reorder/providers/{providerId}/categories/{categoryId}':
     parameters:
       - schema:
@@ -1568,13 +1575,9 @@ components:
             type: object
             properties:
               data:
-                type: array
+                $ref: '#/components/schemas/WeeklyDemand'
                 x-stoplight:
                   id: zxiuog0n1asfp
-                items:
-                  $ref: '#/components/schemas/WeeklyDemand'
-                  x-stoplight:
-                    id: lesum0f0m08bh
               success:
                 type: boolean
                 x-stoplight:

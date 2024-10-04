@@ -1,21 +1,30 @@
 <div class="main-page">
+  <div class="dropdown-container">
+    <app-dropdown
+      [placeholder]="'Select category'"
+      [options]="categoryOptions"
+      [selectedOptionId]="categoryId"
+      (selectionChange)="onCategorySelection($event)">
+    </app-dropdown>
+  </div>
+
   <div class="data-display">
     <app-loader
       [isLoading]="isLoading"
     ></app-loader>
 
-    <ngx-charts-line-chart
+    <ngx-charts-bar-vertical
       [view]="[1200, 600]"
       [results]="forecastData"
-      [legend]="true"
+      [gradient]="false"
       [xAxis]="true"
       [yAxis]="true"
+      [legend]="false"
       [showXAxisLabel]="true"
       [showYAxisLabel]="true"
       [xAxisLabel]="'Weeks'"
-      [yAxisLabel]="'Total Demand'"
-      [autoScale]="true"
-      [showGridLines]="true">
-    </ngx-charts-line-chart>
+      [yAxisLabel]="'Demand Forecast'"
+      [animations]="true">
+    </ngx-charts-bar-vertical>
   </div>
 </div>
