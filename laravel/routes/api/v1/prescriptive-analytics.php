@@ -5,5 +5,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('/reorder')->group(function () {
 
-    Route::get('/{provider}/{category}', [PrescriptiveAnalyticsController::class, 'getReorderSuggestions'])->name('getReorderSuggestions');
+    Route::prefix('/providers/{provider}')->group(function () {
+
+        Route::prefix('/categories/{category}')->group(function () {
+
+            Route::get('/', [PrescriptiveAnalyticsController::class, 'getReorderSuggestions'])->name('getReorderSuggestions');
+        });
+    });
 });

@@ -9,12 +9,12 @@ import { ItemDemand } from "../../../../shared/services/api/models/item-demand";
 import { CategoryDemand } from "../../../../shared/services/api/models/category-demand";
 
 @Component({
-  selector: 'page-category-demand-forecast',
-  templateUrl: './category-demand-forecast.page.html',
-  styleUrls: ['./category-demand-forecast.page.scss'],
+  selector: 'page-product-level-demand-forecast',
+  templateUrl: './product-level-demand-forecast.page.html',
+  styleUrls: ['./product-level-demand-forecast.page.scss'],
 })
 
-export class CategoryDemandForecastPage implements OnDestroy {
+export class ProductLevelDemandForecastPage implements OnDestroy {
 
   public onDestroy: Subject<void> = new Subject();
   public isLoading: boolean = true;
@@ -73,7 +73,7 @@ export class CategoryDemandForecastPage implements OnDestroy {
 
     this.isLoading = true;
 
-    this.apiService.getCategoryDemandForecast({
+    this.apiService.getProductLevelDemandForecast({
       categoryId: this.categoryId,
     }).pipe(
       take(1),

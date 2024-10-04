@@ -20,16 +20,16 @@ class PredictiveAnalyticsController extends Controller
      *
      * @return JsonResponse
      */
-    public function getOverviewDemandForecast(): JsonResponse
+    public function getCategoryLevelDemandForecast(): JsonResponse
     {
-        $demandForecast = $this->demandForecastInterface->getOverviewDemandForecast();
+        $demandForecast = $this->demandForecastInterface->getCategoryLevelDemandForecast();
 
         return Json::success($demandForecast);
     }
 
-    public function getCategoryDemandForecast(Category $category): JsonResponse
+    public function getProductLevelDemandForecast(Category $category): JsonResponse
     {
-        $demandForecast = $this->demandForecastInterface->getCategoryDemandForecast($category);
+        $demandForecast = $this->demandForecastInterface->getProductLevelDemandForecast($category);
 
         return Json::success($demandForecast);
     }

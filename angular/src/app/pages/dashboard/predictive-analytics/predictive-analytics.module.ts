@@ -4,9 +4,9 @@ import { RouterModule } from "@angular/router";
 import { PredictiveAnalyticsRoutingModule } from "./predictive-analytics-routing.module";
 import { PredictiveAnalyticsPage } from "./predictive-analytics.page";
 import { SharedModule } from "../../../shared/shared.module";
-import { OverviewDemandForecastPage } from "./overview-demand-forecast/overview-demand-forecast.page";
+import { CategoryLevelDemandForecastPage } from "./category-level-demand-forecast/category-level-demand-forecast.page";
 import { LineChartModule, NgxChartsModule } from "@swimlane/ngx-charts";
-import { CategoryDemandForecastPage } from "./category-demand-forecast/category-demand-forecast.page";
+import { ProductLevelDemandForecastPage } from "./product-level-demand-forecast/product-level-demand-forecast.page";
 
 import {
   ProductDemandForecastModalComponent
@@ -20,8 +20,8 @@ const MODALS = [
 
 const PAGES = [
   PredictiveAnalyticsPage,
-  OverviewDemandForecastPage,
-  CategoryDemandForecastPage,
+  CategoryLevelDemandForecastPage,
+  ProductLevelDemandForecastPage,
   MonthDemandForecastPage,
   WeeklyDemandForecastPage,
 ];

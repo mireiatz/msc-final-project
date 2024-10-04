@@ -106,10 +106,10 @@ class ReorderService implements ReorderInterface
      *
      * @param float $predictedDemand
      * @param float $safetyStock
-     * @param $stockBalance
+     * @param int $stockBalance
      * @return int
      */
-    public function calculateReorderSuggestion(float $predictedDemand, float $safetyStock, $stockBalance): int
+    public function calculateReorderSuggestion(float $predictedDemand, float $safetyStock, int $stockBalance): int
     {
         // Calculate the required stock
         $requiredStock = $predictedDemand + $safetyStock;
@@ -118,6 +118,6 @@ class ReorderService implements ReorderInterface
         $reorderSuggestion = $requiredStock - $stockBalance;
 
         // Return as int
-        return round($reorderSuggestion);
+        return max(0, round($reorderSuggestion));
     }
 }

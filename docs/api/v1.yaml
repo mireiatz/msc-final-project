@@ -134,22 +134,22 @@ paths:
       operationId: getProductMetrics
       requestBody:
         $ref: '#/components/requestBodies/DateRangeRequest'
-  /predictive-analytics/demand-forecast:
+  /predictive-analytics/demand-forecast/category-level:
     post:
-      summary: getOverviewDemandForecast
+      summary: getCategoryLevelDemandForecast
       tags: []
       responses:
         '200':
           description: OK
-      operationId: getOverviewDemandForecast
+      operationId: getCategoryLevelDemandForecast
     parameters: []
     get:
       summary: ''
-      operationId: getOverviewDemandForecast
+      operationId: getCategoryLevelDemandForecast
       responses:
         '200':
-          $ref: '#/components/responses/OverviewDemandForecastResponse'
-  '/predictive-analytics/demand-forecast/categories/{categoryId}':
+          $ref: '#/components/responses/CategoryLevelDemandForecastResponse'
+  '/predictive-analytics/demand-forecast/product-level/categories/{categoryId}':
     parameters:
       - schema:
           type: string
@@ -157,8 +157,8 @@ paths:
         in: path
         required: true
     get:
-      summary: getCategoryDemandForecast
-      operationId: getCategoryDemandForecast
+      summary: getProductLevelDemandForecast
+      operationId: getProductLevelDemandForecast
       responses:
         '200':
           $ref: '#/components/responses/CategoryDemandForecastResponse'
@@ -178,7 +178,7 @@ paths:
         '200':
           $ref: '#/components/responses/WeeklyDemandResponse'
       operationId: getWeeklyAggregatedDemandForecast
-  '/prescriptive-analytics/reorder/{providerId}/{categoryId}':
+  '/prescriptive-analytics/reorder/providers/{providerId}/categories/{categoryId}':
     parameters:
       - schema:
           type: string
@@ -1489,7 +1489,7 @@ components:
                 type: object
                 x-stoplight:
                   id: 73xtolafrqbia
-    OverviewDemandForecastResponse:
+    CategoryLevelDemandForecastResponse:
       description: Example response
       content:
         application/json:
