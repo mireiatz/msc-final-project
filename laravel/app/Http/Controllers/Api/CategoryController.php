@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Responses\JsonResponse as Json;
 
 class CategoryController extends Controller
 {
@@ -16,10 +17,7 @@ class CategoryController extends Controller
     {
         $categories = Category::all();
 
-        return response()->json([
-            'data' => $categories->toArray(),
-            'success' => true
-        ]);
+        return Json::success($categories);
     }
 
     /**

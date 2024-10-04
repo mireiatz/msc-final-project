@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('name')->index();
             $table->string('description')->nullable();
             $table->string('unit');
-            $table->string('amount_per_unit');
+            $table->integer('amount_per_unit');
             $table->integer('min_stock_level')->index();
             $table->integer('max_stock_level')->index();
             $table->integer('sale');
