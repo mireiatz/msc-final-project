@@ -1,5 +1,5 @@
 from ml.preprocessing.prediction_data_preprocessing_pipeline import PredictionDataPreprocessingPipeline
-from ml.modeling.predictor import Predictor
+from ml.modeling.demand_predictor import DemandPredictor
 from flask import Flask, request, jsonify
 from logging_config import setup_logging, logging
 from app_config import app_config
@@ -7,12 +7,13 @@ import subprocess
 import json
 import os
 import sys
+import pandas as pd
 
 app = Flask(__name__)
 
 def run_in_background(script_name, *args):
     """
-    Run a script in the background with the given arguments.
+    Helper function to run a script in the background with the given arguments.
     """
     # Build the full script path
     script_path = os.path.join(app_config.SCRIPTS, script_name)
@@ -88,20 +89,27 @@ def predict_demand():
     """
     try:
         # Get the data
-        data = request.json
+        prediction_data = request.json
 
         # Preprocess the data
         preprocessed_data = PredictionDataPreprocessingPipeline(
-            data=data,
+            data=prediction_data,
         ).run()
 
+        # Make a copy of the IDs and dates in the preprocessed data
+        source_product_ids = preprocessed_data['source_product_id'].copy()
+        dates = preprocessed_data['date'].copy()
+
+        # Prepare data for prediction by removing unneeded columns
+        prediction_data = preprocessed_data.drop(columns=['source_product_id', 'date'])
+
         # Run the predictor
-        predictions = Predictor().run(preprocessed_data)
+        predictions_df = DemandPredictor().run(prediction_data, source_product_ids, dates)
 
         # Send predictions back
         return jsonify({
-            "status": "Success, data processed",
-            "predictions": predictions.tolist()
+            "status": "Success, demand predicted",
+            "predictions": predictions_df.to_json(orient='records')
         }), 200
 
     except Exception as e:

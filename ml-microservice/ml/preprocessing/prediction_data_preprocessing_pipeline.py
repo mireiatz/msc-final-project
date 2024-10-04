@@ -11,7 +11,6 @@ class PredictionDataPreprocessingPipeline(PreprocessingPipeline):
     def __init__(self, data, output_path=None):
         super().__init__(output_path=output_path)
         self.data = data
-        self.required_features = config.MAIN_FEATURES
 
     def ingest_data(self):
         return PredictionDataIngestionLayer(data=self.data).process()
@@ -28,7 +27,8 @@ class PredictionDataPreprocessingPipeline(PreprocessingPipeline):
     def handle_data(self, preprocessed_data):
         logging.info("Handling prediction data...")
 
-        # Drop any columns that are not in the required features list
-        prediction_data = preprocessed_data[self.required_features]
+        # Drop any columns that are not in the required features list, keep ones necessary for identifying predictions
+        required_columns = config.MAIN_FEATURES + ['source_product_id', 'date']
+        prediction_data = preprocessed_data[required_columns]
 
         return prediction_data

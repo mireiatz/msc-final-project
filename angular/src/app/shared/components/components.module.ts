@@ -10,6 +10,7 @@ import { PaginationFooterComponent } from "./pagination-footer/pagination-footer
 import { LoaderComponent } from "./loader/loader.component";
 import { ModalComponent } from "./modal/modal.component";
 import { SearchBarComponent } from "./search-bar/search-bar.component";
+import { DropdownComponent } from "./dropdown/dropdown.component";
 
 const COMPONENTS = [
   SidebarComponent,
@@ -20,6 +21,7 @@ const COMPONENTS = [
   LoaderComponent,
   ModalComponent,
   SearchBarComponent,
+  DropdownComponent,
 ]
 @NgModule({
   declarations: [

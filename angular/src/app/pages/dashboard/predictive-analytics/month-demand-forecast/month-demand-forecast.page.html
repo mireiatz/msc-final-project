@@ -1,0 +1,21 @@
+<div class="main-page">
+  <div class="data-display">
+    <app-loader
+      [isLoading]="isLoading"
+    ></app-loader>
+
+    <ngx-charts-bar-vertical
+      [view]="[1000, 600]"
+      [results]="forecastData"
+      [legend]="false"
+      [xAxis]="true"
+      [yAxis]="true"
+      [showXAxisLabel]="true"
+      [showYAxisLabel]="true"
+      [xAxisLabel]="'Categories'"
+      [yAxisLabel]="'30 day forecast'"
+      [showGridLines]="true"
+      [barPadding]="0.2">
+      </ngx-charts-bar-vertical>
+  </div>
+</div>

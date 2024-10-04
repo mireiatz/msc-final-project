@@ -4,7 +4,7 @@ namespace Tests\Unit\Services\Analytics;
 
 use App\Models\Category;
 use App\Models\Product;
-use App\Services\Analytics\StockMetricsService;
+use App\Services\DescriptiveAnalytics\StockMetricsService;
 use App\Traits\OrderCreation;
 use App\Traits\SaleCreation;
 use Illuminate\Foundation\Testing\DatabaseTransactions;

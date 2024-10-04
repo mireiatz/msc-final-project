@@ -130,7 +130,9 @@ class SeedProductsFromFile implements ShouldQueue
                 return 'milk';
             case str_contains($category, 'medical'):
                 return 'medical';
-            case str_contains($category, 'grocery') || str_contains($category, 'soups') || str_contains($category, 'meat') || str_contains($category, 'fish') || str_contains($category, 'fruit') || str_contains($category, 'meal') || str_contains($category, 'veg'):
+            case str_contains($category, 'soups') || str_contains($category, 'meat') || str_contains($category, 'fish') || str_contains($category, 'fruit') || str_contains($category, 'veg'):
+                return 'food';
+            case str_contains($category, 'grocery') || str_contains($category, 'meal'):
                 return 'grocery';
             default:
                 return 'miscellaneous';

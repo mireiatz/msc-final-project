@@ -24,8 +24,12 @@ class PreprocessingPipeline:
         # Step 4: Engineer the time series
         time_series_data = self.engineer_time_series(engineered_data)
 
-        # Step 5: Save the preprocessed data after making a backup
-        return self.handle_data(time_series_data)
+        # Step 5: Save or handle the preprocessed data
+        final_data = self.handle_data(time_series_data)
+
+        logging.info("Preprocessing pipeline completed successfully")
+
+        return final_data
 
     def ingest_data(self):
         raise NotImplementedError("Subclass must implement 'ingest_data'")
