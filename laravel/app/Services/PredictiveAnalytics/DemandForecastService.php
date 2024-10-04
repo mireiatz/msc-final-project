@@ -76,44 +76,54 @@ class DemandForecastService implements DemandForecastInterface
      */
     public function getWeeklyAggregatedDemandForecast(Category $category): array
     {
-        // Get the next Monday as the start of the first week
+        // Get start/end dates for weekly forecasts
         $nextMonday = Carbon::now()->next('Monday');
+        $fourWeeksLater = $nextMonday->copy()->addWeeks(4);
 
-        // Get the weekly forecast for the given category
-        $weeklyForecast = DB::table('predictions')
+        // Fetch raw predictions for the next 4 weeks
+        $predictions = DB::table('predictions')
             ->join('products', 'predictions.product_id', '=', 'products.id')
             ->join('categories', 'products.category_id', '=', 'categories.id')
             ->select(
-                'categories.name as category_name',
                 'categories.id as category_id',
-                DB::raw('FLOOR(DATEDIFF(predictions.date, "' . $nextMonday . '") / 7) as week_number'), // Calculate the week number
-                DB::raw('SUM(predictions.value) as total_demand') // Aggregate the predictions for each week
+                'predictions.date',
+                'predictions.value'
             )
-            ->where('categories.id', $category->id)  // Filter by the specific category
-            ->where('predictions.date', '>=', $nextMonday)
-            ->where('predictions.date', '<=', $nextMonday->copy()->addDays(34)) // To cover 4 weeks
-            ->groupBy('categories.id', 'week_number')  // Group by category and week
-            ->orderBy('week_number')
+            ->where('categories.id', $category->id)
+            ->whereBetween('predictions.date', [$nextMonday, $fourWeeksLater])
+            ->orderBy('predictions.date')
             ->get();
 
-        // Structure the data for weekly results
+        // Group predictions by week
+        $weeklyForecast = [];
+
+        foreach ($predictions as $prediction) {
+            $weekStart = Carbon::parse($prediction->date)->startOfWeek();
+            $weekLabel = $weekStart->format('Y-m-d');
+
+            if (!isset($weeklyForecast[$weekLabel])) {
+                $weeklyForecast[$weekLabel] = 0;
+            }
+
+            $weeklyForecast[$weekLabel] += $prediction->value;
+        }
+
+        // Format into forecast
         $formattedResults = [
             'id' => $category->id,
             'name' => $category->name,
             'weeks' => []
         ];
 
-        // Format each week's data
-        foreach ($weeklyForecast as $forecast) {
+        foreach ($weeklyForecast as $weekStart => $totalDemand) {
             $formattedResults['weeks'][] = [
-                'name' => 'Week ' . ($forecast->week_number + 1),  // Label by week
-                'value' => $forecast->total_demand
+                'name' => 'Week of ' . Carbon::parse($weekStart)->format('d-m-Y'),
+                'value' => $totalDemand
             ];
         }
 
         return $formattedResults;
     }
-
 
     /**
      * Get 30-day-aggregated demand predictions, by category.

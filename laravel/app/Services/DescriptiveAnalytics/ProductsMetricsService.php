@@ -139,15 +139,20 @@ class ProductsMetricsService implements ProductsMetricsInterface
      */
     public function getProductStockBalances(Product $product, string $startDate, string $endDate): array
     {
-        // Fetch stock balance at both start and end dates in a single query
-        $stockBalances = $product->inventoryTransactions()
-            ->whereIn('date', [$startDate, $endDate])
+        // Fetch the initial and final stock balances
+        $initialStockBalance = $product->inventoryTransactions()
+            ->where('date', '<=', $startDate)
             ->orderByDesc('date')
-            ->pluck('stock_balance', 'date');
+            ->value('stock_balance');
+
+        $finalStockBalance = $product->inventoryTransactions()
+            ->where('date', '>=', $endDate)
+            ->orderByDesc('date')
+            ->value('stock_balance');
 
         return [
-            'initial_stock_balance' => $stockBalances->get($startDate, 0),
-            'final_stock_balance' => $stockBalances->get($endDate, 0),
+            'initial_stock_balance' => $initialStockBalance ?? 0,
+            'final_stock_balance' => $finalStockBalance ?? 0,
         ];
     }
 
@@ -194,7 +199,7 @@ class ProductsMetricsService implements ProductsMetricsInterface
                 'amount' => $dailySalesRevenue,
             ];
 
-            /// Arrange pre-fetched stock balance
+            // Arrange pre-fetched stock balance
             $stockBalanceSeries[] = [
                 'date' => $date,
                 'amount' => $stockBalances[$date] ?? 0,
@@ -221,8 +226,8 @@ class ProductsMetricsService implements ProductsMetricsInterface
         // Generate all dates between the start and end dates
         $period = new DatePeriod(
             new DateTime($startDate),
-            new DateInterval('P1D'),
-            (new DateTime($endDate))->modify('+1 day')
+            new DateInterval('P1D'), // 1 day intervals
+            (new DateTime($endDate))->modify('+1 day') // End date is exclusive by default
         );
 
         // Convert the DatePeriod into an array of formatted date strings

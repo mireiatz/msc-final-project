@@ -19,6 +19,7 @@ class RunDemandPredictionRequests implements ShouldQueue
 
     protected int $daysToPredict;
     protected int $historicalDays;
+    public int $chunkSize = 500;
 
     /**
      * Create a new job instance.
@@ -40,7 +41,7 @@ class RunDemandPredictionRequests implements ShouldQueue
 
         try {
             // Chunk products data
-            $chunks = array_chunk($payload['products'], 1000);
+            $chunks = array_chunk($payload['products'], $this->chunkSize);
 
             // Dispatch jobs per chunk including the prediction dates
             foreach ($chunks as $chunk) {
@@ -63,7 +64,7 @@ class RunDemandPredictionRequests implements ShouldQueue
      *
      * @return array
      */
-    protected function collectPredictionData(): array
+    public function collectPredictionData(): array
     {
         // Get all active products
         $activeProducts = Product::whereHas('sales', function ($query) {
@@ -73,6 +74,7 @@ class RunDemandPredictionRequests implements ShouldQueue
         // Generate all dates from today to the defined days to predict
         $today = Carbon::today();
         $dates = generateDateRange($today, $today->copy()->addDays($this->daysToPredict));
+        array_pop($dates); // Exclude last
 
         // Build payload with info per product
         $payload = [

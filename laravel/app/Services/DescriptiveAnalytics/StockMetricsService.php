@@ -48,7 +48,7 @@ class StockMetricsService implements StockMetricsInterface
         foreach ($products as $product) {
             $stockBalance = $product->stock_balance;
 
-            $inventoryValue += $stockBalance * $product->cost;
+            $inventoryValue += ($stockBalance * $product->cost);
             $totalItemsInStock += $stockBalance;
 
             if ($stockBalance > 0) {

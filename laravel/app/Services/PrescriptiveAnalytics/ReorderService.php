@@ -72,12 +72,12 @@ class ReorderService implements ReorderInterface
                 DB::raw('(SELECT MAX(sp.quantity) FROM sale_products sp WHERE sp.product_id = products.id) as max_quantity'),
                 // Subquery for average quantity from sales
                 DB::raw('(SELECT AVG(sp.quantity) FROM sale_products sp WHERE sp.product_id = products.id) as avg_quantity'),
-                // Subquery for total predicted demand over the next 7 days using predictions
-                DB::raw('(SELECT SUM(p.value) FROM predictions p WHERE p.product_id = products.id AND p.date BETWEEN ? AND ?) as total_predicted_demand'),
+                // Subquery for total predicted demand between the date range
+                DB::raw('(SELECT SUM(p.value) FROM predictions p WHERE p.product_id = products.id AND p.date BETWEEN ? AND ?) as total_predicted_demand'), // Dates bound below
                 // Subquery to calculate the stock balance by summing inventory transactions
                 DB::raw('(SELECT SUM(it.quantity) FROM inventory_transactions it WHERE it.product_id = products.id) as stock_balance')
             )
-            ->setBindings([$startDate, $endDate], 'select')  // Bind the date parameters for safety
+            ->setBindings([$startDate, $endDate], 'select')  // Bind the date parameters
             ->where('provider_id', $providerId)
             ->where('category_id', $categoryId)
             ->get();
@@ -97,7 +97,7 @@ class ReorderService implements ReorderInterface
         $buffer = ($maxDailyDemand * $leadDays) - ($avgDailyDemand * $leadDays);
 
         // Return as int
-        return round($buffer);
+        return max(0, round($buffer));
     }
 
     /**

@@ -17,7 +17,7 @@ class ProviderController extends Controller
     public function index(): JsonResponse
     {
 
-        $providers = Provider::all();
+        $providers = Provider::orderBy('name')->get();
 
         return Json::success($providers);
     }

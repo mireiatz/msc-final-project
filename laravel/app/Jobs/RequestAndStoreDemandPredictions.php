@@ -18,6 +18,8 @@ class RequestAndStoreDemandPredictions implements ShouldQueue
 
     protected array $data;
 
+    protected int $chunkSize = 2000;
+
     /**
      * Create a new job instance.
      */
@@ -39,7 +41,7 @@ class RequestAndStoreDemandPredictions implements ShouldQueue
             $predictions = json_decode($response['predictions'], true);
 
             // Chunk the predictions
-            $chunks = array_chunk($predictions, 5000);
+            $chunks = array_chunk($predictions, $this->chunkSize);
             foreach ($chunks as $chunk) {
                 // Upsert records (precaution for the unique constraint for product_id - date)
                 Prediction::upsert(
