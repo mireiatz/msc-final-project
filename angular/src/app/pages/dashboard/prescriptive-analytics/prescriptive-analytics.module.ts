@@ -4,7 +4,11 @@ import { RouterModule } from "@angular/router";
 import { PrescriptiveAnalyticsRoutingModule } from "./prescriptive-analytics-routing.module";
 import { ReorderingPage } from "./reordering/reordering.page";
 import { ComponentsModule } from "../../../shared/components/components.module";
+import { ReorderInfoModalComponent } from "./modals/product-performance-modal/reorder-info-modal.component";
 
+const MODALS = [
+  ReorderInfoModalComponent,
+]
 const PAGES = [
   ReorderingPage,
 ];
@@ -12,6 +16,7 @@ const PAGES = [
 @NgModule({
   declarations: [
     ...PAGES,
+    ...MODALS,
   ],
   imports: [
     PrescriptiveAnalyticsRoutingModule,

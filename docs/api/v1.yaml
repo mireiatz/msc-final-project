@@ -1195,6 +1195,9 @@ components:
                 type: object
                 x-stoplight:
                   id: mbdtpv0j8o8yp
+            required:
+              - data
+              - success
     InventoryTransactionsResponse:
       description: Example response
       content:
@@ -1287,6 +1290,9 @@ components:
                 type: object
                 x-stoplight:
                   id: 9g1wka7euisof
+            required:
+              - data
+              - success
     SalesResponse:
       description: Example response
       content:

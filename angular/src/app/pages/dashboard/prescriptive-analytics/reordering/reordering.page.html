@@ -2,20 +2,22 @@
   <div class="dropdown-container">
     <app-dropdown
       [placeholder]="'Select provider'"
-      [options]="providers"
+      [options]="providerOptions"
       [selectedOptionId]="providerId"
       (selectionChange)="onProviderSelection($event)">
     </app-dropdown>
     <app-dropdown
       [placeholder]="'Select category'"
-      [options]="categories"
+      [options]="categoryOptions"
       [selectedOptionId]="categoryId"
       (selectionChange)="onCategorySelection($event)">
     </app-dropdown>
   </div>
   <app-table
     [columns]="columns"
-    [data]="reorderSuggestions">
+    [data]="reorderSuggestions"
+    (cellClicked)="displayOrderInfo($event)"
+  >
   </app-table>
 
   <app-pagination-footer

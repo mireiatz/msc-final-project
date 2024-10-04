@@ -23,7 +23,7 @@ export class CategoryDemandForecastPage implements OnDestroy {
   public categoryDemand: CategoryDemand | null = null;
   public forecastData: any[] = [];
   public categoryId: string | undefined = '';
-  public categories: Option[] = [];
+  public categoryOptions: Option[] = [];
 
   constructor(
     protected apiService: ApiService,
@@ -49,13 +49,13 @@ export class CategoryDemandForecastPage implements OnDestroy {
         next: response => {
           if(!response.data) return;
 
-          this.categories = response.data.map(category => ({
+          this.categoryOptions = response.data.map(category => ({
             id: category.id,
             name: category.name
           }));
 
-          if(this.categories) {
-            this.onCategorySelection(this.categories[0].id)
+          if(this.categoryOptions) {
+            this.onCategorySelection(this.categoryOptions[0].id)
             this.getDemandForecast();
           }
         },

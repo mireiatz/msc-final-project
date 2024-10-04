@@ -1,0 +1,36 @@
+<app-modal>
+  <ng-container header>
+    <h3>{{ data.title }}</h3>
+  </ng-container>
+
+  <ng-container content>
+    <div class="row order-content align-content-around">
+      <div class="order-details">
+        <h1>Provider Details</h1>
+        <p>{{ data.provider.name }}</p>
+        <p>{{ data.provider.phone }}</p>
+        <p>{{ data.provider.email }}</p>
+        <p>{{ data.provider.address.address_line_1 }}</p>
+        <p>{{ data.provider.address.city }}, {{ data.provider.address.postcode }}</p>
+        <p>{{ data.provider.address.country }}</p>
+      </div>
+
+      <div class="order-details">
+        <h1>Product Details</h1>
+        <p>{{ data.product_name }}</p>
+        <p>Units: {{ data.product_unit }}</p>
+        <p>Cost: £{{ data.product_cost }}</p>
+      </div>
+
+      <div class="order-details">
+        <h1>Order Details</h1>
+        <p>Amount: {{ data.order_amount }}</p>
+        <p>Cost: {{ data.order_cost }}</p>
+      </div>
+    </div>
+  </ng-container>
+
+  <ng-container footer>
+    <a (click)="close()" class="btn btn-primary">Close</a>
+  </ng-container>
+</app-modal>

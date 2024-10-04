@@ -4,6 +4,9 @@ import { HttpErrorResponse } from "@angular/common/http";
 import { ApiService } from "../../../../shared/services/api/services/api.service";
 import { Option } from "../../../../shared/interfaces";
 import { ReorderSuggestion } from "../../../../shared/services/api/models/reorder-suggestion";
+import { ModalService } from "../../../../shared/services/modal/modal.service";
+import { Provider } from "../../../../shared/services/api/models/provider";
+import { ReorderInfoModalComponent } from "../modals/product-performance-modal/reorder-info-modal.component";
 
 @Component({
   selector: 'page-reordering',
@@ -19,9 +22,10 @@ export class ReorderingPage  implements OnDestroy {
 
   public reorderSuggestions: ReorderSuggestion[] = [];
   public categoryId: string | undefined = '';
-  public categories: Option[] = [];
+  public categoryOptions: Option[] = [];
   public providerId: string | undefined = '';
-  public providers: Option[] = [];
+  public providerOptions: Option[] = [];
+  public providers: Provider[] = [];
 
   public columns = [
     { header: 'Product Name', field: 'product_name' },
@@ -46,6 +50,7 @@ export class ReorderingPage  implements OnDestroy {
 
   constructor(
     protected apiService: ApiService,
+    protected modalService: ModalService,
   ) {
     this.fetchProviders();
     this.fetchCategories();
@@ -72,7 +77,6 @@ export class ReorderingPage  implements OnDestroy {
         next: response => {
           this.reorderSuggestions = response.data.items;
           this.pagination = response.data.pagination;
-          console.log(this.pagination)
         },
         error: (error: HttpErrorResponse) => {
           for (let errorList in error.error.errors) {
@@ -90,7 +94,6 @@ export class ReorderingPage  implements OnDestroy {
 
   public onProviderSelection(selectedProvider: any) {
     this.providerId = selectedProvider;
-    console.log(this.providerId)
     this.getReorderSuggestions(this.page);
   }
 
@@ -102,12 +105,14 @@ export class ReorderingPage  implements OnDestroy {
     ).subscribe({
         next: response => {
           if(!response.data) return;
-          this.providers = response.data.map(provider => ({
+
+          this.providers = response.data;
+          this.providerOptions = response.data.map(provider => ({
             id: provider.id,
             name: provider.name
           }));
-          if(this.providers) {
-            this.onProviderSelection(this.providers[0].id);
+          if(this.providerOptions) {
+            this.onProviderSelection(this.providerOptions[0].id);
             this.getReorderSuggestions(this.page);
           }
         },
@@ -128,13 +133,13 @@ export class ReorderingPage  implements OnDestroy {
         next: response => {
           if(!response.data) return;
 
-          this.categories = response.data.map(category => ({
+          this.categoryOptions = response.data.map(category => ({
             id: category.id,
             name: category.name
           }));
 
-          if(this.categories) {
-            this.onCategorySelection(this.categories[0].id)
+          if(this.categoryOptions) {
+            this.onCategorySelection(this.categoryOptions[0].id)
             this.getReorderSuggestions(this.page);
           }
         },
@@ -151,5 +156,19 @@ export class ReorderingPage  implements OnDestroy {
     this.page = page;
     this.pagination.current_page = page;
     this.getReorderSuggestions(this.page);
+  }
+
+  public displayOrderInfo(order: ReorderSuggestion) {
+
+    const data: any = {
+      title: 'Order for product ' + order.product_name,
+      provider: this.providers.find(provider => provider.id === this.providerId),
+      product_name: order.product_name,
+      product_unit: `${order.amount_per_unit} per ${order.unit}`,
+      product_cost: order.cost_per_unit,
+      order_amount: order.reorder_amount,
+      order_cost: order.total_cost,
+    }
+    this.modalService.open(ReorderInfoModalComponent, data);
   }
 }
