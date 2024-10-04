@@ -44,13 +44,7 @@ trait SaleCreation
                 'currency' => $product->currency,
             ]);
 
-            $sale->inventoryTransactions()->create([
-                'store_id' => $sale->store_id,
-                'product_id' => $product->id,
-                'date' => $sale->date,
-                'quantity' => -1 * $quantity,
-                'stock_balance' => $product->stock_balance - $quantity,
-            ]);
+            // Inventory transactions are created in an event hook in the model
 
             $total_sale += $totalSale;
             $total_cost += $totalCost;
