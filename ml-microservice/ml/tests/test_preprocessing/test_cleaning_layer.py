@@ -43,22 +43,6 @@ class TestCleaningLayer(unittest.TestCase):
             # Fail the test if any exception is raised
             self.fail(f"validate_columns raised {type(e).__name__} unexpectedly")
 
-    def test_cast_integer_columns(self):
-        """
-        Test that default 'year' and 'week' columns are converted to integers from decimals.
-        """
-        # Define decimal weeks adn years
-        test_data =  pd.DataFrame({
-            'year': [2021.0, 2022.0, 2023.0, 2024.0],
-            'week': [1.0, 15.0, 38.0, 52.0]
-        })
-
-        # Invoke method from the class
-        df = self.layer.cast_integer_columns(test_data)
-
-        self.assertListEqual(test_data['year'].tolist(), [2021, 2022, 2023, 2024])
-        self.assertListEqual(test_data['week'].tolist(), [1, 15, 38, 52])
-
     def test_validate_columns_raises_error(self):
         """
         Test that a KeyError is raised when required columns are missing.

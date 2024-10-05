@@ -48,7 +48,7 @@ class DemandPredictor:
         })
 
         # Format the date
-        predictions_df['date'] = pd.to_datetime(predictions_df['date'], unit='ms').dt.strftime('%Y-%m-%d')
+        predictions_df['date'] = pd.to_datetime(predictions_df['date']).dt.strftime('%Y-%m-%d')
 
         # Round to nearest integer and convert negatives to 0
         predictions_df['value'] = predictions_df['value'].round(0).clip(lower=0).astype(int)

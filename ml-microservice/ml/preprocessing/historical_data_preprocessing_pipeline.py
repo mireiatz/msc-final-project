@@ -4,6 +4,9 @@ from ml.preprocessing.cleaning_layer import CleaningLayer
 from ml.preprocessing.feature_engineering_layer import FeatureEngineeringLayer
 from ml.preprocessing.time_series_engineering_layer import TimeSeriesEngineeringLayer
 from ml.config import config
+import logging
+from datetime import datetime
+import os
 
 class HistoricalDataPreprocessingPipeline(PreprocessingPipeline):
 
@@ -65,3 +68,5 @@ class HistoricalDataPreprocessingPipeline(PreprocessingPipeline):
         except Exception as e:
             logging.error(f"Error saving data at {main_file_path} (backup at: {backup_file_path}) | Error: {e}")
             return
+
+        return data
