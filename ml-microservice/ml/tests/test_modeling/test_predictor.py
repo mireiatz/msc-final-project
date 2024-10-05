@@ -1,10 +1,9 @@
 import unittest
 from unittest.mock import patch, MagicMock
 import pandas as pd
-from ml.modeling.demand_predictor import DemandPredictor
-import joblib
+from ml.modeling.predictor import Predictor
 
-class TestDemandPredictor(unittest.TestCase):
+class TestPredictor(unittest.TestCase):
 
     @patch('joblib.load')
     def test_load_model_success(self, mock_joblib_load):
@@ -14,7 +13,7 @@ class TestDemandPredictor(unittest.TestCase):
         # Mock the joblib load method
         mock_joblib_load.return_value = MagicMock()
 
-        predictor = DemandPredictor(model_path='/dummy/path/to/model')
+        predictor = Predictor(model_path='/dummy/path/to/model')
         predictor.load_model()
 
         # Check that the model was set
@@ -28,9 +27,9 @@ class TestDemandPredictor(unittest.TestCase):
         # Simulate an error when loading the model
         mock_joblib_load.side_effect = Exception("Failed to load model")
 
-        predictor = DemandPredictor(model_path='/dummy/path/to/model')
+        predictor = Predictor(model_path='/dummy/path/to/model')
 
-        # Assert that the RuntimeError is raised
+        # Error raised
         with self.assertRaises(RuntimeError) as context:
             predictor.load_model()
 
@@ -43,7 +42,7 @@ class TestDemandPredictor(unittest.TestCase):
         # Create a mock model with a predict method and set it in the predictor
         mock_model = MagicMock()
         mock_model.predict.return_value = [100, 200]
-        predictor = DemandPredictor()
+        predictor = Predictor()
         predictor.model = mock_model
 
         # Test data
@@ -60,15 +59,15 @@ class TestDemandPredictor(unittest.TestCase):
 
     def test_transform_predictions(self):
         """
-        Test that predictions are transformed correctly.
+        Test that predictions are transformed correctly for live predictions.
         """
-        # Sample predictions and input data
+        # Define sample predictions and input data
         predictions = [100.6, -50.2]
         source_product_ids = ['A', 'B']
         dates = ['2023-01-01', '2023-01-02']
 
         # Transform predictions
-        predictor = DemandPredictor()
+        predictor = Predictor()
         result_df = predictor.transform_predictions(predictions, source_product_ids, dates)
 
         # Check that the DataFrame is formatted correctly
@@ -80,58 +79,69 @@ class TestDemandPredictor(unittest.TestCase):
 
         pd.testing.assert_frame_equal(result_df, expected_df)
 
-    @patch('joblib.load')
-    @patch.object(DemandPredictor, 'make_predictions')
-    def test_run_pipeline_success(self, mock_make_predictions, mock_joblib_load):
+    @patch('ml.modeling.predictor.Predictor.load_model')
+    def test_run_predictions_for_evaluation(self, mock_load_model):
         """
-        Test the full pipeline from loading the model to returning predictions.
+        Test running predictions for evaluation purposes.
         """
-        # Mock model loading
-        mock_joblib_load.return_value = MagicMock()
-
-        # Mock prediction
-        mock_make_predictions.return_value = [100, 200]
-
-
-        # Sample data
-        data = pd.DataFrame({'feature1': [1, 2], 'feature2': [3, 4]})
-        source_product_ids = ['A', 'B']
-        dates = ['2023-01-01', '2023-01-02']
-
-        # Run the predictor
-        predictor = DemandPredictor()
-        predictions_df = predictor.run(data, source_product_ids, dates)
-
-        # Check that predictions are returned and formatted correctly
-        expected_df = pd.DataFrame({
-            'product_id': ['A', 'B'],
-            'date': ['2023-01-01', '2023-01-02'],
-            'value': [100, 200]
+        # Mock test data
+        X_test = pd.DataFrame({
+            'feature1': [1, 2],
+            'feature2': [3, 4]
         })
 
-        pd.testing.assert_frame_equal(predictions_df, expected_df)
+        # Mock predictions
+        mock_predictions = pd.Series([100, 200])
 
-    def test_run_empty_data(self):
-        """
-        Test that ValueError is raised for empty DataFrame.
-        """
-        predictor = DemandPredictor()
+        # Instantiate predictor and mock predictions
+        predictor = Predictor(model_path='/dummy/model_path.pkl')
+        predictor.make_predictions = MagicMock(return_value=mock_predictions)
 
-        # Run with an empty DataFrame
+        # Invoke the class method
+        predictions = predictor.run_predictions_for_evaluation(X_test)
+
+        # Check the process characteristics
+        self.assertTrue(isinstance(predictions, pd.Series))
+        self.assertEqual(len(predictions), len(X_test))
+        self.assertListEqual(predictions.tolist(), mock_predictions.tolist())
+
+    @patch('ml.modeling.predictor.joblib.load')
+    @patch.object(Predictor, 'make_predictions')
+    def test_run_live_predictions(self, mock_make_predictions, mock_joblib_load):
+        """
+        Test live predictions.
+        """
+        # Mock the model and predictions
+        mock_joblib_load.return_value = 'mock_model'
+        mock_make_predictions.return_value = [10, 20, 30]
+
+        # Instantiate predictor
+        predictor = Predictor(model_path='dummy_path')
+
+        # Invoke the class method with test data
+        data = pd.DataFrame({'feature1': [1, 2, 3], 'feature2': [4, 5, 6]})
+        predictions = predictor.run_live_predictions(data, ['A', 'B', 'C'], ['2023-01-01', '2023-01-02', '2023-01-03'])
+
+        # Check the process characteristics
+        mock_joblib_load.assert_called_once_with('dummy_path')
+        mock_make_predictions.assert_called_once_with(data)
+        self.assertEqual(len(predictions), 3)
+
+    def test_sanity_check(self):
+        """
+        Test that errors are raised for invalid data input.
+        """
+        predictor = Predictor()
+
+        # Error raised
         with self.assertRaises(ValueError) as context:
-            predictor.run(pd.DataFrame(), ['A', 'B'], ['2023-01-01', '2023-01-02'])
+            predictor.sanity_check(pd.DataFrame())
 
         self.assertIn("Empty DataFrame provided", str(context.exception))
 
-    def test_run_invalid_data_type(self):
-        """
-        Test that ValueError is raised for non-DataFrame inputs.
-        """
-        predictor = DemandPredictor()
-
-        # Run with invalid data type
+        # Error raised
         with self.assertRaises(ValueError) as context:
-            predictor.run("invalid_data", ['A', 'B'], ['2023-01-01', '2023-01-02'])
+            predictor.sanity_check("invalid_data")
 
         self.assertIn("Expected data as a DataFrame", str(context.exception))
 

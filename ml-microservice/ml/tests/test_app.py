@@ -8,37 +8,49 @@ import pandas as pd
 class TestApp(unittest.TestCase):
 
     def setUp(self):
+        """
+        Set up test app client and indicate testing mode.
+        """
         self.app = app.test_client()
         self.app.testing = True
 
     def test_export_sales_data_no_file(self):
         """
-        Test the export-sales-data endpoint with no file uploaded.
+        Test the 'export-sales-data' endpoint with no file uploaded.
         """
+        # Make the request
         response = self.app.post('/export-sales-data')
+
+        # Check error
         self.assertEqual(response.status_code, 400)
         self.assertIn('No file uploaded', response.json['error'])
 
     def test_export_sales_data_no_metadata(self):
         """
-        Test the export-sales-data endpoint with no metadata provided.
+        Test the 'export-sales-dat'a endpoint with no metadata provided.
         """
+        # Make the request
         data = {
             'file': (BytesIO(b'mock data'), 'mock_file.csv')
         }
         response = self.app.post('/export-sales-data', data=data)
+
+        # Check error
         self.assertEqual(response.status_code, 400)
         self.assertIn('No metadata provided', response.json['error'])
 
     def test_export_sales_data_invalid_metadata(self):
         """
-        Test the export-sales-data endpoint with invalid JSON metadata.
+        Test the 'export-sales-data' endpoint with invalid metadata.
         """
+        # Make the request
         data = {
             'file': (BytesIO(b'mock data'), 'mock_file.csv'),
             'metadata': 'invalid json'
         }
         response = self.app.post('/export-sales-data', data=data)
+
+        # Check error
         self.assertEqual(response.status_code, 400)
         self.assertIn('Invalid metadata format', response.json['error'])
 
@@ -47,20 +59,22 @@ class TestApp(unittest.TestCase):
         """
         Test successful historical weekly data export.
         """
-        mock_run_in_background.return_value = None
+        # Make the request
         data = {
             'file': (BytesIO(b'mock data'), 'mock_file.csv'),
             'metadata': json.dumps({'type': 'historical', 'format': 'weekly'})
         }
         response = self.app.post('/export-sales-data', data=data)
+
+        # Check success
         self.assertEqual(response.status_code, 200)
         self.assertIn('Preprocessing started for weekly data', response.json['status'])
 
     @patch('app.PredictionDataPreprocessingPipeline.run')
-    @patch('app.DemandPredictor.run')
+    @patch('app.Predictor.run_live_predictions')
     def test_predict_demand_success(self, mock_predictor_run, mock_pipeline_run):
         """
-        Test the predict-demand endpoint for successful predictions.
+        Test the 'predict-demand' endpoint for successful predictions.
         """
         # Mock the preprocessed data
         mock_pipeline_run.return_value = pd.DataFrame({
@@ -79,7 +93,7 @@ class TestApp(unittest.TestCase):
             'value': [150, 250]
         })
 
-        # Send the request
+        # Make request
         data = {
             "prediction_dates": ["2023-01-03", "2023-01-04"],
             "products": [
@@ -113,7 +127,7 @@ class TestApp(unittest.TestCase):
         }
         response = self.app.post('/predict-demand', json=data)
 
-        # Assert success and correct data in response
+        # Check success and correct data in response
         self.assertEqual(response.status_code, 200)
         self.assertIn('Success, demand predicted', response.json['status'])
         predictions = json.loads(response.data)
@@ -124,9 +138,46 @@ class TestApp(unittest.TestCase):
 
     def test_predict_demand_invalid_json(self):
         """
-        Test the predict-demand endpoint with invalid JSON.
+        Test the 'predict-demand' endpoint with invalid JSON.
         """
+        # Make request
         response = self.app.post('/predict-demand', data="invalid json")
+
+        # Check error
+        self.assertEqual(response.status_code, 500)
+        self.assertIn('error', response.json)
+
+    def test_export_sales_data_invalid_data_type(self):
+        """
+        Test the export-sales-data endpoint with invalid data type.
+        """
+        # Make request
+        data = {
+            'file': (BytesIO(b'mock data'), 'mock_file.csv'),
+            'metadata': json.dumps({'type': 'historical', 'format': 'invalid_format'})
+        }
+        response = self.app.post('/export-sales-data', data=data)
+
+        # Check error
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Invalid data format', response.json['status'])
+
+    def test_predict_demand_missing_fields(self):
+        """
+        Test the predict-demand endpoint with missing product details.
+        """
+        # Make request
+        data = {
+            "prediction_dates": ["2023-01-03", "2023-01-04"],
+            "products": [
+                {
+                    # Missing 'details' and 'historical_sales'
+                }
+            ]
+        }
+        response = self.app.post('/predict-demand', json=data)
+
+        # Check error
         self.assertEqual(response.status_code, 500)
         self.assertIn('error', response.json)
 
