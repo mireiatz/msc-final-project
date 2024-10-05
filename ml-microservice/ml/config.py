@@ -7,13 +7,18 @@ class Config:
     MAPPINGS = './ml/data/mappings'
 
     # Available ML models, and related info
+    MODELS = './ml/models'
     MAIN_XGB_MODEL = './ml/models/xgboost_demand_forecast_model_20240928_134943.pkl'
     MAIN_LGB_MODEL = './ml/models/lightgbm_demand_forecast_model_20240928_134943.pkl'
+    MAIN_TARGET = 'quantity'
     MAIN_FEATURES = [
         'product_id_encoded', 'category_encoded', 'quantity_lag_1',
         'quantity_lag_7', 'quantity_rolling_avg_7', 'quantity_rolling_avg_30',
         'month_cos', 'month_sin', 'weekday_cos', 'weekday_sin',
         'in_stock', 'per_item_value'
     ]
+
+    # Scripts
+    SCRIPTS = './scripts'
 
 config = Config()
