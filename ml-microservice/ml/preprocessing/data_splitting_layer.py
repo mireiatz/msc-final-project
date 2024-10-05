@@ -7,7 +7,7 @@ class DataSplittingLayer:
     def __init__(self, data, features=None, target=None):
         self.data = data
         self.features = features or config.MAIN_FEATURES
-        self.target = target or config.MAIN_TARGET
+        self.target = target or config.TARGET
 
     def sanity_check(self, df):
         """

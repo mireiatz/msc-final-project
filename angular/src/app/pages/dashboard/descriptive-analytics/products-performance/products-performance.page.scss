@@ -1,13 +1,19 @@
 .filters {
   width: 100%;
-  display: flex;
-  padding-left: 15px;
 
   .date-range-picker-container {
-    width: 75%;
+    width: 100%;
+    margin-left: 20px;
   }
 
   .search-bar-container {
-    width: 25%;
+    width: 30%;
+    margin-right: 30px;
+  }
+
+  .dropdown-container {
+    width: 30%;
+    align-content: center;
+    margin: 0;
   }
 }

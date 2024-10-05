@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 from ml.preprocessing.time_series_engineering_layer import TimeSeriesEngineeringLayer
+import numpy.testing as npt
 
 class TestTimeSeriesEngineeringLayer(unittest.TestCase):
 
@@ -43,46 +44,48 @@ class TestTimeSeriesEngineeringLayer(unittest.TestCase):
         self.assertIn('quantity_lag_30', df.columns)
 
         # Values are shifted the specified amount of days for Product A
-        expected_lag_1 = [0] + list(range(1, 30))
+
+        # Expected values with np.nan
+        expected_lag_1 = [np.nan] + list(map(float, range(1, 30)))
         actual_lag_1 = df[df['product_id'] == 'A']['quantity_lag_1'].tolist()
-        self.assertEqual(actual_lag_1, expected_lag_1)
+        npt.assert_array_almost_equal(actual_lag_1, expected_lag_1, decimal=7)
 
-        expected_lag_5 = [0, 0, 0, 0, 0] + list(range(1, 26))
+        expected_lag_5 = [np.nan] * 5 + list(map(float, range(1, 26)))
         actual_lag_5 = df[df['product_id'] == 'A']['quantity_lag_5'].tolist()
-        self.assertEqual(actual_lag_5, expected_lag_5)
+        npt.assert_array_almost_equal(actual_lag_5, expected_lag_5, decimal=7)
 
-        expected_lag_10 = [0] * 10 + list(range(1, 21))
+        expected_lag_10 = [np.nan] * 10 + list(map(float, range(1, 21)))
         actual_lag_10 = df[df['product_id'] == 'A']['quantity_lag_10'].tolist()
-        self.assertEqual(actual_lag_10, expected_lag_10)
+        npt.assert_array_almost_equal(actual_lag_10, expected_lag_10, decimal=7)
 
-        expected_lag_15 = [0] * 15 + list(range(1, 16))
+        expected_lag_15 = [np.nan] * 15 + list(map(float, range(1, 16)))
         actual_lag_15 = df[df['product_id'] == 'A']['quantity_lag_15'].tolist()
-        self.assertEqual(actual_lag_15, expected_lag_15)
+        npt.assert_array_almost_equal(actual_lag_15, expected_lag_15, decimal=7)
 
-        expected_lag_30 = [0] * 30
+        expected_lag_30 = [np.nan] * 30
         actual_lag_30 = df[df['product_id'] == 'A']['quantity_lag_30'].tolist()
-        self.assertEqual(actual_lag_30, expected_lag_30)
+        npt.assert_array_almost_equal(actual_lag_30, expected_lag_30, decimal=7)
 
         # Values are shifted the specified amount of days for Product B
-        expected_lag_1 = [0] + list(range(1, 30))
+        expected_lag_1 = [np.nan] + list(map(float, range(1, 30)))
         actual_lag_1 = df[df['product_id'] == 'B']['quantity_lag_1'].tolist()
-        self.assertEqual(actual_lag_1, expected_lag_1)
+        npt.assert_array_almost_equal(actual_lag_1, expected_lag_1, decimal=7)
 
-        expected_lag_5 = [0, 0, 0, 0, 0] + list(range(1, 26))
+        expected_lag_5 = [np.nan] * 5 + list(map(float, range(1, 26)))
         actual_lag_5 = df[df['product_id'] == 'B']['quantity_lag_5'].tolist()
-        self.assertEqual(actual_lag_5, expected_lag_5)
+        npt.assert_array_almost_equal(actual_lag_5, expected_lag_5, decimal=7)
 
-        expected_lag_10 = [0] * 10 + list(range(1, 21))
+        expected_lag_10 = [np.nan] * 10 + list(map(float, range(1, 21)))
         actual_lag_10 = df[df['product_id'] == 'B']['quantity_lag_10'].tolist()
-        self.assertEqual(actual_lag_10, expected_lag_10)
+        npt.assert_array_almost_equal(actual_lag_10, expected_lag_10, decimal=7)
 
-        expected_lag_15 = [0] * 15 + list(range(1, 16))
+        expected_lag_15 = [np.nan] * 15 + list(map(float, range(1, 16)))
         actual_lag_15 = df[df['product_id'] == 'B']['quantity_lag_15'].tolist()
-        self.assertEqual(actual_lag_15, expected_lag_15)
+        npt.assert_array_almost_equal(actual_lag_15, expected_lag_15, decimal=7)
 
-        expected_lag_30 = [0] * 30
+        expected_lag_30 = [np.nan] * 30
         actual_lag_30 = df[df['product_id'] == 'B']['quantity_lag_30'].tolist()
-        self.assertEqual(actual_lag_30, expected_lag_30)
+        npt.assert_array_almost_equal(actual_lag_30, expected_lag_30, decimal=7)
 
         # Invoke method from the class
         df = self.layer.create_time_series_features(self.data, 'quantity', [7, 30])

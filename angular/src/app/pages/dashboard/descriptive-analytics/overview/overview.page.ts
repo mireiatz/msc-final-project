@@ -37,6 +37,8 @@ export class OverviewPage implements OnDestroy {
   }
 
   public getOverviewMetrics() {
+    this.isLoading = true;
+    
     this.apiService.getOverviewMetrics({
       body: {
         start_date: this.startDate,

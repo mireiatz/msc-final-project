@@ -20,7 +20,7 @@ if __name__ == "__main__":
 
     # Get the arguments
     parser = argparse.ArgumentParser(description='Run historical preprocessing pipeline')
-    parser.add_argument('--data_path', required=True, help='Path to the data (file or directory)')
+    parser.add_argument('--data_path', required=False, help='Path to the data (file or directory)')
     parser.add_argument('--output_path', required=False, help='Path to store the preprocessed data')
     parser.add_argument('--data_type', required=True, choices=['weekly', 'daily'], help='Type of data (weekly or daily)')
 

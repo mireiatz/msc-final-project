@@ -1,5 +1,5 @@
 from ml.preprocessing.prediction_data_preprocessing_pipeline import PredictionDataPreprocessingPipeline
-from ml.modeling.demand_predictor import DemandPredictor
+from ml.modeling.predictor import Predictor
 from flask import Flask, request, jsonify
 from logging_config import setup_logging, logging
 from app_config import app_config
@@ -72,10 +72,9 @@ def export_sales_data():
 
                 return jsonify({"status": f"Preprocessing started for {data_type} data"}), 200
             else:
-                return jsonify({"status": "Invalid data type"}), 400
+                return jsonify({"status": "Invalid data format, must be 'weekly' or 'daily'"}), 400
         else:
-            return jsonify({"status": "Warning, no data processed, use data type historical"}), 200
-            pass
+            return jsonify({"error": "Invalid data type, must be 'historical'"}), 400
 
         return jsonify({"status": "Success, data processed"}), 200
 
@@ -104,7 +103,7 @@ def predict_demand():
         prediction_data = preprocessed_data.drop(columns=['source_product_id', 'date'])
 
         # Run the predictor
-        predictions_df = DemandPredictor().run(prediction_data, source_product_ids, dates)
+        predictions_df = Predictor().run_live_predictions(prediction_data, source_product_ids, dates)
 
         # Send predictions back
         return jsonify({
@@ -115,7 +114,6 @@ def predict_demand():
     except Exception as e:
         logging.error(f"Error: {e}")
         return jsonify({'error': str(e)}), 500
-
 
 if __name__ == "__main__":
     setup_logging()

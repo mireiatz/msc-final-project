@@ -38,18 +38,20 @@ class ReorderService implements ReorderInterface
             $safetyStock = $this->calculateSafetyStock($maxDailyDemand, $avgDailyDemand, $leadDays);
             $reorderSuggestion = $this->calculateReorderSuggestion($predictedDemand, $safetyStock, $stockBalance);
 
-            $reorderSuggestions[] = [
-                'product_id' => $product->id,
-                'product_name' => $product->name,
-                'unit' => $product->unit,
-                'amount_per_unit' => $product->amount_per_unit,
-                'stock_balance' => $stockBalance,
-                'predicted_demand' => $predictedDemand,
-                'safety_stock' => $safetyStock,
-                'reorder_amount' => $reorderSuggestion,
-                'cost_per_unit' => round(($product->cost / 100), 2),
-                'total_cost' => round((($product->cost / 100) * $reorderSuggestion), 2),
-            ];
+            if($reorderSuggestion > 0) { // Do not include suggestions of 0
+                $reorderSuggestions[] = [
+                    'product_id' => $product->id,
+                    'product_name' => $product->name,
+                    'unit' => $product->unit,
+                    'amount_per_unit' => $product->amount_per_unit,
+                    'stock_balance' => $stockBalance,
+                    'predicted_demand' => $predictedDemand,
+                    'safety_stock' => $safetyStock,
+                    'reorder_amount' => $reorderSuggestion,
+                    'cost_per_unit' => round(($product->cost / 100), 2),
+                    'total_cost' => round((($product->cost / 100) * $reorderSuggestion), 2),
+                ];
+            }
         }
 
         return $reorderSuggestions;
