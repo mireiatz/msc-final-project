@@ -5,12 +5,12 @@ import { HttpErrorResponse } from "@angular/common/http";
 import { ItemDemand } from "../../../../shared/services/api/models/item-demand";
 
 @Component({
-  selector: 'page-overview-demand-forecast',
-  templateUrl: './overview-demand-forecast.page.html',
-  styleUrls: ['./overview-demand-forecast.page.scss'],
+  selector: 'page-category-level-demand-forecast',
+  templateUrl: './category-level-demand-forecast.page.html',
+  styleUrls: ['./category-level-demand-forecast.page.scss'],
 })
 
-export class OverviewDemandForecastPage implements OnDestroy {
+export class CategoryLevelDemandForecastPage implements OnDestroy {
 
   public onDestroy: Subject<void> = new Subject();
   public isLoading: boolean = true;
@@ -32,7 +32,7 @@ export class OverviewDemandForecastPage implements OnDestroy {
   public getDemandForecast() {
     this.isLoading = true;
 
-    this.apiService.getOverviewDemandForecast().pipe(
+    this.apiService.getCategoryLevelDemandForecast().pipe(
       take(1),
       finalize(() => this.isLoading = false),
     ).subscribe({

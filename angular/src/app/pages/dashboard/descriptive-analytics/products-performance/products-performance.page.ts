@@ -5,6 +5,7 @@ import { ApiService } from "../../../../shared/services/api/services/api.service
 import { ProductDetailedMetrics } from "../../../../shared/services/api/models/product-detailed-metrics";
 import { ModalService } from "../../../../shared/services/modal/modal.service";
 import { ProductPerformanceModalComponent } from "../modals/product-performance-modal/product-performance-modal.component";
+import { Option } from "../../../../shared/interfaces";
 
 @Component({
 	selector: 'page-products-performance',
@@ -21,9 +22,10 @@ export class ProductsPerformancePage implements OnDestroy {
   public errors: string[] = [];
   public startDate: string = '';
   public endDate: string = '';
+  public categoryId: string | undefined = '';
+  public categoryOptions: Option[] = [];
 
   public columns = [
-    { header: 'Category', field: 'category' },
     { header: 'Product', field: 'name' },
     { header: 'Provider', field: 'provider' },
     { header: 'Price', field: 'sale' },
@@ -45,16 +47,53 @@ export class ProductsPerformancePage implements OnDestroy {
   constructor(
     protected apiService: ApiService,
     protected modalService: ModalService,
-  ) {}
+  ) {
+    this.fetchCategories();
+  }
 
   public ngOnDestroy(): void {
     this.onDestroy.next();
   }
 
+  public onCategorySelection(selectedCategory: any) {
+    this.categoryId = selectedCategory;
+    this.getProductsMetrics(this.page);
+  }
+
+  public fetchCategories() {
+    this.apiService.getCategories().pipe(
+      take(1),
+      finalize(() => this.isLoading = false),
+    ).subscribe({
+        next: response => {
+          if(!response.data) return;
+
+          this.categoryOptions = response.data.map(category => ({
+            id: category.id,
+            name: category.name
+          }));
+
+          if(this.categoryOptions) {
+            this.onCategorySelection(this.categoryOptions[0].id)
+            this.getProductsMetrics(this.page);
+          }
+        },
+        error: (error: HttpErrorResponse) => {
+          for (let errorList in error.error.errors) {
+            this.errors.push(error.error.errors[errorList].toString())
+          }
+        }
+      }
+    );
+  }
+
   public getProductsMetrics(page: number) {
+    if(!this.categoryId) return;
+
     this.isLoading = true;
 
     this.apiService.getProductsMetrics({
+      categoryId: this.categoryId,
       page: page,
       body: {
         start_date: this.startDate,

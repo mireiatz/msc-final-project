@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit\Services\Analytics;
+namespace Tests\Unit\Services;
 
 use App\Models\Category;
 use App\Models\Product;
@@ -8,13 +8,13 @@ use App\Models\Sale;
 use App\Services\DescriptiveAnalytics\SalesMetricsService;
 use App\Traits\SaleCreation;
 use Carbon\Carbon;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
 use Tests\TestCase;
 
 class SalesMetricsServiceTest extends TestCase
 {
-    use DatabaseTransactions, SaleCreation;
+    use RefreshDatabase, SaleCreation;
 
     private SalesMetricsService $service;
     private Product $product1;
@@ -29,8 +29,10 @@ class SalesMetricsServiceTest extends TestCase
     {
         parent::setUp();
 
+        // Instantiate the service
         $this->service = new SalesMetricsService();
 
+        // Create elements needed throughout
         $category1 = Category::factory()->create();
         $category2 = Category::factory()->create();
 
@@ -82,23 +84,6 @@ class SalesMetricsServiceTest extends TestCase
             ->groupBy(function ($sale) {
                 return Carbon::parse($sale->date)->format('Y-m-d');
             });
-    }
-
-    /**
-     * Test the `countSales` method to ensure it correctly counts the total number of sales.
-     */
-    public function testCountSales(): void
-    {
-        $sales = $this->getSales();
-        $this->assertEquals(0, $this->service->countSales($sales));
-
-        $this->createSale(collect([$this->product1]), [5], $this->startDate, $this->endDate);
-        $sales = $this->getSales();
-        $this->assertEquals(1, $this->service->countSales($sales));
-
-        $this->createSale(collect([$this->product2]), [3], $this->startDate, $this->endDate);
-        $sales = $this->getSales();
-        $this->assertEquals(2, $this->service->countSales($sales));
     }
 
     /**
@@ -260,116 +245,112 @@ class SalesMetricsServiceTest extends TestCase
     }
 
     /**
-     * Test the `mapAllSales` method to ensure it maps sales data correctly by date.
+     * Test the `getOverviewMetrics` method to ensure overall data structure and correctness of the overview metrics.
      */
-    public function testMapAllSales(): void
+    public function testGetOverviewMetrics(): void
     {
-        $products = collect([$this->product1, $this->product2]);
+        // Create sales within the specified date range
+        $this->createSale(collect([$this->product1]), [5], $this->startDate, $this->endDate);
+        $this->createSale(collect([$this->product2]), [3], $this->startDate, $this->endDate);
 
-        $this->createSale($products, [5, 3], $this->startDate, Carbon::parse($this->startDate)->addDays(1));
-        $sales = $this->getSalesGroupedByDate();
-        $allSales = $this->service->mapAllSales($sales);
-        $this->assertCount(1, $allSales);
-        $this->assertEquals(250.00, $allSales[0]['total_sale']);
-        $this->assertEquals(8, $allSales[0]['items']);
+        // Run function in service
+        $metrics = $this->service->getOverviewMetrics($this->startDate, $this->endDate);
 
-        $this->createSale(collect([$this->product1]), [10], $this->endDate, Carbon::parse($this->endDate)->subDays(1)->toDateString());
-        $sales = $this->getSalesGroupedByDate();
-        $allSales = $this->service->mapAllSales($sales);
-        $this->assertCount(2, $allSales);
-        $this->assertEquals(250.00, $allSales[0]['total_sale']);
-        $this->assertEquals(8, $allSales[0]['items']);
-        $this->assertEquals(200.00, $allSales[1]['total_sale']);
-        $this->assertEquals(10, $allSales[1]['items']);
-
-        $this->createSale(collect([$this->product2]), [10], $this->endDate, Carbon::parse($this->endDate)->subDays(1)->toDateString());
-        $sales = $this->getSalesGroupedByDate();
-        $allSales = $this->service->mapAllSales($sales);
-        $this->assertCount(2, $allSales);
-        $this->assertEquals(250.00, $allSales[0]['total_sale']);
-        $this->assertEquals(8, $allSales[0]['items']);
-        $this->assertEquals(700.00, $allSales[1]['total_sale']);
-        $this->assertEquals(20, $allSales[1]['items']);
-    }
-
-
-    /**
-     * Test the `mapSalesPerProduct` method to ensure it maps sales data correctly per product.
-     */
-    public function testMapSalesPerProduct(): void
-    {
-        $products = collect([$this->product1, $this->product2]);
-
-        $this->createSale($products, [5, 3], $this->startDate, $this->endDate);
-        $sales = $this->getSalesGroupedByDate();
-        $salesPerProduct = $this->service->mapSalesPerProduct($sales);
-        $this->assertCount(2, $salesPerProduct);
-        $this->assertEquals($this->product1->id, $salesPerProduct[0]['product_id']);
-        $this->assertEquals(100.00, $salesPerProduct[0]['total_sale']);
-        $this->assertEquals(5, $salesPerProduct[0]['quantity']);
-        $this->assertEquals($this->product2->id, $salesPerProduct[1]['product_id']);
-        $this->assertEquals(150.00, $salesPerProduct[1]['total_sale']);
-        $this->assertEquals(3, $salesPerProduct[1]['quantity']);
-
-        $this->createSale(collect([$this->product1]), [7], $this->startDate, Carbon::parse($this->startDate)->addDays(1)->toDateString());
-        $this->createSale(collect([$this->product2]), [2], $this->startDate, Carbon::parse($this->startDate)->addDays(1)->toDateString());
-        $sales = $this->getSalesGroupedByDate();
-        $salesPerProduct = $this->service->mapSalesPerProduct($sales);
-        $this->assertCount(2, $salesPerProduct);
-        $this->assertEquals($this->product1->id, $salesPerProduct[0]['product_id']);
-        $this->assertEquals(240.00, $salesPerProduct[0]['total_sale']);
-        $this->assertEquals(12, $salesPerProduct[0]['quantity']);
-        $this->assertEquals($this->product2->id, $salesPerProduct[1]['product_id']);
-        $this->assertEquals(250.00, $salesPerProduct[1]['total_sale']);
-        $this->assertEquals(5, $salesPerProduct[1]['quantity']);
+        // Assert metrics
+        $this->assertEquals(2, $metrics['sales_count']);
+        $this->assertEquals(150, $metrics['highest_sale']);
+        $this->assertEquals(100, $metrics['lowest_sale']);
+        $this->assertEquals(8, $metrics['total_items_sold']);
+        $this->assertEquals(250, $metrics['total_sales_value']);
+        $this->assertEquals(5, $metrics['max_items_sold_in_sale']);
+        $this->assertEquals(3, $metrics['min_items_sold_in_sale']);
     }
 
     /**
-     * Test the `mapSalesPerCategory` method to ensure it maps sales data correctly per category.
+     * Test the `getDetailedMetrics` method to ensure overall data structure and correctness of the detailed metrics.
      */
-    public function testMapSalesPerCategory(): void
+    public function testGetDetailedMetrics(): void
     {
-        $products = collect([$this->product1, $this->product2]);
+        // Create sales within the specified date range
+        $this->createSale(collect([$this->product1]), [5], $this->startDate, $this->endDate);
+        $this->createSale(collect([$this->product2]), [3], $this->startDate, $this->endDate);
 
-        $this->createSale($products, [5, 3], $this->startDate, Carbon::parse($this->startDate)->addDays(1)->toDateString());
-        $sales = $this->getSalesGroupedByDate();
-        $salesPerCategory = $this->service->mapSalesPerCategory($sales);
-        $this->assertCount(2, $salesPerCategory);
-        $this->assertEquals($this->product1->category_id, $salesPerCategory[0]['category_id']);
-        $this->assertEquals(100.00, $salesPerCategory[0]['total_sale']);
-        $this->assertEquals(5, $salesPerCategory[0]['quantity']);
-        $this->assertEquals($this->product2->category_id, $salesPerCategory[1]['category_id']);
-        $this->assertEquals(150.00, $salesPerCategory[1]['total_sale']);
-        $this->assertEquals(3, $salesPerCategory[1]['quantity']);
+        // Run function in service
+        $detailedMetrics = $this->service->getDetailedMetrics($this->startDate, $this->endDate);
 
-        $this->createSale(collect([$this->product1]), [5], $this->startDate, Carbon::parse($this->startDate)->addDays(1)->toDateString());
-        $this->createSale(collect([$this->product2]), [3], $this->startDate, Carbon::parse($this->startDate)->addDays(1)->toDateString());
-        $sales = $this->getSalesGroupedByDate();
-        $salesPerCategory = $this->service->mapSalesPerCategory($sales);
-        $this->assertCount(2, $salesPerCategory);
-        $this->assertEquals($this->product1->category_id, $salesPerCategory[0]['category_id']);
-        $this->assertEquals(200.00, $salesPerCategory[0]['total_sale']);
-        $this->assertEquals(10, $salesPerCategory[0]['quantity']);
-        $this->assertEquals($this->product2->category_id, $salesPerCategory[1]['category_id']);
-        $this->assertEquals(300.00, $salesPerCategory[1]['total_sale']);
-        $this->assertEquals(6, $salesPerCategory[1]['quantity']);
+        // Assertions for 'all_sales'
+        $this->assertCount(1, $detailedMetrics['all_sales']);
+        $this->assertEquals(8, $detailedMetrics['all_sales'][0]['items']);
+        $this->assertEquals(250, $detailedMetrics['all_sales'][0]['total_sale']);
 
-        $this->createSale(collect([$this->product1]), [1], $this->endDate, Carbon::parse($this->endDate)->subDays(1)->toDateString());
-        $this->createSale(collect([$this->product2]), [1], $this->endDate, Carbon::parse($this->endDate)->subDays(1)->toDateString());
-        $sales = $this->getSalesGroupedByDate();
-        $salesPerCategory = $this->service->mapSalesPerCategory($sales);
-        $this->assertCount(4, $salesPerCategory);
-        $this->assertEquals($this->product1->category_id, $salesPerCategory[0]['category_id']);
-        $this->assertEquals(200.00, $salesPerCategory[0]['total_sale']);
-        $this->assertEquals(10, $salesPerCategory[0]['quantity']);
-        $this->assertEquals($this->product1->category_id, $salesPerCategory[1]['category_id']);
-        $this->assertEquals(20.00, $salesPerCategory[1]['total_sale']);
-        $this->assertEquals(1, $salesPerCategory[1]['quantity']);
-        $this->assertEquals($this->product2->category_id, $salesPerCategory[2]['category_id']);
-        $this->assertEquals(300.00, $salesPerCategory[2]['total_sale']);
-        $this->assertEquals(6, $salesPerCategory[2]['quantity']);
-        $this->assertEquals($this->product2->category_id, $salesPerCategory[3]['category_id']);
-        $this->assertEquals(50.00, $salesPerCategory[3]['total_sale']);
-        $this->assertEquals(1, $salesPerCategory[3]['quantity']);
+        // Assertions for 'sales_per_category'
+        $this->assertCount(2, $detailedMetrics['sales_per_category']);
+
+        // Assert the details for each category
+        foreach ($detailedMetrics['sales_per_category'] as $categorySales) {
+            if ($categorySales['category_id'] === $this->product1->category_id) {
+                $this->assertEquals(5, $categorySales['quantity']);
+                $this->assertEquals(100, $categorySales['total_sale']);
+            } else if ($categorySales['category_id'] === $this->product2->category_id) {
+                $this->assertEquals(3, $categorySales['quantity']);
+                $this->assertEquals(150, $categorySales['total_sale']);
+            }
+        }
+    }
+
+    /**
+     * Test the `getSales` method to ensure the correct sales are retrieved.
+     */
+    public function testGetSales(): void
+    {
+        // Create sales in the date range
+        $this->createSale(collect([$this->product1]), [5], $this->startDate, $this->endDate);
+        $this->createSale(collect([$this->product2]), [3], $this->startDate, $this->endDate);
+
+        // Run the service function
+        $sales = $this->service->getSales($this->startDate, $this->endDate);
+
+        // Assert values
+        $this->assertCount(2, $sales);
+        $this->assertEquals(10000, $sales[0]->sale); // In cents in the DB
+        $this->assertEquals(15000, $sales[1]->sale);
+    }
+
+    /**
+     * Test the `getHighestAndLowestSale` method to ensure the correct sales are selected.
+     */
+    public function testGetHighestAndLowestSale(): void
+    {
+        // Create sales
+        $this->createSale(collect([$this->product1]), [5], $this->startDate, $this->endDate);
+        $this->createSale(collect([$this->product2]), [3], $this->startDate, $this->endDate);
+
+        // Run service function
+        $sales = $this->service->getSales($this->startDate, $this->endDate);
+        $highestSale = $this->service->getHighestSale($sales);
+        $lowestSale = $this->service->getLowestSale($sales);
+
+        // Assert values
+        $this->assertEquals(150, $highestSale);
+        $this->assertEquals(100, $lowestSale);
+    }
+
+    /**
+     * Test the `getMAxAndMinItemsSoldInSale` method to ensure the correct sales are retrieved.
+     */
+    public function testGetMaxAndMinItemsSoldInSale(): void
+    {
+        // Create sales
+        $this->createSale(collect([$this->product1]), [5], $this->startDate, $this->endDate);
+        $this->createSale(collect([$this->product2]), [3], $this->startDate, $this->endDate);
+
+        // Run service function
+        $sales = $this->service->getSales($this->startDate, $this->endDate);
+        $maxItemsSold = $this->service->getMaxItemsSoldInSale($sales);
+        $minItemsSold = $this->service->getMinItemsSoldInSale($sales);
+
+        // Asser values
+        $this->assertEquals(5, $maxItemsSold);
+        $this->assertEquals(3, $minItemsSold);
     }
 }

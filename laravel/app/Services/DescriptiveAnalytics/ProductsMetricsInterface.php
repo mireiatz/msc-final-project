@@ -1,6 +1,7 @@
 <?php
 namespace App\Services\DescriptiveAnalytics;
 
+use App\Models\Category;
 use App\Models\Product;
 
 interface ProductsMetricsInterface
@@ -19,9 +20,10 @@ interface ProductsMetricsInterface
      *
      * @param string $startDate
      * @param string $endDate
+     * @param Category $category
      * @return array
      */
-    public function getDetailedMetrics(string $startDate, string $endDate): array;
+    public function getDetailedMetrics(Category $category, string $startDate, string $endDate): array;
 
     /**
      * Get metrics for a specific product for the specified date range.

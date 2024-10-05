@@ -44,7 +44,7 @@ class MLServiceClient implements MLServiceClientInterface
     {
         try {
             // Execute the request
-            $response =  $http->$method($this->baseUri . $endpoint, $data);
+            $response =  $http->$method($this->baseUri . $endpoint, $data)->throw();;
 
             return $response->json();
 

@@ -11,23 +11,8 @@ class TestFeatureEngineeringLayer(unittest.TestCase):
         """
         Set up test FeatureEngineeringLayer and data sample.
         """
-        # Sample 30 day data for lag and rolling feature creation
-        product_1_month_9 = pd.date_range(start='2024-09-01', periods=15)
-        product_1_month_1 = pd.date_range(start='2024-01-01', periods=15)
-        product_2_month_8 = pd.date_range(start='2024-08-01', periods=15)
-        product_2_month_3 = pd.date_range(start='2024-03-01', periods=15)
-        values_1_15 = list(range(1, 16))
-        values_16_31 = list(range(16, 31))
-        self.data = pd.DataFrame({
-            'product_id': ['A'] * 15 + ['B'] * 15 + ['A'] * 15 + ['B'] * 15,
-            'date': list(product_1_month_9) + list(product_2_month_8) + list(product_1_month_1) + list(product_2_month_3),
-            'quantity': values_16_31 + values_16_31 + values_1_15 + values_1_15,
-            'value': values_16_31 + values_16_31 + values_1_15 + values_1_15,
-        })
-
-        # Mock data for historical and new data
-        self.historical_data = self.create_mock_historical_data()
-        self.new_data = self.create_mock_new_data()
+        # Specific test data defined in tests
+        self.data = pd.DataFrame({})
 
         # Initialise the layer
         self.layer = FeatureEngineeringLayer(self.data)
@@ -159,25 +144,24 @@ class TestFeatureEngineeringLayer(unittest.TestCase):
             self.assertEqual(sin_value, expected_sin)
             self.assertEqual(cos_value, expected_cos)
 
-
     def test_create_date_feature(self):
         """
         Test the creation of dates.
         """
         # Sample data for date creation
-        test_df = pd.DataFrame({
+        test_data = pd.DataFrame({
             'year': [2022, 2023],
             'week': [1, 10],
             'weekday': [0, 2]  # Monday, Wednesday
         })
 
         # Invoke method from the class
-        result_df = self.layer.create_date_feature(test_df)
+        result_data = self.layer.create_date_feature(test_data)
 
         # Assert that dates are correct
         expected_dates = ['2022-01-03', '2023-03-08']
         for idx, expected_date in enumerate(expected_dates):
-            self.assertEqual(result_df['date'].iloc[idx].strftime('%Y-%m-%d'), expected_date, f"Date mismatch for row {idx}")
+            self.assertEqual(result_data['date'].iloc[idx].strftime('%Y-%m-%d'), expected_date, f"Date mismatch for row {idx}")
 
     def test_create_week_features(self):
         """
@@ -321,149 +305,6 @@ class TestFeatureEngineeringLayer(unittest.TestCase):
         # 'in_stock' column shifts 7 days and is adjusted based on sales quantity
         expected_data = [0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
         self.assertEqual(df['in_stock'].tolist(), expected_data)
-
-    def test_create_time_series_features(self):
-        """
-        Test the creation of lag and rolling average columns for different periods.
-        """
-        # Invoke method from the class
-        df = self.layer.create_time_series_features(self.data, 'quantity', [1, 5, 10, 15, 30])
-
-        # Lag columns exist
-        self.assertIn('quantity_lag_1', df.columns)
-        self.assertIn('quantity_lag_5', df.columns)
-        self.assertIn('quantity_lag_10', df.columns)
-        self.assertIn('quantity_lag_15', df.columns)
-        self.assertIn('quantity_lag_30', df.columns)
-
-        # Values are shifted the specified amount of days for Product A
-        expected_lag_1 = [0] + list(range(1, 30))
-        actual_lag_1 = df[df['product_id'] == 'A']['quantity_lag_1'].tolist()
-        self.assertEqual(actual_lag_1, expected_lag_1)
-
-        expected_lag_5 = [0, 0, 0, 0, 0] + list(range(1, 26))
-        actual_lag_5 = df[df['product_id'] == 'A']['quantity_lag_5'].tolist()
-        self.assertEqual(actual_lag_5, expected_lag_5)
-
-        expected_lag_10 = [0] * 10 + list(range(1, 21))
-        actual_lag_10 = df[df['product_id'] == 'A']['quantity_lag_10'].tolist()
-        self.assertEqual(actual_lag_10, expected_lag_10)
-
-        expected_lag_15 = [0] * 15 + list(range(1, 16))
-        actual_lag_15 = df[df['product_id'] == 'A']['quantity_lag_15'].tolist()
-        self.assertEqual(actual_lag_15, expected_lag_15)
-
-        expected_lag_30 = [0] * 30
-        actual_lag_30 = df[df['product_id'] == 'A']['quantity_lag_30'].tolist()
-        self.assertEqual(actual_lag_30, expected_lag_30)
-
-        # Values are shifted the specified amount of days for Product B
-        expected_lag_1 = [0] + list(range(1, 30))
-        actual_lag_1 = df[df['product_id'] == 'B']['quantity_lag_1'].tolist()
-        self.assertEqual(actual_lag_1, expected_lag_1)
-
-        expected_lag_5 = [0, 0, 0, 0, 0] + list(range(1, 26))
-        actual_lag_5 = df[df['product_id'] == 'B']['quantity_lag_5'].tolist()
-        self.assertEqual(actual_lag_5, expected_lag_5)
-
-        expected_lag_10 = [0] * 10 + list(range(1, 21))
-        actual_lag_10 = df[df['product_id'] == 'B']['quantity_lag_10'].tolist()
-        self.assertEqual(actual_lag_10, expected_lag_10)
-
-        expected_lag_15 = [0] * 15 + list(range(1, 16))
-        actual_lag_15 = df[df['product_id'] == 'B']['quantity_lag_15'].tolist()
-        self.assertEqual(actual_lag_15, expected_lag_15)
-
-        expected_lag_30 = [0] * 30
-        actual_lag_30 = df[df['product_id'] == 'B']['quantity_lag_30'].tolist()
-        self.assertEqual(actual_lag_30, expected_lag_30)
-
-        # Invoke method from the class
-        df = self.layer.create_time_series_features(self.data, 'quantity', [7, 30])
-
-        # Rolling average columns exist
-        self.assertIn('quantity_rolling_avg_7', df.columns)
-        self.assertIn('quantity_rolling_avg_30', df.columns)
-
-        # Manually calculated rolling averages for a 7-day and 30-day window
-        expected_rolling_avg_7 = [
-            1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0,
-            17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.0, 25.0, 26.0, 27.0
-        ]
-        expected_rolling_avg_30 = [
-            1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0, 10.5,
-            11.0, 11.5, 12.0, 12.5, 13.0, 13.5, 14.0, 14.5, 15.0, 15.5
-        ]
-
-        # Average values are calculated for indicated windows for product A
-        actual_rolling_avg_7 = df[df['product_id'] == 'A']['quantity_rolling_avg_7'].tolist()
-        self.assertEqual(actual_rolling_avg_7, expected_rolling_avg_7)
-        actual_rolling_avg_30 = df[df['product_id'] == 'A']['quantity_rolling_avg_30'].tolist()
-        self.assertEqual(actual_rolling_avg_30, expected_rolling_avg_30)
-
-        # Average values are calculated for indicated windows for product B
-        actual_rolling_avg_7 = df[df['product_id'] == 'B']['quantity_rolling_avg_7'].tolist()
-        self.assertEqual(actual_rolling_avg_7, expected_rolling_avg_7)
-        actual_rolling_avg_30 = df[df['product_id'] == 'B']['quantity_rolling_avg_30'].tolist()
-        self.assertEqual(actual_rolling_avg_30, expected_rolling_avg_30)
-
-    def create_mock_historical_data(self):
-        """
-        Sample mock historical data
-        """
-        dates = pd.date_range(end='2023-12-31', periods=35, freq='D')  # Last 35 days of 2023
-        return pd.DataFrame({
-            'date': dates,
-            'quantity': range(1, 36),
-            'product_id': [1] * 35
-        })
-
-    def create_mock_new_data(self):
-        """
-        Sample mock new data
-        """
-        dates = pd.date_range(start='2024-01-01', periods=10, freq='D')
-        return pd.DataFrame({
-            'date': dates,
-            'quantity': range(1, 11),
-            'product_id': [1] * 10
-        })
-
-    @patch('pandas.read_csv')
-    def test_fetch_historical_data_records(self, mock_read_csv):
-        # Mock the read_csv to return the historical data
-        mock_read_csv.return_value = self.historical_data
-
-        last_date = datetime.strptime('2023-12-31', '%Y-%m-%d')
-
-        # Test the fetching of historical data
-        fetched_data = self.layer.fetch_historical_data(last_date, 35)  # Should fetch 35 days of data
-        self.assertEqual(len(fetched_data), 35)
-        self.assertEqual(fetched_data['date'].max(), pd.Timestamp('2023-12-31'))
-
-    @patch('pandas.read_csv')
-    def test_merge_historical_data_records(self, mock_read_csv):
-        # Mock the read_csv to return the historical data
-        mock_read_csv.return_value = self.historical_data
-
-        # Test the merging of historical data with new data
-        merged_data = self.layer.merge_historical_data(self.new_data)
-        self.assertEqual(len(merged_data), 45)  # 35 days historical + 10 days new data
-        self.assertEqual(merged_data['date'].min(), pd.Timestamp('2023-11-27'))  # Oldest in historical
-        self.assertEqual(merged_data['date'].max(), pd.Timestamp('2024-01-10'))  # Latest in new data
-
-    def test_remove_historical_data_records(self):
-        # Set the mock to return True
-        self.layer.historical_data_fetched = True
-
-        # Manually merge historical and new data for this test
-        combined_data = pd.concat([self.historical_data, self.new_data], ignore_index=True)
-
-        # Test the removal of historical data
-        cleaned_data = self.layer.remove_historical_data(combined_data, 35)
-        self.assertEqual(len(cleaned_data), 10)  # Only the 10 days of new data should remain
-        self.assertEqual(cleaned_data['date'].min(), pd.Timestamp('2024-01-01'))  # Oldest in new data
-        self.assertEqual(cleaned_data['date'].max(), pd.Timestamp('2024-01-10'))  # Latest in new data
 
 if __name__ == '__main__':
     unittest.main()

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\DateRangeRequest;
 use App\Http\Responses\JsonResponse as Json;
+use App\Models\Category;
 use App\Models\Product;
 use App\Services\DescriptiveAnalytics\OverviewMetricsInterface;
 use App\Services\DescriptiveAnalytics\ProductsMetricsInterface;
@@ -36,18 +37,6 @@ class DescriptiveAnalyticsController extends Controller
     }
 
     /**
-     * Get stock metrics.
-     *
-     * @return JsonResponse
-     */
-    public function getStockMetrics(): JsonResponse
-    {
-        $metrics = $this->stockMetricsInterface->getDetailedMetrics();
-
-        return Json::success($metrics);
-    }
-
-    /**
      * Get sales metrics for the specified date range.
      *
      * @param DateRangeRequest $request
@@ -65,13 +54,14 @@ class DescriptiveAnalyticsController extends Controller
      * Get products metrics for the specified date range.
      *
      * @param DateRangeRequest $request
+     * @param Category $category
      * @return JsonResponse
      */
-    public function getProductsMetrics(DateRangeRequest $request): JsonResponse
+    public function getCategoryProductsMetrics(DateRangeRequest $request, Category $category): JsonResponse
     {
         $data = $request->validated();
 
-        $metrics = $this->productsMetricsInterface->getDetailedMetrics($data['start_date'], $data['end_date']);
+        $metrics = $this->productsMetricsInterface->getDetailedMetrics($category, $data['start_date'], $data['end_date']);
 
         return Json::paginate($metrics);
     }
@@ -88,6 +78,19 @@ class DescriptiveAnalyticsController extends Controller
         $data = $request->validated();
 
         $metrics = $this->productsMetricsInterface->getProductSpecificMetrics($product, $data['start_date'], $data['end_date']);
+
+        return Json::success($metrics);
+    }
+
+    /**
+     * Get stock metrics.
+     *
+     * @param Category $category
+     * @return JsonResponse
+     */
+    public function getCategoryStockMetrics(Category $category): JsonResponse
+    {
+        $metrics = $this->stockMetricsInterface->getDetailedMetrics($category);
 
         return Json::success($metrics);
     }

@@ -1,6 +1,8 @@
 <?php
 namespace App\Services\DescriptiveAnalytics;
 
+use App\Models\Category;
+
 interface StockMetricsInterface
 {
     /**
@@ -11,9 +13,10 @@ interface StockMetricsInterface
     public function getOverviewMetrics(): array;
 
     /**
-     * Get detailed stock metrics.
+     * Get detailed stock metrics for a category.
      *
+     * @param Category $category
      * @return array
      */
-    public function getDetailedMetrics(): array;
+    public function getDetailedMetrics(Category $category): array;
 }

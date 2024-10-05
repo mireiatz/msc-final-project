@@ -36,15 +36,10 @@ trait OrderCreation
                 'currency' => $product->currency,
             ]);
 
-            $order->inventoryTransactions()->create([
-                'store_id' => $order->store_id,
-                'product_id' => $product->id,
-                'date' => $order->date,
-                'quantity' => $quantity,
-                'stock_balance' => $product->stock_balance + $quantity,
-            ]);
+            // Inventory transactions are created in an event hook in the model
 
             $total_cost += $totalCost;
+            $product->update(['stock_balance' => $product->stock_balance + $quantity]);
         });
 
         $order->update([

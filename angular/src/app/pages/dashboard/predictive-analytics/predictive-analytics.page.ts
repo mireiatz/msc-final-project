@@ -12,9 +12,9 @@ export class PredictiveAnalyticsPage implements OnDestroy {
   public onDestroy: Subject<void> = new Subject();
   public tabs = [
     {
-      label: 'Overview',
-      route: 'overview',
-      key: 'overview',
+      label: 'Category-level',
+      route: 'category-level',
+      key: 'category-level',
     },
     {
       label: 'Product-level',
