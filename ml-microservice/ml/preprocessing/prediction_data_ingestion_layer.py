@@ -4,8 +4,9 @@ import pandas as pd
 
 class PredictionDataIngestionLayer:
 
-    def __init__(self, data):
-        self.data = data
+    def __init__(self, historical_data, prediction_dates):
+        self.historical_data = historical_data
+        self.prediction_dates = prediction_dates
 
     def process(self):
         """
@@ -13,61 +14,29 @@ class PredictionDataIngestionLayer:
         """
         logging.info("Starting ingestion of prediction data process...")
 
-        # Prepare the dictionaries
-        prediction_data = {
-            'source_product_id': [],
-            'product_name': [],
-            'category': [],
-            'per_item_value': [],
-            'in_stock': [],
-            'date': []
-        }
+        prediction_data = []
 
-        historical_data = {
-            'source_product_id': [],
-            'product_name': [],
-            'category': [],
-            'per_item_value': [],
-            'in_stock': [],
-            'date': [],
-            'quantity': []  # Historical sales include quantity
-        }
+        # Get a record per product from the historical sales
+        products = self.historical_data[['source_product_id', 'product_name', 'category', 'per_item_value', 'in_stock']].drop_duplicates()
 
-        # Extract prediction dates
-        prediction_dates = self.data['prediction_dates']
+        # For each unique product, append the prediction dates
+        for _, product in products.iterrows():
+            for date in self.prediction_dates:
+                prediction_data.append({
+                    'source_product_id': product['source_product_id'],
+                    'product_name': product['product_name'],
+                    'category': product['category'],
+                    'per_item_value': product['per_item_value'],
+                    'in_stock': product['in_stock'],
+                    'date': date,
+                    'quantity': None  # No sales data for future prediction dates
+                })
 
-        # Loop through each product
-        products = self.data['products']
-        for product in products:
-            # Extract product details and historical sales for each product
-            product_info = product['details']
-            historical_sales = product['historical_sales']
-
-            # Collect historical sales data for each product
-            for sale in historical_sales:
-                historical_data['source_product_id'].append(product_info['source_product_id'])
-                historical_data['product_name'].append(product_info['product_name'])
-                historical_data['category'].append(product_info['category'])
-                historical_data['per_item_value'].append(product_info['per_item_value'])
-                historical_data['in_stock'].append(product_info['in_stock'])
-                historical_data['date'].append(sale['date'])  # Historical sales date
-                historical_data['quantity'].append(sale['quantity'])  # Historical sales quantity
-
-            # Collect prediction data for each product using the prediction dates
-            for date in prediction_dates:
-                prediction_data['source_product_id'].append(product_info['source_product_id'])
-                prediction_data['product_name'].append(product_info['product_name'])
-                prediction_data['category'].append(product_info['category'])
-                prediction_data['per_item_value'].append(product_info['per_item_value'])
-                prediction_data['in_stock'].append(product_info['in_stock'])
-                prediction_data['date'].append(date)  # Future prediction date
-
-        # Convert dictionaries to DataFrames
+        # Convert the prediction data to a DataFrame
         df_prediction = pd.DataFrame(prediction_data)
-        df_historical = pd.DataFrame(historical_data)
 
-        # Combine both DataFrames
-        df = pd.concat([df_historical, df_prediction], ignore_index=True)
+        # Combine historical and prediction data into a DataFrames
+        df = pd.concat([self.historical_data, df_prediction], ignore_index=True)
 
         logging.info("Ingestion completed")
 

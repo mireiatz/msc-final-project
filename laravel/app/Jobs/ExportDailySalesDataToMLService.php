@@ -14,29 +14,22 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
-class ExportSalesDataToMLService implements ShouldQueue
+class ExportDailySalesDataToMLService implements ShouldQueue
 {
 
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected string $dataType;
-    protected string $dataFormat;
     protected ?string $startDate;
     protected ?string $endDate;
 
-    /**
-     * Create a new job instance.
-     */
-    public function __construct(string $dataType, string $dataFormat, ?string $startDate, ?string $endDate)
+    public function __construct(?string $startDate, ?string $endDate)
     {
-        $this->dataType = $dataType;
-        $this->dataFormat = $dataFormat;
         $this->startDate = $startDate;
         $this->endDate = $endDate;
     }
 
     /**
-     * Execute the job.
+     * Execute the job to export historical sales data (in daily format) to the ML microservice.
      *
      * @throws Exception
      */
@@ -44,19 +37,26 @@ class ExportSalesDataToMLService implements ShouldQueue
     {
         try {
             // Get the content for the CSV file
-            $csv = $this->createCsvContent();
+            $csvContent = $this->createCsvContent();
 
-            // Use the ML service client to export sales data
+            // Write the CSV content to a temporary file
+            $csvFilePath = tempnam(sys_get_temp_dir(), 'sales_data_') . '.csv';
+            file_put_contents($csvFilePath, $csvContent);
+
+            // Define the payload
             $payload = [
-                'file' => 'sales_data.csv',
-                'content' => $csv,
+                'file' => $csvFilePath, // The path to the file
                 'metadata' => [
-                    'type' => $this->dataType,
-                    'format' => $this->dataFormat,
+                    'type' => 'historical', // Only type currently
+                    'format' => 'daily', // To indicate the correct preprocessing approach
                 ]
             ];
 
+            // Use the ML Client to send the sales data to the ML microservice
             $response = $mlServiceClient->exportSalesData($payload);
+
+            // Clean up temporary file
+            unlink($csvFilePath);
 
             Log::info('ExportSalesDataToMLService job completed | Response: ', $response);
         } catch (Exception $e) {
@@ -68,11 +68,11 @@ class ExportSalesDataToMLService implements ShouldQueue
     /**
      * Create the content to be written into the CSV.
      *
-     * @throws Exception
+     * @return string
      */
     public function createCsvContent(): string
     {
-        // Get all products that are active
+        // Get all products that are active (sales in the last 3 months)
         $activeProducts = Product::whereHas('sales', function ($query) {
             $query->where('date', '>=', Carbon::now()->subMonths(3));
         })->get();
@@ -101,7 +101,7 @@ class ExportSalesDataToMLService implements ShouldQueue
 
         $csvContent = '';
 
-        // Write the CSV header
+        // CSV header
         $csvContent .= implode(',', [
                 'product_id',
                 'product_name',
@@ -112,7 +112,7 @@ class ExportSalesDataToMLService implements ShouldQueue
                 'date',
             ]) . "\n";
 
-        // Loop through active products and dates, filling in zero sales for missing products
+        // Loop through active products and dates
         $dates = generateDateRange($this->startDate, $this->endDate);
         foreach ($activeProducts as $product) {
             foreach ($dates as $date) {

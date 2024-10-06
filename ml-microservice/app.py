@@ -35,21 +35,22 @@ def run_in_background(script_name, *args):
 def export_sales_data():
     """
     Flask route to handle the preprocessing of historical data.
+    Expects a CSV file and metadata ('type' and 'format') in the request.
     """
-    # No file found in the request
+    # Check if a file was uploaded in the request
     if 'file' not in request.files:
         return jsonify({'error': 'No file uploaded'}), 400
 
-    # Get the details
+    # Retrieve the uploaded file from the request
     file = request.files['file']
     if file.filename == '':
         return jsonify({'error': 'No selected file'}), 400
 
-    # Save the file temporarily
+    # Save the file to a temporary location
     file_path = os.path.join('/tmp', file.filename)
     file.save(file_path)
 
-    # Retrieve and parse the JSON metadata from the form
+    # Retrieve and parse the metadata from the form
     metadata = request.form.get('metadata')
 
     if not metadata:
@@ -76,8 +77,6 @@ def export_sales_data():
         else:
             return jsonify({"error": "Invalid data type, must be 'historical'"}), 400
 
-        return jsonify({"status": "Success, data processed"}), 200
-
     except Exception as e:
         return jsonify({"error": f"Error processing data: {str(e)}"}), 500
 
@@ -85,31 +84,61 @@ def export_sales_data():
 def predict_demand():
     """
     Flask route to make predictions.
+    Expects a CSV file containing historical data and metadata ('prediction_dates') in the request.
     """
+    # Check if a file was uploaded in the request
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
+
+    # Retrieve the uploaded file from the request
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+
+    # Save the file to a temporary location
+    file_path = os.path.join('/tmp', file.filename)
+    file.save(file_path)
+
+    # Retrieve and parse the metadata from the form
+    metadata = request.form.get('metadata')
+
+    if not metadata:
+        return jsonify({'error': 'No metadata provided'}), 400
+
     try:
-        # Get the data
-        prediction_data = request.json
+        metadata = json.loads(metadata)  # Convert JSON string to dictionary
+    except json.JSONDecodeError:
+        return jsonify({'error': 'Invalid metadata format, must be valid JSON'}), 400
 
-        # Preprocess the data
-        preprocessed_data = PredictionDataPreprocessingPipeline(
-            data=prediction_data,
-        ).run()
+    try:
+        # Make sure it's the right data
+        if metadata.get('type') == 'prediction':
+            # Get the historical data from the file
+            historical_data = pd.read_csv(file_path)
 
-        # Make a copy of the IDs and dates in the preprocessed data
-        source_product_ids = preprocessed_data['source_product_id'].copy()
-        dates = preprocessed_data['date'].copy()
+            # Preprocess the data
+            preprocessed_data = PredictionDataPreprocessingPipeline(
+                historical_data=historical_data,
+                prediction_dates=metadata.get('prediction_dates') # Sent as metadata
+            ).run()
 
-        # Prepare data for prediction by removing unneeded columns
-        prediction_data = preprocessed_data.drop(columns=['source_product_id', 'date'])
+            # Make a copy of the IDs and dates in the preprocessed data
+            source_product_ids = preprocessed_data['source_product_id'].copy()
+            dates = preprocessed_data['date'].copy()
 
-        # Run the predictor
-        predictions_df = Predictor().run_live_predictions(prediction_data, source_product_ids, dates)
+            # Prepare data for prediction by removing unneeded columns
+            prediction_data = preprocessed_data.drop(columns=['source_product_id', 'date'])
 
-        # Send predictions back
-        return jsonify({
-            "status": "Success, demand predicted",
-            "predictions": predictions_df.to_json(orient='records')
-        }), 200
+            # Run the predictor
+            predictions_df = Predictor().run_live_predictions(prediction_data, source_product_ids, dates)
+
+            # Send predictions back
+            return jsonify({
+                "status": "Success, demand predicted",
+                "predictions": predictions_df.to_json(orient='records')
+            }), 200
+        else:
+            return jsonify({"error": "Invalid data type, must be 'historical'"}), 400
 
     except Exception as e:
         logging.error(f"Error: {e}")
