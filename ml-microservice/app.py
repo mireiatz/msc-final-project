@@ -113,30 +113,44 @@ def predict_demand():
     try:
         # Make sure it's the right data
         if metadata.get('type') == 'prediction':
+            # Check if prediction_dates are present in metadata
+            if not metadata.get('prediction_dates'):
+                return jsonify({'error': 'Missing prediction_dates in metadata'}), 400
+
             # Get the historical data from the file
             historical_data = pd.read_csv(file_path)
 
-            # Preprocess the data
-            preprocessed_data = PredictionDataPreprocessingPipeline(
-                historical_data=historical_data,
-                prediction_dates=metadata.get('prediction_dates') # Sent as metadata
-            ).run()
+            try:
+                # Preprocess the data
+                preprocessed_data = PredictionDataPreprocessingPipeline(
+                    historical_data=historical_data,
+                    prediction_dates=metadata.get('prediction_dates') # Sent as metadata
+                ).run()
 
-            # Make a copy of the IDs and dates in the preprocessed data
-            source_product_ids = preprocessed_data['source_product_id'].copy()
-            dates = preprocessed_data['date'].copy()
+                # Make a copy of the IDs and dates in the preprocessed data
+                source_product_ids = preprocessed_data['source_product_id'].copy()
+                dates = preprocessed_data['date'].copy()
 
-            # Prepare data for prediction by removing unneeded columns
-            prediction_data = preprocessed_data.drop(columns=['source_product_id', 'date'])
+                # Prepare data for prediction by removing unneeded columns
+                prediction_data = preprocessed_data.drop(columns=['source_product_id', 'date'])
 
-            # Run the predictor
-            predictions_df = Predictor().run_live_predictions(prediction_data, source_product_ids, dates)
+                # Run the predictor
+                predictions_df = Predictor().run_live_predictions(
+                    prediction_data,
+                    source_product_ids,
+                    dates
+                )
 
-            # Send predictions back
-            return jsonify({
-                "status": "Success, demand predicted",
-                "predictions": predictions_df.to_json(orient='records')
-            }), 200
+                # Send predictions back
+                return jsonify({
+                    "status": "Success, demand predicted",
+                    "predictions": predictions_df.to_json(orient='records')
+                }), 200
+
+            except Exception as e:
+                logging.error(f"an exception occurred during prediction. Error: {e}")
+                return jsonify({'error': str(e)}), 500
+
         else:
             return jsonify({"error": "Invalid data type, must be 'historical'"}), 400
 

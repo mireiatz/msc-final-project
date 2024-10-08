@@ -89,50 +89,33 @@ class TestApp(unittest.TestCase):
         # Mock the prediction result
         mock_predictor_run.return_value = pd.DataFrame({
             'product_id': ['A', 'B'],
-            'date': ['2023-01-01', '2023-01-02'],
+            'date': ['2023-01-03', '2023-01-04'],
             'value': [150, 250]
         })
 
-        # Make request
+        # Create the mock file and metadata
+        file_content = "source_product_id,date,quantity\nA,2023-01-01,100\nA,2023-01-02,200\nB,2023-01-01,150\nB,2023-01-02,250\n"
+        mock_file = (BytesIO(file_content.encode()), 'mock_file.csv')
+
+        # Metadata with prediction dates
+        metadata = json.dumps({
+            "type": "prediction",
+            "prediction_dates": ["2023-01-03", "2023-01-04"]
+        })
+
+        # Make request, sending file and metadata
         data = {
-            "prediction_dates": ["2023-01-03", "2023-01-04"],
-            "products": [
-                {
-                    "details": {
-                        "source_product_id": "A",
-                        "product_name": "Product A",
-                        "category": "cat1",
-                        "per_item_value": 100,
-                        "in_stock": 1,
-                    },
-                    "historical_sales": [
-                        {"date": "2023-01-01", "quantity": 100},
-                        {"date": "2023-01-02", "quantity": 200}
-                    ]
-                },
-                {
-                    "details": {
-                        "source_product_id": "B",
-                        "product_name": "Product B",
-                        "category": "cat2",
-                        "per_item_value": 200,
-                        "in_stock": 1,
-                    },
-                    "historical_sales": [
-                        {"date": "2023-01-01", "quantity": 150},
-                        {"date": "2023-01-02", "quantity": 250}
-                    ]
-                }
-            ]
+            'file': mock_file,
+            'metadata': metadata
         }
-        response = self.app.post('/predict-demand', json=data)
+        response = self.app.post('/predict-demand', data=data, content_type='multipart/form-data')
 
         # Check success and correct data in response
         self.assertEqual(response.status_code, 200)
         self.assertIn('Success, demand predicted', response.json['status'])
         predictions = json.loads(response.data)
         predictions_list = json.loads(predictions['predictions'])
-        self.assertEqual(len(predictions), 2)
+        self.assertEqual(len(predictions_list), 2)
         self.assertEqual(predictions_list[0]['value'], 150)
         self.assertEqual(predictions_list[1]['value'], 250)
 
@@ -144,7 +127,7 @@ class TestApp(unittest.TestCase):
         response = self.app.post('/predict-demand', data="invalid json")
 
         # Check error
-        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.status_code, 400)
         self.assertIn('error', response.json)
 
     def test_export_sales_data_invalid_data_type(self):
@@ -178,7 +161,7 @@ class TestApp(unittest.TestCase):
         response = self.app.post('/predict-demand', json=data)
 
         # Check error
-        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.status_code, 400)
         self.assertIn('error', response.json)
 
 if __name__ == '__main__':

@@ -29,7 +29,7 @@ RUN chown -R www-data:www-data /var/www
 RUN sed -i 's#/var/www/html#/var/www/public#' /etc/apache2/sites-available/000-default.conf
 
 # Add cron job to run Laravel scheduler every minute for testing
-RUN echo "* * * * * www-data php /var/www/artisan schedule:run >> /dev/null 2>&1" > /etc/cron.d/laravel_scheduler
+RUN echo "0 * * * * www-data php /var/www/artisan schedule:run >> /dev/null 2>&1" > /etc/cron.d/laravel_scheduler
 
 # Give execution rights to the cron job
 RUN chmod 0644 /etc/cron.d/laravel_scheduler

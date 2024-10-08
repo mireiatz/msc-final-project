@@ -5,8 +5,8 @@ import logging
 
 class Evaluator:
 
-    def __init__(self, target):
-        self.target = target
+    def __init__(self, target=None):
+        self.target = target or config.TARGET
 
     def calculate_metrics(self, y_test, predictions):
         """

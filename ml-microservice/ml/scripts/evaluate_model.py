@@ -13,7 +13,7 @@ def main(model_path, X_test, y_test):
         predictions = predictor.run_predictions_for_evaluation(X_test)
 
         # Evaluate the predictions
-        evaluator = Evaluator(target=config.TARGET)
+        evaluator = Evaluator()
         metrics = evaluator.run(y_test, predictions)
 
         logging.info(f"Evaluation completed for model {model_path}. Metrics below.")

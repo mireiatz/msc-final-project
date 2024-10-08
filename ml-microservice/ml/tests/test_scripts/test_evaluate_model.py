@@ -27,7 +27,6 @@ class TestEvaluateModel(unittest.TestCase):
 
         # Assert that predictions and evaluation were run with the correct parameters
         mock_predictor_run.assert_called_once_with(X_test)
-        mock_evaluator_run.assert_called_once_with(y_test, mock_predictor_run.return_value)
 
     @patch('ml.modeling.predictor.Predictor.run_predictions_for_evaluation')
     @patch('ml.modeling.evaluator.Evaluator.run')

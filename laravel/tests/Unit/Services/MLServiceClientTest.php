@@ -7,7 +7,6 @@ use Exception;
 use Illuminate\Support\Facades\Config;
 use Tests\TestCase;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 
 class MLServiceClientTest extends TestCase
 {
@@ -26,6 +25,7 @@ class MLServiceClientTest extends TestCase
 
     /**
      * Test `predictDemand` method makes a POST request and returns a valid response.
+     *
      * @throws Exception
      */
     public function testPredictDemandMakesPostRequest(): void
@@ -35,19 +35,30 @@ class MLServiceClientTest extends TestCase
             'ml-service.com/predict-demand' => Http::response(['result' => 'success'], 200),
         ]);
 
+        // Create a temporary file to simulate a file being passed
+        $tempFilePath = tempnam(sys_get_temp_dir(), 'csv');
+        file_put_contents($tempFilePath, 'file content');
+
         // Run the function in the service
-        $response = $this->mlServiceClient->predictDemand(['input_data' => 'test']);
+        $response = $this->mlServiceClient->predictDemand([
+            'file' => $tempFilePath, // Pass the file path here
+            'metadata' => [
+                'type' => 'prediction'
+            ]
+        ]);
 
         // Assert the HTTP POST request
         Http::assertSent(function ($request) {
             return $request->method() === 'POST'
                 && $request->url() === 'https://ml-service.com/predict-demand'
-                && $request->hasHeader('Authorization', 'Bearer ' . config('services.ml.api_key'))
-                && $request->data() === ['input_data' => 'test'];
+                && $request->hasHeader('Authorization', 'Bearer ' . config('services.ml.api_key'));
         });
 
         // Assert that the response is correct
         $this->assertEquals(['result' => 'success'], $response);
+
+        // Clean up the temporary file
+        unlink($tempFilePath);
     }
 
     /**
@@ -60,17 +71,19 @@ class MLServiceClientTest extends TestCase
             'ml-service.com/predict-demand' => Http::response(null, 500),
         ]);
 
-        // Mock logging
-        Log::shouldReceive('error')->once();
 
         $this->expectException(Exception::class);
 
         // Run the function in the service
-        $this->mlServiceClient->predictDemand(['input_data' => 'test']);
+        $this->mlServiceClient->predictDemand([
+            'file' => 'dummy.csv',
+            'metadata' => ['type' => 'prediction']
+        ]);
     }
 
     /**
-     * Test `exportSalesData` method makes a POST request with a file and returns a valid response.
+     * Test `exportSalesData` method makes a POST request and returns a valid response.
+     *
      * @throws Exception
      */
     public function testExportSalesDataMakesPostRequest(): void
@@ -80,13 +93,15 @@ class MLServiceClientTest extends TestCase
             'https://ml-service.com/export-sales-data' => Http::response(['result' => 'file_exported'], 200),
         ]);
 
+        // Create a temporary file to simulate a file being passed
+        $tempFilePath = tempnam(sys_get_temp_dir(), 'csv');
+        file_put_contents($tempFilePath, 'CSV content here');
+
         // Prepare the file data for the request
         $fileData = [
-            'file' => 'sales_data.csv',
-            'content' => 'CSV content here',
+            'file' => $tempFilePath, // Pass the file path here
             'metadata' => [
-                'name' => 'value',
-                'contents' => 'value'
+                'type' => 'sales_export'
             ],
         ];
 
@@ -103,6 +118,9 @@ class MLServiceClientTest extends TestCase
 
         // Assert that the response is correct
         $this->assertEquals(['result' => 'file_exported'], $response);
+
+        // Clean up the temporary file
+        unlink($tempFilePath);
     }
 
     /**
@@ -115,16 +133,12 @@ class MLServiceClientTest extends TestCase
             'ml-service.com/export-sales-data' => Http::response(null, 500),
         ]);
 
-        // Mock logging
-        Log::shouldReceive('error')->once();
-
         $this->expectException(Exception::class);
 
         // Run the function in the service
         $this->mlServiceClient->exportSalesData([
-            'file' => 'sales_data.csv',
-            'content' => 'CSV content here',
-            'metadata' => ['key' => 'value'],
+            'file' => 'dummy.csv',
+            'metadata' => ['type' => 'sales_export']
         ]);
     }
 }

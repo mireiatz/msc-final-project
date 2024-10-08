@@ -38,6 +38,8 @@ class RunDemandPredictionRequests implements ShouldQueue
      */
     public function handle(MLServiceClientInterface $mlServiceClient): void
     {
+        Log::info('Forecast demand started');
+
         try {
             // Get the content for the CSV file
             $csvContent = $this->generateCsvContent();
