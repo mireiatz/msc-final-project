@@ -5,35 +5,34 @@ import logging
 
 class Evaluator:
 
-    def __init__(self, target):
-        self.target = target
+    def __init__(self, target=None):
+        self.target = target or config.TARGET
 
-    def calculate_metrics(self, true_values, predictions):
+    def calculate_metrics(self, y_test, predictions):
         """
         Calculate standard regression metrics.
         """
-        mae = mean_absolute_error(true_values, predictions)
-        mse = mean_squared_error(true_values, predictions)
+        mae = mean_absolute_error(y_test, predictions)
+        mse = mean_squared_error(y_test, predictions)
         rmse = np.sqrt(mse)
-        r2 = r2_score(true_values, predictions)
+        r2 = r2_score(y_test, predictions)
 
-        return mae, mse, rmse, r2
+        return mae, rmse, r2
 
-    def run(self, true_values, predictions):
+    def run(self, y_test, predictions):
         """
         Run the evaluation.
         """
         logging.info("Evaluating predictions...")
 
-        pd.set_option('display.float_format', '{:.4f}'.format)
+        pd.set_option('display.float_format', '{:.4f}'.format)  # Cap the decimals
 
         # Calculate base metrics
-        mae, mse, rmse, r2 = self.calculate_metrics(true_values, predictions)
+        mae, rmse, r2 = self.calculate_metrics(y_test, predictions)
 
         # Return all the metrics
         return {
             'mae': mae,
-            'mse': mse,
             'rmse': rmse,
             'r2': r2,
         }

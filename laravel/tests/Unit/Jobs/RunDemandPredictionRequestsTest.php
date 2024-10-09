@@ -3,17 +3,15 @@ namespace Tests\Unit\Jobs;
 
 use App\Jobs\RunDemandPredictionRequests;
 use App\Models\Product;
-use App\Traits\SaleCreation;
-use Carbon\Carbon;
+use App\Services\ML\MLServiceClientInterface;
 use Exception;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
-use App\Jobs\RequestAndStoreDemandPredictions;
 use Tests\TestCase;
 
 class RunDemandPredictionRequestsTest extends TestCase
 {
-    use RefreshDatabase, SaleCreation;
+    use RefreshDatabase;
 
     /**
      * Test that the job is dispatched.
@@ -31,49 +29,72 @@ class RunDemandPredictionRequestsTest extends TestCase
     }
 
     /**
-     * Test the `collectPredictionData` method to ensure the correct data is fetched for predictions to be made.
+     * Test the `handle` method to ensure that the job requests predictions and stores them.
+     *
+     * @throws \PHPUnit\Framework\MockObject\Exception
+     *
+     * @throws Exception
      */
-    public function testCollectPredictionData(): void
+    public function testHandleGeneratesCsvAndStoresPredictions(): void
     {
-        // Create elements needed
-        $product = Product::factory()->create();
-        $this->createSale(collect([$product]), [1], now()->subDays(5), now());
-        Carbon::setTestNow(Carbon::today());
+        // Fake the queue and create products
+        Queue::fake();
+        $product1 = Product::factory()->create();
+        $product2 = Product::factory()->create();
+
+        // Create a mock of the MLServiceClientInterface
+        $mlServiceClientMock = $this->createMock(MLServiceClientInterface::class);
+
+        // Mock the predictDemand method to return fake predictions
+        $mlServiceClientMock->method('predictDemand')->willReturn([
+            'predictions' => json_encode([
+                ['product_id' => $product1->id, 'date' => '2023-01-01', 'value' => 100],
+                ['product_id' => $product2->id, 'date' => '2023-01-02', 'value' => 200],
+            ]),
+        ]);
 
         // Create the job instance
         $job = new RunDemandPredictionRequests(7, 30);
 
-        // Collect the prediction data
-        $payload = $job->collectPredictionData();
+        // Call the handle method with the mock
+        $job->handle($mlServiceClientMock);
 
-        // Assert data in payload
-        $this->assertCount(7, $payload['prediction_dates']);
-        $this->assertNotEmpty($payload['products']);
-        $this->assertEquals($product->id, $payload['products'][0]['details']['source_product_id']);
-        $this->assertArrayHasKey('historical_sales', $payload['products'][0]);
+        // Assert that the predictions were stored correctly
+        $this->assertDatabaseHas('predictions', [
+            'product_id' => $product1->id,
+            'date' => '2023-01-01',
+            'value' => 100,
+        ]);
+
+        $this->assertDatabaseHas('predictions', [
+            'product_id' => $product2->id,
+            'date' => '2023-01-02',
+            'value' => 200,
+        ]);
     }
 
     /**
-     *  Test the `collectPredictionData` method to ensure the correct data is fetched for predictions to be made.
+     * Test the job handles exceptions correctly during prediction requests.
      *
-     * @throws Exception
+     * @throws \PHPUnit\Framework\MockObject\Exception
      */
-    public function testJobChunksAndDispatchesCorrectData(): void
+    public function testHandleCatchesExceptions(): void
     {
-        // Fake the queue and create elements needed
+        // Fake the queue and create a product
         Queue::fake();
-        $product1 = Product::factory()->create();
-        $product2 = Product::factory()->create();
-        $this->createSale(collect([$product1]), [1], now()->subMonths(2), now()->subDays(1));
-        $this->createSale(collect([$product2]), [1], now()->subMonths(2), now()->subDays(1));
+        $product = Product::factory()->create();
 
-        // Create the job instance and run it
-        $job = new class(7, 30) extends RunDemandPredictionRequests {
-            public int $chunkSize = 1;  // Override chunk size
-        };
-        $job->handle();
+        // Create a mock of the MLServiceClientInterface
+        $mlServiceClientMock = $this->createMock(MLServiceClientInterface::class);
 
-        // Assert that a job was dispatched for each product
-        Queue::assertPushed(RequestAndStoreDemandPredictions::class, 2);
+        // Simulate an exception when calling predictDemand
+        $mlServiceClientMock->method('predictDemand')->willThrowException(new Exception('Prediction request failed'));
+
+        // Create the job instance
+        $job = new RunDemandPredictionRequests(7, 30);
+
+        // Call the handle method and catch the exception
+        $this->expectException(Exception::class);
+        $job->handle($mlServiceClientMock);
     }
 }

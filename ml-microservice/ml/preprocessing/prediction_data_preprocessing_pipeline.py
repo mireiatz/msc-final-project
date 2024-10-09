@@ -8,12 +8,13 @@ import logging
 
 class PredictionDataPreprocessingPipeline(PreprocessingPipeline):
 
-    def __init__(self, data, output_path=None):
+    def __init__(self, historical_data, prediction_dates, output_path=None):
         super().__init__(output_path=output_path)
-        self.data = data
+        self.historical_data = historical_data
+        self.prediction_dates = prediction_dates
 
     def ingest_data(self):
-        return PredictionDataIngestionLayer(data=self.data).process()
+        return PredictionDataIngestionLayer(historical_data=self.historical_data, prediction_dates=self.prediction_dates).process()
 
     def clean_data(self, ingested_data):
         return CleaningLayer(ingested_data).process_prediction_data()

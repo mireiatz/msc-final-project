@@ -1,17 +1,28 @@
 <div *ngIf="metrics || isLoading" class="main-page">
 
-  <div class="filters">
-      <div class="date-range-picker-container">
-        <app-date-range-picker
-          (datesSelected)="setDatesSelected($event)"
-        ></app-date-range-picker>
-      </div>
+  <div class="filters row">
+    <div class="date-range-picker-container">
+      <app-date-range-picker
+        (datesSelected)="setDatesSelected($event)"
+      ></app-date-range-picker>
+    </div>
+  </div>
 
-      <div class="search-bar-container">
-        <app-search-bar
-          (search)="onSearch($event)"
-        ></app-search-bar>
-      </div>
+  <div class="filters row">
+    <div class="search-bar-container">
+      <app-search-bar
+        (search)="onSearch($event)"
+      ></app-search-bar>
+    </div>
+
+    <div class="dropdown-container">
+      <app-dropdown
+        [placeholder]="'Select category'"
+        [options]="categoryOptions"
+        [selectedOptionId]="categoryId"
+        (selectionChange)="onCategorySelection($event)">
+      </app-dropdown>
+    </div>
   </div>
 
   <div class="data-display">

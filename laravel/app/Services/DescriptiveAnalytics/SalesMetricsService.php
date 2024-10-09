@@ -16,100 +16,38 @@ class SalesMetricsService implements SalesMetricsInterface
      */
     public function getOverviewMetrics(string $startDate, string $endDate): array
     {
-        // Fetch sales within the date range
-        $sales = $this->getSales($startDate, $endDate);
-
-        // Calculate various sales metrics
-        return [
-            'sales_count' => $sales->count(),
-            'highest_sale' => $this->getHighestSale($sales),
-            'lowest_sale' => $this->getLowestSale($sales),
-            'total_items_sold' => $this->calculateTotalItemsSold($sales),
-            'total_sales_value' => $this->calculateTotalSalesValue($sales),
-            'max_items_sold_in_sale' => $this->getMaxItemsSoldInSale($sales),
-            'min_items_sold_in_sale' => $this->getMinItemsSoldInSale($sales),
+        $metrics = [
+            'sales_count' => 0,
+            'highest_sale' => 0,
+            'lowest_sale' => PHP_INT_MAX,
+            'total_items_sold' => 0,
+            'total_sales_value' => 0,
+            'max_items_sold_in_sale' => 0,
+            'min_items_sold_in_sale' => PHP_INT_MAX,
         ];
-    }
 
-    /**
-     * Get sales data for the specified date range.
-     *
-     * @param string $startDate
-     * @param string $endDate
-     * @return Collection
-     */
-    public function getSales(string $startDate, string $endDate): Collection
-    {
-        return Sale::whereBetween('date', [$startDate, $endDate])
+        Sale::whereBetween('date', [$startDate, $endDate])
             ->with('products')
-            ->get();
-    }
+            ->chunk(100, function ($sales) use (&$metrics) { // Chunk the data
+                // Incrementally calculate metrics over each chunk
+                $metrics['sales_count'] += $sales->count();
+                $metrics['highest_sale'] = max($metrics['highest_sale'], $sales->max('sale') / 100);
+                $metrics['lowest_sale'] = min($metrics['lowest_sale'], $sales->min('sale') / 100);
+                $metrics['total_items_sold'] += $sales->sum(fn($sale) => $sale->products->sum('sale_products.quantity'));
+                $metrics['total_sales_value'] += $sales->sum('sale') / 100;
 
-    /**
-     * Get the highest sale value for the provided sales data.
-     *
-     * @param Collection $sales
-     * @return int
-     */
-    public function getHighestSale(Collection $sales): int
-    {
-        return $sales->max('sale') / 100;
-    }
+                $maxItemsInSale = $sales->map(fn($sale) => $sale->products->sum('sale_products.quantity'))->max();
+                $minItemsInSale = $sales->map(fn($sale) => $sale->products->sum('sale_products.quantity'))->min();
 
-    /**
-     * Get the lowest sale value for the provided sales data.
-     *
-     * @param Collection $sales
-     * @return int
-     */
-    public function getLowestSale(Collection $sales): int
-    {
-        return $sales->min('sale') / 100;
-    }
+                $metrics['max_items_sold_in_sale'] = max($metrics['max_items_sold_in_sale'], $maxItemsInSale);
+                $metrics['min_items_sold_in_sale'] = min($metrics['min_items_sold_in_sale'], $minItemsInSale);
+            });
 
-    /**
-     * Calculate the total number of items sold for the provided sales data.
-     *
-     * @param Collection $sales
-     * @return int
-     */
-    public function calculateTotalItemsSold(Collection $sales): int
-    {
-        return $sales->sum(fn($sale) => $sale->products->sum('sale_products.quantity'));
+        // Avoid "PHP_INT_MAX" as lowest_sale and min items sold
+        $metrics['lowest_sale'] = $metrics['lowest_sale'] === PHP_INT_MAX ? 0 : $metrics['lowest_sale'];
+        $metrics['min_items_sold_in_sale'] = $metrics['min_items_sold_in_sale'] === PHP_INT_MAX ? 0 : $metrics['min_items_sold_in_sale'];
 
-    }
-
-    /**
-     * Calculate the total sales value for the provided sales data.
-     *
-     * @param Collection $sales
-     * @return int
-     */
-    public function calculateTotalSalesValue(Collection $sales): int
-    {
-        return $sales->sum('sale') / 100;
-    }
-
-    /**
-     * Get the maximum number of items sold in a single sale.
-     *
-     * @param Collection $sales
-     * @return int
-     */
-    public function getMaxItemsSoldInSale(Collection $sales): int
-    {
-        return $sales->map(fn($sale) => $sale->products->sum('sale_products.quantity'))->max() ?? 0;
-    }
-
-    /**
-     * Get the minimum number of items sold in a single sale.
-     *
-     * @param Collection $sales
-     * @return int
-     */
-    public function getMinItemsSoldInSale(Collection $sales): int
-    {
-        return $sales->map(fn($sale) => $sale->products->sum('sale_products.quantity'))->min() ?? 0;
+        return $metrics;
     }
 
     /**

@@ -57,7 +57,7 @@ class TimeSeriesEngineeringLayer:
         """
         logging.info("Starting time series engineering process...")
 
-        df = self.create_time_series_features(self.data, 'quantity', periods=[1, 7, 14, 30, 90, 365])
+        df = self.create_time_series_features(self.data, 'quantity')
 
         return df
 
@@ -67,7 +67,7 @@ class TimeSeriesEngineeringLayer:
         """
         logging.info("Starting time series engineering process...")
 
-        df = self.create_time_series_features(self.data, 'quantity', periods=[1, 7, 30])
+        df = self.create_time_series_features(self.data, 'quantity')
         df = self.remove_historical_data_records(df)
 
         return df

@@ -30,8 +30,14 @@ class TestPredictionDataPreprocessingPipelineIntegration(unittest.TestCase):
             'in_stock': [1, 1],
             'quantity_lag_1': [100, 200],
             'quantity_lag_7': [150, 250],
+            'quantity_lag_30': [100, 200],
+            'quantity_lag_90': [100, 200],
+            'quantity_lag_365': [100, 200],
             'quantity_rolling_avg_7': [120, 220],
+            'quantity_rolling_avg_14': [120, 220],
             'quantity_rolling_avg_30': [110, 210],
+            'quantity_rolling_avg_90': [120, 220],
+            'quantity_rolling_avg_365': [120, 220],
             'month_cos': [0.87, 0.5],
             'month_sin': [0.5, 0.87],
             'weekday_cos': [1, 0.87],
@@ -41,40 +47,20 @@ class TestPredictionDataPreprocessingPipelineIntegration(unittest.TestCase):
         })
 
         # Define test data
-        test_data = {
-            'prediction_dates': ['2023-01-03', '2023-01-04'],
-            'products': [
-                {
-                    'details': {
-                        'source_product_id': 'A',
-                        'product_name': 'Product A',
-                        'category': 'cat1',
-                        'per_item_value': 100,
-                        'in_stock': 1,
-                    },
-                    'historical_sales': [
-                        {'date': '2023-01-01', 'quantity': 100},
-                        {'date': '2023-01-02', 'quantity': 200}
-                    ]
-                },
-                {
-                    'details': {
-                        'source_product_id': 'B',
-                        'product_name': 'Product B',
-                        'category': 'cat2',
-                        'per_item_value': 200,
-                        'in_stock': 1,
-                    },
-                    'historical_sales': [
-                        {'date': '2023-01-01', 'quantity': 150},
-                        {'date': '2023-01-02', 'quantity': 250}
-                    ]
-                }
-            ]
-        }
+        historical_data = pd.DataFrame({
+            'source_product_id': ['A', 'A', 'B', 'B'],
+            'product_name': ['Product A', 'Product A', 'Product B', 'Product B'],
+            'category': ['cat1', 'cat1', 'cat2', 'cat2'],
+            'per_item_value': [100, 100, 200, 200],
+            'in_stock': [1, 1, 1, 1],
+            'date': ['2023-01-01', '2023-01-02', '2023-01-01', '2023-01-02'],
+            'quantity': [100, 200, 150, 250]
+        })
+
+        prediction_dates = ['2023-01-03', '2023-01-04']
 
         # Initialise the pipeline for prediction data preprocessing
-        pipeline = PredictionDataPreprocessingPipeline(data=test_data)
+        pipeline = PredictionDataPreprocessingPipeline(historical_data=historical_data, prediction_dates=prediction_dates)
         final_data = pipeline.run()
 
         # Check the data was processed correctly

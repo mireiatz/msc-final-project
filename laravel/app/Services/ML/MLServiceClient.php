@@ -27,7 +27,7 @@ class MLServiceClient implements MLServiceClientInterface
     {
         return Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->apiKey,
-        ]);
+        ])->timeout(120);
     }
 
     /**
@@ -44,7 +44,9 @@ class MLServiceClient implements MLServiceClientInterface
     {
         try {
             // Execute the request
-            $response =  $http->$method($this->baseUri . $endpoint, $data)->throw();;
+            $response =  $http->$method($this->baseUri . $endpoint, [
+                'metadata' => json_encode($data['metadata'])  // Pass metadata as form data
+            ]);
 
             return $response->json();
 
@@ -82,21 +84,12 @@ class MLServiceClient implements MLServiceClientInterface
     {
         $http = $this->authorise()
             ->attach(
-                'file',
-                $data['content'],
-                $data['file']
-            )->withOptions([
-                'multipart' => [
-                    [
-                        'name'     => 'file',
-                        'contents' => $data['content'],
-                        'filename' => $data['file'],
-                    ],
-                    [
-                        'name'     => 'metadata',
-                        'contents' => json_encode($data['metadata']),
-                    ]
-                ]
+                'file', // Name of the form field
+                fopen($data['file'], 'r'), // File contents
+                basename($data['file']))
+            ->asMultipart() // Define it as multipart/form-data
+            ->withHeaders([
+                'Accept' => 'application/json' // Add headers
             ]);
         return $this->sendRequest($method, $endpoint, $data, $http);
     }
@@ -110,7 +103,7 @@ class MLServiceClient implements MLServiceClientInterface
      */
     public function predictDemand(array $data): mixed
     {
-        return $this->makeJsonRequest('post', '/predict-demand', $data);
+        return $this->makeFileRequest('post', '/predict-demand', $data);
     }
 
     /**
