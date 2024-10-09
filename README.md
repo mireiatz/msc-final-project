@@ -12,7 +12,7 @@ This project is focused on developing a Machine Learning (ML)-driven data analyt
 
 ***
 
-## Technologies
+## Main Technologies
 * **Frontend:** Angular (with ngx-charts for data visualisation).
 * **Backend:** Laravel (RESTful API).
 * **ML:** Flask and Python.
@@ -22,13 +22,14 @@ This project is focused on developing a Machine Learning (ML)-driven data analyt
 ***
 
 ## System Requirements
-* **PHP:** v8.2
-* **Laravel:** v11.15
-* **Node.js:** v21.1
-* **Angular:** v18.1
-* **MySQL:** v5.7
-* **Docker:** v27.1
-* **Python:** 3.12
+* **Docker**
+* **PHP**
+* **Laravel**
+* **Node.js**
+* **Angular**
+* **MySQL**
+* **Python**
+* **Flask**
 
 ***
 
@@ -40,90 +41,34 @@ This project is focused on developing a Machine Learning (ML)-driven data analyt
 https://github.com/University-of-London/project-module-2024-apr-mireiatz.git
 ```
 
-#### Step 2: Docker Setup
+#### Step 2: Start Docker Containers
 
 * Build the containers with Docker:
 ```
 docker-compose up -d
 ```
 
-#### Step 3: Backend setup (Laravel)
+#### Step 3: Access the Application
 
-* Navigate to the backend directory:
-```
-cd laravel
-```
+* The Angular frontend will be accessible at `http://localhost:4200`
+* The Laravel backend will be accessible at `http://localhost:80`
+* The ML microservice will run at `http://localhost:5002`
 
-* Install Laravel dependencies:
-```
-composer install
-```
-
-* Copy the .env file and configure your MySQL database settings:
-```
-cp .env.example .env
-```
-
-* Enter the container:
-``` 
-docker compose exec laravel bash
-```
-
-* Run migrations to set up the database:
-``` 
-php artisan migrate
-```
-
-#### Step 4: Frontend Setup (Angular)
-
-* Navigate to the frontend directory:
-```
-cd ../frontend
-```
-
-* Install dependencies:
-```
-npm install
-```
-
-#### Step 5: ML Microservice (Python)
-
-* Navigate to the ML microservice directory:
-``` 
-cd ../ml
-```
-
-* Install the required packages:
-``` 
-pip3 install -r requirements.txt
-```
-
-## Running the application
-
-* Build the containers with Docker:
-```
-docker-compose up -d
-```
-
-* Navigate to the angular directory:
-``` 
-cd ../angular
-```
-
-* Generate the application bundle:
-``` 
-npm run api:gen
-npm run watch
-```
-
-***
+*** 
 
 ## Testing
 
-#### Backend (Laravel)
-* **Unit Testing**
+#### Backend (Laravel) Unit Testing
 ``` 
+cd laravel
+docker compose exec laravel bash
 php artisan test
+```
+
+#### ML microservice (Python) Unit Testing
+``` 
+cd ml-microservice/ml
+pytest
 ```
 
 ***
@@ -149,6 +94,18 @@ It displays graphics informing on stock levels for products organised by categor
 ### 2. Demand Forecast
 This is the `Predictive Analytics` section.
 
+#### 2.1. Category-level
+It displays a comparative graph with the demand predictions for the next 30 days, aggregated by category.
+
+#### 2.2. Product-level
+It displays a comparative graph with the demand predictions for each product within a category, selectable through a dropdown.
+
+#### 2.3. Weekly
+It displays the aggregated predictions per week for the next couple of weeks in a bar chart.
+
+#### 2.4. Month
+It displays the aggregated predictions for the next 30 days per category in a comparative bar chart.
+
 ### 3. Reordering
-This is the `Prescriptive Analytics` section.
+This is the `Prescriptive Analytics` section. It features a table with the reorder suggestions for products per provider and category, selectable through dropdowns.
 
